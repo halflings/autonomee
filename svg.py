@@ -1,5 +1,6 @@
 from lxml import etree
-from geometry import Point, Rectangle, Ellipse, Polygone, Polyline
+from geometry import Point, Rectangle, Ellipse, Polygone, Polyline, Ray
+from astar import DiscreteMap, Cell
 import re
 NS = {'svg': 'http://www.w3.org/2000/svg',
 'sodipodi': 'http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd'}
@@ -14,7 +15,6 @@ def remove_ns(text, namespace = NS['svg']):
 
 def add_ns(text, namespace = NS['sodipodi']):
 	return '{' + namespace + '}' + text
-
 
 class SvgTree:
 	default_title = "Undefined title"
@@ -107,7 +107,7 @@ class SvgTree:
 				polyline = Polyline(points)
 				self.shapes.append(polyline)
 
-		#self.discretize()
+		self.discreteMap = DiscreteMap(self)
 
 	@staticmethod
 	def parse_points(svg_rep):
@@ -137,35 +137,6 @@ class SvgTree:
 
 		return minDist
 
-	#FOR PATHFINDING, should optimize this
-	def discretize(self):
-		division = 20
-
-		matrix = [ [ False for y in range(int(self.width/division)) ] for range(int(self.height/division))]
-
-		print ' ' + '__'*(1 + self.width/division)
-
-		for i in range(int(self.height/division)):
-			print '| ',
-			for j in range(int(self.width/division)):
-				point = Point(j*division, i*division)
-				obstacle = False
-				id = 0
-
-				while not obstacle and id<len(self.shapes):
-					obstacle = point.containedIn(self.shapes[id])
-					id += 1
-
-				if obstacle:
-					print '#',
-				else:
-					print ' ',
-
-		    # End of line
-			print "|\n",
-
-		print '|'+ '__'*(1 + self.width/division) + '|'
-
 	def __str__(self):
 		result = 'SVG Tree - "{}"\n'.format(self.title)
 		result += "Width : {}{} | Height : {}{} \n".format(self.width, self.width_unit,
@@ -180,5 +151,8 @@ class SvgTree:
 if __name__=="__main__":
 
 	mySvg = SvgTree("maps/mapexample.svg")
-	mySvg.discretize()
 	print mySvg
+	print ""
+	path = mySvg.discreteMap.search(Cell(0, 0), Cell(30, 10))
+	for cell in path[::-1]:
+		print cell
