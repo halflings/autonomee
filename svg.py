@@ -1,6 +1,5 @@
 from lxml import etree
-from geometry import *
-import math
+from geometry import Point, Rectangle, Ellipse, Polygone, Polyline
 import re
 NS = {'svg': 'http://www.w3.org/2000/svg',
 'sodipodi': 'http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd'}
@@ -50,9 +49,11 @@ class SvgTree:
 			else:
 				raise "No {} ! Can't parse SVG.".format(attribute)
 
-		### Parsing SHAPES
-		### We search all the groups and subgroups and parse their elements
-		###################################################################
+
+		######################################################################
+		### Parsing SHAPES													##
+		### We search all the groups and subgroups and parse their elements ##
+		######################################################################
 
 		#PARSING PATHS (polylines and ellipses)
 		paths = tree.xpath("//n:path",
@@ -66,8 +67,7 @@ class SvgTree:
 					cy = float(path.attrib[add_ns('cy', NS['sodipodi'])])
 					rx = float(path.attrib[add_ns('rx', NS['sodipodi'])])
 					ry = float(path.attrib[add_ns('ry', NS['sodipodi'])])
-
-					ellipse = EllipseFactory(cx, cy, rx, ry)
+					ellipse = Ellipse(cx, cy, rx, ry)
 					self.shapes.append(ellipse)
 				else:
 					print "[ ! ] Paths - except ellipses - are not implemented yet"
@@ -84,8 +84,7 @@ class SvgTree:
 				w = float(rect.attrib['width'])
 				h = float(rect.attrib['height'])
 
-				rectangle = RectangleFactory(x, y, w, h)
-				print "PARSED : ", rectangle
+				rectangle = Rectangle(x, y, w, h)
 				self.shapes.append(rectangle)
 
 		#PARSING POLYGONES
@@ -96,7 +95,6 @@ class SvgTree:
 				points = self.parse_points(polygone.attrib['points'])
 
 				polygone = Polygone(points)
-				print "PARSED : ", polygone
 				self.shapes.append(polygone)
 
 		#PARSING POLYLINES
@@ -107,7 +105,6 @@ class SvgTree:
 			for poly in polylines:
 				points = self.parse_points(poly.attrib['points'])
 				polyline = Polyline(points)
-				print "PARSED : ", polyline
 				self.shapes.append(polyline)
 
 		#self.discretize()
@@ -142,23 +139,32 @@ class SvgTree:
 
 	#FOR PATHFINDING, should optimize this
 	def discretize(self):
-		for i in range(int(self.width/20)):
-			for j in range(int(self.height/20)):
-				point = Point(i*20, j*20)
+		division = 20
+
+		matrix = [ [ False for y in range(int(self.width/division)) ] for range(int(self.height/division))]
+
+		print ' ' + '__'*(1 + self.width/division)
+
+		for i in range(int(self.height/division)):
+			print '| ',
+			for j in range(int(self.width/division)):
+				point = Point(j*division, i*division)
 				obstacle = False
-				i = 0
-				while not obstacle and i<len(self.shapes):
-					obstacle = point.containedIn(self.shapes[i])
-					i+=1
+				id = 0
+
+				while not obstacle and id<len(self.shapes):
+					obstacle = point.containedIn(self.shapes[id])
+					id += 1
+
 				if obstacle:
 					print '#',
 				else:
 					print ' ',
 
-			print '\n',
+		    # End of line
+			print "|\n",
 
-
-
+		print '|'+ '__'*(1 + self.width/division) + '|'
 
 	def __str__(self):
 		result = 'SVG Tree - "{}"\n'.format(self.title)
@@ -173,5 +179,6 @@ class SvgTree:
 
 if __name__=="__main__":
 
-	mySvg = SvgTree("mapexample.svg")
+	mySvg = SvgTree("maps/mapexample.svg")
+	mySvg.discretize()
 	print mySvg

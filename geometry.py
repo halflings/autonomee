@@ -1,13 +1,6 @@
 import math
 import numpy as np
 
-
-def RectangleFactory(x, y, w, h):
-	return Rectangle(x, y, w, h)
-
-def EllipseFactory(cx, cy, rx, ry):
-	return Ellipse(cx, cy, rx, ry)
-
 class Point:
 	def __init__(self, x, y):
 		self.x = int(x)
@@ -21,12 +14,16 @@ class Point:
 		return Point(self.x + vector[0], self.y + vector[1])
 
 	def containedIn(self, shape):
-		onX = self.x >= shape.boundingRect.origin.x and self.y<= shape.boundingRect.origin.x + shape.boundingRect.width
-		onY = self.y >= shape.boundingRect.origin.y and self.y<= shape.boundingRect.origin.y + shape.boundingRect.height
-		return onX and onY
+		if isinstance(shape, Rectangle):
+			onX = self.x >= shape.boundingRect.origin.x and self.x <= shape.boundingRect.origin.x + shape.boundingRect.width
+			onY = self.y >= shape.boundingRect.origin.y and self.y <= shape.boundingRect.origin.y + shape.boundingRect.height
+			return onX and onY
+		elif isinstance(shape, Ellipse):
+			# FIX THIS, doesn't take into account ry !
+			return self.distance(shape.center) < shape.rx
 
 	def __str__(self):
-		return "Point ({} , {})".format(self.x, self.y)
+		return "Point [{}, {}]".format(self.x, self.y)
 
 	def __sub__(self, point):
 		return np.array([self.x - point.x, self.y - point.y])
@@ -106,6 +103,9 @@ class Ellipse(Shape):
 		self.center = Point(cx, cy)
 		self.rx, self.ry = rx, ry
 		self.boundingRect = Rectangle(cx-rx, cy-ry, 2*rx, 2*ry)
+
+	def __str__(self):
+		return "Ellipse #{} : Center = {} ; rx = {} ; ry = {}".format(self.id, self.center, self.rx, self.ry)
 
 class Ray(object):
 	def __init__(self, x, y, angle):
@@ -224,7 +224,9 @@ if __name__=="__main__":
 	# else:
 	# 	print "No intersection between {} and {} !".format(seg1, seg2)
 
-	point = Point(4, 4)
+	point = Point(3, 5)
 	rect = Rectangle(0, 0, 4, 4)
 	if point.containedIn(rect):
-		print "CONTAINED"
+		print point, "contained in", rect
+	else:
+		print point, "not contained in", rect
