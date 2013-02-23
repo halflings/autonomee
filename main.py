@@ -71,25 +71,6 @@ class MainWindow(QtGui.QMainWindow):
 
             #self.svg = pysvg.parser.parse('mapexample.svg')
 
-class ExGraphicsItem (QtGui.QGraphicsItem):
-    def __init__ (self, position):
-        super(ExGraphicsItem, self).__init__()
-        x = position.x()
-        y = position.y()
-        self.rectF = QtCore.QRectF(x,y,5,5)
-
-        self.setFlag(QtGui.QGraphicsItem.ItemIsMovable, True)
-        self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable, True)
-
-    def boundingRect (self):
-        return self.rectF
-    def paint (self, painter=None, style=None, widget=None):
-        painter.fillRect(self.rectF, QtCore.Qt.red)
-
-    # def mouseMoveEvent(self, event):
-    #     QtGui.QGraphicsItem.mouseMoveEvent(self, event)
-    #     print event.scenePos().x()
-
 class ViewerScene(QtGui.QGraphicsScene):
     def __init__(self, parent=None):
         super(ViewerScene, self).__init__(parent)
@@ -100,11 +81,20 @@ class ViewerScene(QtGui.QGraphicsScene):
 
         self.car = None
         self.map = None
+
+        self.path = None
+
     def mousePressEvent(self, event):
         x, y = event.scenePos().x(), event.scenePos().y()
         if not self.car:
             self.car = engine.Car(self.map, x, y)
             self.addItem(self.car)
+        else:
+            self.path = self.map.search((self.car.x, self.car.y), (x,y))
+            if self.path is not None:
+                for i in range(len(self.path)-1):
+                    self.addItem( QtGui.QGraphicsLineItem(self.path[i].x, self.path[i].y, self.path[i+1].x, self.path[i+1].y) )
+
 
         super(ViewerScene,self).mousePressEvent(event)
 
@@ -126,11 +116,10 @@ class ViewerScene(QtGui.QGraphicsScene):
             elif event.key()==QtCore.Qt.Key_Down or event.key()==QtCore.Qt.Key_S:
                 self.car.move(-speed)
 
-    # def mouseMoveEvent(self, event):
-    #     print "in mouse move"
-    #     print event.scenePos().x()
-    #     super(ViewerScene, self).mouseMoveEvent(event)
-
+    # def paintEvent(self, event):
+    #     if self.path is not None:
+    #         for i in range(len(self.path)-1):
+    #             painter.drawLine(self.path[i].x, self.path[i].y, self.path[i+1].x, self.path[i+1].y)
 
 class SvgView(QtGui.QGraphicsView):
     Native, OpenGL, Image = range(3)

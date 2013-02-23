@@ -1,11 +1,13 @@
 from geometry import Point
+from math import sqrt
 from time import sleep
+import copy
 
 class Cell(object):
     def __init__(self, x, y, reachable = True):
         self.reachable = reachable
-        self.x = x
-        self.y = y
+        self.x = int(x)
+        self.y = int(y)
         self.parent = None
 
         # Cost to move to an adjacent cell
@@ -22,11 +24,10 @@ class Cell(object):
 
     def distance(self, cell):
         """Manhattan distance"""
-        return abs((self.x-cell.x)**2 + (self.y - cell.y)**2)
+        return sqrt((self.x - cell.x)**2 + (self.y - cell.y)**2)
 
     def process(self, parent, goal):
         self.parent = parent
-
         self.g = parent.distance(self)
         self.h = self.distance(goal)
         self.f = self.g + self.h
@@ -49,7 +50,7 @@ class Cell(object):
 
 class DiscreteMap:
 
-    def __init__(self, SvgMap, division = 20):
+    def __init__(self, SvgMap, division = 5):
         self.division = division
 
         self.width = int(SvgMap.width/division)
@@ -61,7 +62,7 @@ class DiscreteMap:
         self.ol = set()
         self.cl = set()
 
-        self.visited = []
+        self.path = []
 
         for y in range(self.height):
             for x in range(self.width):
@@ -94,49 +95,67 @@ class DiscreteMap:
 
 
     def search(self, begin, goal):
-        curCell = begin
-        self.cl = set()
-        self.ol = set()
-        self.ol.add(begin)
+        if goal.x not in range(self.width) or goal.y not in range(self.height):
+            print "Goal is out of bound"
+            return []
+        elif not self.grid[begin.y][begin.x].reachable:
+            print "Beginning is unreachable"
+            return []
+        elif not self.grid[goal.y][goal.x].reachable:
+            print "Goal is unreachable"
+            return []
+        else:
+            curCell = begin
 
-        self.visited = []
+            self.cl = set()
+            self.ol = set()
 
-        while len(self.ol) > 0:
-            # FOR DEBUG ONLY
-            self.visited.append(curCell)
+            self.ol.add(begin)
 
-            # We add the current cell to the closed list
-            self.cl.add(curCell)
+            while len(self.ol) > 0:
 
-            # We check the cell's (reachable) neighbours :
-            neighbours = self.neighbours(curCell)
+                # We add the current cell to the closed list
+                self.cl.add(curCell)
 
-            for cell in neighbours:
-                # If the goal is a neighbour cell :
-                if cell == goal:
-                    cell.parent = curCell
-                    return cell.path()
-                elif cell not in self.cl:
-                    # We process the cells that are not in the closed list
-                    # and add them to the open list
-                    cell.process(curCell, goal)
-                    self.ol.add(cell)
+                # We check the cell's (reachable) neighbours :
+                neighbours = self.neighbours(curCell)
 
-            # We choose the cell with the minimum score as our next next current cell
-            minF = float('inf')
-            for cell in self.ol:
-                if cell not in self.cl and cell.f < minF:
-                    minF = cell.f
-                    curCell = cell
+                for cell in neighbours:
+                    # If the goal is a neighbour cell :
+                    if cell == goal:
+                        cell.parent = curCell
+                        self.path = cell.path()
+                        self.display()
+                        self.clear()
+                        return self.path
+                    elif cell not in self.cl:
+                        # We process the cells that are not in the closed list
+                        # and add them to the open list
+                        cell.process(curCell, goal)
+                        self.ol.add(cell)
 
-            self.display()
-            sleep(0.05)
+                # We choose the cell with the minimum score as our next next current cell
+                minF = float('inf')
+                for cell in self.ol:
+                    if cell not in self.cl and cell.f < minF:
+                        minF = cell.f
+                        curCell = cell
 
+                # To vizualize the algorithm in ASCII
+                # self.display()
+                # sleep(0.02)
 
-        # If the open list gets empty : no path can be found
-        return None
+            # If the open list gets empty : no path can be found
+            self.clear()
+            return []
 
-
+    def clear(self):
+        for line in self.grid:
+            for cell in line:
+                cell.f = 0
+                cell.h = 0
+                cell.g = 0
+                cell.parent = None
 
     def display(self):
 
@@ -147,8 +166,11 @@ class DiscreteMap:
                     dispMatrix[y][x] = ' '
                 else:
                     dispMatrix[y][x] = '#'
-        for cell in self.visited:
-            dispMatrix[cell.y][cell.x] = 'X'
+        # for cell in self.cl:
+        #     dispMatrix[cell.y][cell.x] = 'X'
+        for cell in self.path:
+            print len(self.path)
+            dispMatrix[cell.y][cell.x] = 'o'
 
 
         print ' ' + '__'*(1 + self.width)

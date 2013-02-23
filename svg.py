@@ -20,6 +20,16 @@ class SvgTree:
 	default_title = "Undefined title"
 	points_pattern = "(?:([-]?\d+\.?\d*),([-]?\d+\.?\d*))"
 
+	@staticmethod
+	def parse_points(svg_rep):
+		points = []
+		search = re.findall(SvgTree.points_pattern, svg_rep)
+		for point in search:
+			x = float(point[0])
+			y = float(point[1])
+			points.append(Point(x, y))
+		return points
+
 	def __init__(self, path="map/mapexample.svg"):
 		#Shapes' list
 		self.shapes = []
@@ -109,15 +119,7 @@ class SvgTree:
 
 		self.discreteMap = DiscreteMap(self)
 
-	@staticmethod
-	def parse_points(svg_rep):
-		points = []
-		search = re.findall(SvgTree.points_pattern, svg_rep)
-		for point in search:
-			x = float(point[0])
-			y = float(point[1])
-			points.append(Point(x, y))
-		return points
+
 
 	def RayDistance(self, x, y, headingAngle):
 		ray = Ray(x, y, headingAngle)
@@ -137,6 +139,19 @@ class SvgTree:
 
 		return minDist
 
+	def search(self, begin, goal):
+		div = self.discreteMap.division
+		beginCell = Cell(begin[0]/div, begin[1]/div)
+		goalCell = Cell(goal[0]/div, goal[1]/div)
+
+		path = self.discreteMap.search(beginCell, goalCell)
+		points = []
+		if path:
+			for cell in path:
+				points.append(Point(cell.x*div, cell.y*div))
+
+		return points
+
 	def __str__(self):
 		result = 'SVG Tree - "{}"\n'.format(self.title)
 		result += "Width : {}{} | Height : {}{} \n".format(self.width, self.width_unit,
@@ -150,9 +165,9 @@ class SvgTree:
 
 if __name__=="__main__":
 
-	mySvg = SvgTree("maps/mapexample.svg")
+	mySvg = SvgTree("maps/laby.svg")
 	print mySvg
 	print ""
-	path = mySvg.discreteMap.search(Cell(0, 0), Cell(30, 10))
-	for cell in path[::-1]:
-		print cell
+	for i in range(10):
+		path = mySvg.discreteMap.search(Cell(0, 0), Cell(40, 40))
+
