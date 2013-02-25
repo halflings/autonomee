@@ -3,16 +3,21 @@
 import pygame
 from time import sleep
 import serial
-import sys
-import os
+# import sys
+# import os
+
 #from pygame import joystick, event
 
 ser = serial.Serial('/dev/ttyACM0', 9600)
 pygame.init()
-#joystick.init()
+pygame.joystick.init()
 j = pygame.joystick.Joystick(0)
 j.init()
 print 'Initialized Joystick : {}'.format(j.get_name())
+
+
+running = False
+turning = False
 
 
 try:
@@ -20,26 +25,32 @@ try:
 
         sum = 0
 
-        while j.get_axis(1) != 0 and j.get_button(11) != 0:
-            sum += j.get_axis(1)/4
-            sleep(0.02)
-            pygame.event.pump()
+        axisX = j.get_axis(1)
+        axisY = j.get_axis(0)
 
+        if axisX != 0 and not running:
+            running = True
 
-        if sum != 0:
-            data = "{}".format(abs(int(sum*100)))
-            print "SENT {}".format(data)
-            ser.write(data)
+            if axisX > 0:
+                ser.write('-1')
+            else:
+                ser.write('1')
+
+        if axisY != 0 and not turning:
+            turning = True
+
+            if axisY > 0:
+                ser.write('2')
+            else:
+                ser.write('-2')
+
+        if (axisX == 0 and running) or (axisY == 0 and turning):
+            ser.write('0')
+            turning = False
+            running = False
 
         pygame.event.pump()
-        # for i in range(0, j.get_numaxes()):
-        #     if j.get_axis(i) != 0.00:
-        #         print 'Axis %i reads %.2f' % (i, j.get_axis(i))
-        # for i in range(0, j.get_numbuttons()):
-        #     if j.get_button(i) != 0:
-        #         print 'Button %i reads %i' % (i, j.get_button(i))
 
-        sleep(0.1)
 
 except KeyboardInterrupt:
     j.quit()
