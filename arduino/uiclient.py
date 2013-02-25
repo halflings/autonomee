@@ -201,7 +201,7 @@ class Ui_Dialog(object):
             axisY = self.joystick.get_axis(0)
 
             if axisX != 0 and not self.running:
-                running = True
+                self.running = True
 
                 if axisX > 0:
                     self.socket.sendall('-1')
@@ -209,17 +209,17 @@ class Ui_Dialog(object):
                     self.socket.sendall('1')
 
             if axisY != 0 and not self.turning:
-                turning = True
+                self.turning = True
 
                 if axisY > 0:
                     self.socket.sendall('2')
                 else:
                     self.socket.sendall('-2')
 
-            if (axisX == 0 and running) or (axisY == 0 and turning):
+            if (axisX == 0 and self.running) or (axisY == 0 and self.turning):
                 self.socket.sendall('0')
-                turning = False
-                running = False
+                self.turning = False
+                self.running = False
 
             pygame.event.pump()
 

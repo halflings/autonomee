@@ -30,7 +30,7 @@ class PiHandler(SocketServer.BaseRequestHandler, object):
 			print "In connected iteration"
 			self.data = self.request.recv(1024)
 			print "Received : [{}]".format(self.data)
-			self.ardino.write(self.data)
+			self.arduino.write(self.data)
 	        print "Wrote input on the arduino"
 	        print '-'*15
 
@@ -40,7 +40,7 @@ class PiServer(SocketServer.TCPServer):
 
     def __init___(self, address, handler):
     	super(PiServer,self).__init__(address, handler)
-    	# Serial connection with the Arduino, at 9600 bauds
+    	# Serial connection with the Arduno, at 9600 bauds
     	self.arduino = serial.Serial(USB_PATH, 9600)
 
 
