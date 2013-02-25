@@ -12,6 +12,8 @@ import socket
 import threading
 import time
 import re
+import pygame
+
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
@@ -124,6 +126,16 @@ class Ui_Dialog(object):
 
         #Initializing the socket to None
         self.socket = None
+        self.socketThread = None
+
+        #Joystick
+        # TODO : Make this a class instead of procedural functions
+        pygame.init()
+        pygame.joystick.init()
+        self.joystick = pygame.joystick.Joystick(0)
+        self.joystick.init()
+        self.running = False
+        self.turning = False
 
         #Initializing and connecting the logger
         self.logger = Logger()
@@ -164,7 +176,7 @@ class Ui_Dialog(object):
             self.lcdNumber.setEnabled(True)
             self.parametersBox.setEnabled(True)
             #Launching socket thread
-            self.socketThread = threading.Thread(target=self.readingFromServer)
+            self.socketThread = threading.Thread(target=self.serverProcessing)
             self.socketThread.daemon = True
             self.socketThread.start()
 
@@ -175,30 +187,61 @@ class Ui_Dialog(object):
         print "In disconnectSocket"
 
         self.connected = False
-        self.socketThread.join()
+	if self.socketThread:
+        	self.socketThread.join()
 
         QtCore.QCoreApplication.instance().quit()
 
-    def readingFromServer(self):
-        print "begin reading"
+    def serverProcessing(self):
+        print "begin sending"
+
         while self.connected:
-            print "reading iteration"
-            pinNum = self.pinNumber.value()
-            if self.analogButton.isChecked():
-                type = "A"
-            else:
-                type = "D"
-            self.socket.sendall("WRITE\r\n{}{}\r\n0".format(pinNum,type))
 
-            # Receive data from the server
-            received = self.socket.recv(1024)
-            receivedMatch = re.match("OK\r\n([\d]+)", received)
-            if receivedMatch:
-                self.logger.send(int(receivedMatch.group(1)))
-            else:
-                print received
+            axisX = self.joystick.get_axis(1)
+            axisY = self.joystick.get_axis(0)
 
-            time.sleep(0.3)
+            if axisX != 0 and not self.running:
+                running = True
+
+                if axisX > 0:
+                    self.socket.sendall('-1')
+                else:
+                    self.socket.sendall('1')
+
+            if axisY != 0 and not self.turning:
+                turning = True
+
+                if axisY > 0:
+                    self.socket.sendall('2')
+                else:
+                    self.socket.sendall('-2')
+
+            if (axisX == 0 and running) or (axisY == 0 and turning):
+                self.socket.sendall('0')
+                turning = False
+                running = False
+
+            pygame.event.pump()
+
+
+        # while self.connected:
+        #     print "reading iteration"
+        #     pinNum = self.pinNumber.value()
+        #     if self.analogButton.isChecked():
+        #         type = "A"
+        #     else:
+        #         type = "D"
+        #     self.socket.sendall("READ\r\n{}{}\r\n0".format(pinNum,type))
+
+        #     # Receive data from the server
+        #     received = self.socket.recv(1024)
+        #     receivedMatch = re.match("OK\r\n([\d]+)", received)
+        #     if receivedMatch:
+        #         self.logger.send(int(receivedMatch.group(1)))
+        #     else:
+        #         print received
+
+        #     time.sleep(0.3)
 
         self.socket.sendall("DISCONNECT")
         self.socket.close()

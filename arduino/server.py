@@ -21,6 +21,7 @@ class PiHandler(SocketServer.BaseRequestHandler, object):
 			readMatch = re.search(PiHandler.read_pattern, self.data)
 			writeMatch = re.search(PiHandler.write_pattern, self.data)
 
+			value = None
 			if readMatch:
 				print "HOORAY READMATCH"
 

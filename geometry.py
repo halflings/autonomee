@@ -19,8 +19,7 @@ class Point:
 			onY = self.y >= shape.boundingRect.origin.y and self.y <= shape.boundingRect.origin.y + shape.boundingRect.height
 			return onX and onY
 		elif isinstance(shape, Ellipse):
-			# FIX THIS, doesn't take into account ry !
-			return self.distance(shape.center) < shape.rx
+			return (self.x - shape.center.x) / (shape.rx**2) + (self.y - shape.center.y)/(shape.ry**2) <= 1
 
 	def __str__(self):
 		return "Point [{}, {}]".format(self.x, self.y)

@@ -1,7 +1,7 @@
 import time
 from pyfirmata import ArduinoMega, util
 
-pin = 12
+pin = 11
 
 board = ArduinoMega('/dev/ttyACM0')
 
