@@ -88,12 +88,11 @@
     <path
        sodipodi:type="arc"
        style="fill:#e3dedb;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-miterlimit:4;stroke-opacity:0.76150626;stroke-dasharray:none"
-       id="path2996"
-       sodipodi:cx="823.07233"
-       sodipodi:cy="675.36902"
-       sodipodi:rx="62.225399"
-       sodipodi:ry="38.890873"
-       d="M 885.29773,675.36902 A 62.225399,38.890873 0 1 1 760.84693,675.36902 62.225399,38.890873 0 1 1 885.29773,675.36902 z"
-       transform="matrix(1.7840909,0,0,2.109091,-596.57316,-792.17919)" />
+       id="path3049"
+       sodipodi:cx="839.33582"
+       sodipodi:cy="609.60809"
+       sodipodi:rx="144.95689"
+       sodipodi:ry="42.426407"
+       d="M 984.29271,609.60809 A 144.95689,42.426407 0 1 1 694.37892,609.60809 144.95689,42.426407 0 1 1 984.29271,609.60809 z" />
   </g>
 </svg>

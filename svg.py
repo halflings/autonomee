@@ -168,6 +168,4 @@ if __name__=="__main__":
 	mySvg = SvgTree("maps/laby.svg")
 	print mySvg
 	print ""
-	for i in range(10):
-		path = mySvg.discreteMap.search(Cell(0, 0), Cell(40, 40))
-
+	path = mySvg.discreteMap.search(Cell(0, 0), Cell(40, 40))

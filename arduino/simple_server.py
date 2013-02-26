@@ -2,7 +2,7 @@ import SocketServer
 import socket
 import serial
 
-USB_PATH = '/dev/bus/usb/001/003'
+USB_PATH = '/dev/ttyACM0'
 
 def getAddress():
     try:
@@ -23,7 +23,12 @@ class PiHandler(SocketServer.BaseRequestHandler, object):
 		self.request.sendall(data)
 		print "Sent '{}'".format(data)
 
+
 	def handle(self):
+    	# Serial connection with the Arduno, at 9600 bauds
+    	# NOTE : this should be on the server, but that causes bugs
+		self.arduino = serial.Serial(USB_PATH, 9600)
+
 		print "New connection"
 		connected = True
 		while connected:
@@ -34,14 +39,14 @@ class PiHandler(SocketServer.BaseRequestHandler, object):
 	        print "Wrote input on the arduino"
 	        print '-'*15
 
-#TCPServer that should run on the Raspberry Pi
 class PiServer(SocketServer.TCPServer):
-    allow_reuse_address = True
-
-    def __init___(self, address, handler):
-    	super(PiServer,self).__init__(address, handler)
-    	# Serial connection with the Arduno, at 9600 bauds
-    	self.arduino = serial.Serial(USB_PATH, 9600)
+	"""
+	A TCP server, running on the Raspberry Pi, that controls the Arduino
+	by sending serial messages
+	"""
+	allow_reuse_address = True
+	def __init___(self, address, handler):
+		super(PiServer,self).__init__(address, handler)
 
 
 if __name__ == "__main__":
