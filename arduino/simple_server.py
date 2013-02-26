@@ -3,6 +3,7 @@ import socket
 import serial
 
 USB_PATH = '/dev/ttyACM0'
+DEFAULT_IP = '10.0.0.42'
 
 def getAddress():
     try:
@@ -13,7 +14,7 @@ def getAddress():
     if not address or address.startswith('127.'):
         # ...the hard way.
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(('4.2.2.1', 0))
+        s.connect((DEFAULT_IP, 0))
         address = s.getsockname()[0]
     return address
 
@@ -25,8 +26,8 @@ class PiHandler(SocketServer.BaseRequestHandler, object):
 
 
 	def handle(self):
-    	# Serial connection with the Arduno, at 9600 bauds
-    	# NOTE : this should be on the server, but that causes bugs
+    		# Serial connection with the Arduno, at 9600 bauds
+    		# NOTE : this should be on the server, but that causes bugs
 		self.arduino = serial.Serial(USB_PATH, 9600)
 
 		print "New connection"
@@ -36,8 +37,13 @@ class PiHandler(SocketServer.BaseRequestHandler, object):
 			self.data = self.request.recv(1024)
 			print "Received : [{}]".format(self.data)
 			self.arduino.write(self.data)
-	        print "Wrote input on the arduino"
-	        print '-'*15
+			if self.data == '3':
+				sensorData = self.arduino.readline()
+				print "Sensor data = {}".format(sensorData)
+				self.request.sendall(sensorData)
+	        	print '-'*15
+
+		self.arduino.close()
 
 class PiServer(SocketServer.TCPServer):
 	"""

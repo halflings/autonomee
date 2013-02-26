@@ -199,6 +199,7 @@ class Ui_Dialog(object):
 
             axisX = self.joystick.get_axis(1)
             axisY = self.joystick.get_axis(0)
+	    backButton = self.joystick.get_button(11)
 
             if axisX != 0 and not self.running:
                 self.running = True
@@ -216,6 +217,11 @@ class Ui_Dialog(object):
                 else:
                     self.socket.sendall('-2')
 
+	    if backButton != 0:
+		    self.socket.sendall('3')
+		    self.sensorData = int(self.socket.recv(1024))
+		    print "Received sensor data : {}".format(self.sensorData)
+                    self.logger.send(int(self.sensorData))
             if (axisX == 0 and self.running) or (axisY == 0 and self.turning):
                 self.socket.sendall('0')
                 self.turning = False
@@ -237,8 +243,9 @@ class Ui_Dialog(object):
         #     received = self.socket.recv(1024)
         #     receivedMatch = re.match("OK\r\n([\d]+)", received)
         #     if receivedMatch:
+	
         #         self.logger.send(int(receivedMatch.group(1)))
-        #     else:
+	#     else:
         #         print received
 
         #     time.sleep(0.3)
