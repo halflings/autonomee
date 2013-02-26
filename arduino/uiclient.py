@@ -1,12 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'client_ui.ui'
-#
-# Created: Fri Feb  8 22:43:43 2013
-#      by: PyQt4 UI code generator 4.9.3
-#
-# WARNING! All changes made in this file will be lost!
-
 from PySide import QtCore, QtGui
 import socket
 import threading
@@ -219,36 +212,23 @@ class Ui_Dialog(object):
 
 	    if backButton != 0:
 		    self.socket.sendall('3')
-		    self.sensorData = int(self.socket.recv(1024))
-		    print "Received sensor data : {}".format(self.sensorData)
-                    self.logger.send(int(self.sensorData))
+		    
+	            numMeasurements = int(self.socket.recv(1024))
+		    self.sensorData = dict()
+	            for i in range(numMeasurements):
+		    	data = re.search("A([-]?\d+)\r\nD(\d+)\r\n", self.socket.recv(1024))
+			if data:
+				self.sensorData[int(data.group(1))] = int(data.group(2))
+		    for angle in self.sensorData:
+		    	print "{} at angle {}".format(self.sensorData[sData], angle)
+                    	self.logger.send(self.sensorData[angle])
+
             if (axisX == 0 and self.running) or (axisY == 0 and self.turning):
                 self.socket.sendall('0')
                 self.turning = False
                 self.running = False
 
             pygame.event.pump()
-
-
-        # while self.connected:
-        #     print "reading iteration"
-        #     pinNum = self.pinNumber.value()
-        #     if self.analogButton.isChecked():
-        #         type = "A"
-        #     else:
-        #         type = "D"
-        #     self.socket.sendall("READ\r\n{}{}\r\n0".format(pinNum,type))
-
-        #     # Receive data from the server
-        #     received = self.socket.recv(1024)
-        #     receivedMatch = re.match("OK\r\n([\d]+)", received)
-        #     if receivedMatch:
-	
-        #         self.logger.send(int(receivedMatch.group(1)))
-	#     else:
-        #         print received
-
-        #     time.sleep(0.3)
 
         self.socket.sendall("DISCONNECT")
         self.socket.close()

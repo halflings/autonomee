@@ -1,6 +1,7 @@
 import SocketServer
 import socket
 import serial
+import re
 
 USB_PATH = '/dev/ttyACM0'
 DEFAULT_IP = '10.0.0.42'
@@ -38,11 +39,21 @@ class PiHandler(SocketServer.BaseRequestHandler, object):
 			print "Received : [{}]".format(self.data)
 			self.arduino.write(self.data)
 			if self.data == '3':
-				sensorData = self.arduino.readline()
-				print "Sensor data = {}".format(sensorData)
-				self.request.sendall(sensorData)
+				sensorData = []
+				while self.arduino.inWaiting() > 0:
+					angle = int(self.arduino.readline())
+					distance = int(self.arduino.readline())
+					sensorData[angle] = distance
+					print "Sensor at angle {} : {}".format(angle, distance)
+
+				# We first send the number of measurements
+				self.request.sendall(str(len(sensorData)))
+				# We send one by one the sensor measurements
+				for angle in sensorData:
+					self.request.sendall("A{}\r\nD{}\r\n".format(angle, sensorData[angle])
 	        	print '-'*15
 
+		self.arduino.write('0')
 		self.arduino.close()
 
 class PiServer(SocketServer.TCPServer):
