@@ -47,11 +47,12 @@ class PiHandler(SocketServer.BaseRequestHandler, object):
 					print "Sensor at angle {} : {}".format(angle, distance)
 
 				# We first send the number of measurements
-				self.request.sendall(str(len(sensorData)))
+                self.request.sendall(str(len(sensorData)))
 				# We send one by one the sensor measurements
-				for angle in sensorData:
-					self.request.sendall("A{}\r\nD{}\r\n".format(angle, sensorData[angle])
-	        	print '-'*15
+                for angle in sensorData:
+                    self.request.sendall("A{}\r\nD{}\r\n".format(angle, sensorData[angle]))
+
+                print '-'*15
 
 		self.arduino.write('0')
 		self.arduino.close()

@@ -1,7 +1,6 @@
 from geometry import Point
 from math import sqrt
 from time import sleep
-import copy
 
 class Cell(object):
     def __init__(self, x, y, reachable = True):
@@ -23,13 +22,15 @@ class Cell(object):
         return self.x == cell.x and self.y == cell.y and self.reachable == cell.reachable
 
     def distance(self, cell):
-        """Manhattan distance"""
         return sqrt((self.x - cell.x)**2 + (self.y - cell.y)**2)
+
+    def manhattanDistance(self, cell):
+        return abs(self.x - cell.x) + abs(self.y - cell.y)
 
     def process(self, parent, goal):
         self.parent = parent
         self.g = parent.distance(self)
-        self.h = self.distance(goal)
+        self.h = self.manhattanDistance(goal)
         self.f = self.g + self.h
 
     def path(self):
