@@ -212,7 +212,7 @@ class Ui_Dialog(object):
 
 	    if backButton != 0:
 		    self.socket.sendall('3')
-		    
+
 	            numMeasurements = int(self.socket.recv(1024))
 		    self.sensorData = dict()
 	            for i in range(numMeasurements):
@@ -220,7 +220,7 @@ class Ui_Dialog(object):
 			if data:
 				self.sensorData[int(data.group(1))] = int(data.group(2))
 		    for angle in self.sensorData:
-		    	print "{} at angle {}".format(self.sensorData[sData], angle)
+		    	print "{} at angle {}".format(self.sensorData[angle], angle)
                     	self.logger.send(self.sensorData[angle])
 
             if (axisX == 0 and self.running) or (axisY == 0 and self.turning):

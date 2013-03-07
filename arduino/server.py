@@ -1,92 +1,121 @@
 import SocketServer
+import socket
+import serial
 import re
-from arduino import Arduino
+import threading
+from Queue import Queue
+from time import sleep
+
+
+USB_PATH = '/dev/ttyACM0'
+DEFAULT_IP = '10.0.0.42'
+
+def getAddress():
+    try:
+        address = socket.gethostbyname(socket.gethostname())
+        # This often give 127.0.0.1, so ...
+    except:
+        address = ''
+    if not address or address.startswith('127.'):
+        # ...the hard way.
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect((DEFAULT_IP, 0))
+        address = s.getsockname()[0]
+    return address
 
 class PiHandler(SocketServer.BaseRequestHandler, object):
-	read_pattern="READ\r\n([\d]+)(A|D)"
-	write_pattern="WRITE\r\n([\d]+)(A|D)\r\n([\d]+)"
+
+    def setup(self):
+        super(PiHandler, self).setup()
+        self.connected = True
+        self.arduino = serial.Serial(USB_PATH, 9600)
+        self.queries = Queue()
+        self.receiveThread = threading.Thread(target = self.receptionRoutine)
+        self.receiveThread.daemon = True
+        self.receiveThread.start()
 
 	def send(self, data):
 		self.request.sendall(data)
 		print "Sent '{}'".format(data)
 
+    def receptionRoutine(self):
+        while self.connected:
+            data = self.request.recv(1024)
+            print "Received '{}'".format(data)
+            self.queries.put(data)
+
+        # Serial connection with the Arduno, at 9600 bauds
+        # NOTE : this should be on the server, but that causes bugs
+
+
 	def handle(self):
-		print "New connection"
+		print "New connection with : {}\n".format(self.request.address)
+        loopNumber = 0
+        while self.connected:
+            loopNumber += 1
+            print "Connected loop #{}".format(loopNumber)
+            print "-"*30
 
-		connected = True
-		while connected:
-			print "In connected iteration"
-			self.data = self.request.recv(1024)
-			print "Got {}".format(self.data)
-			readMatch = re.search(PiHandler.read_pattern, self.data)
-			writeMatch = re.search(PiHandler.write_pattern, self.data)
+            #We write the value we receive to the Arduino
+            query = self.queries.get()
+            self.arduino.write(query)
 
-			value = None
-			if readMatch:
-				print "HOORAY READMATCH"
+            #If the remote client is requesting angular distances
+            if int(query) == 3:
+                #We read the angular distances sent by the Arduino
+                sensorData = dict()
+                while self.arduino.inWaiting() > 0:
+                    angle = int(self.arduino.readline())
+                    distance = int(self.arduino.readline())
+                    sensorData[angle] = distance
+                    print "Read sensor data : dist {} at angle {}".format(distance, angle)
+                    sleep(0.03)
 
-			if self.data == "DISCONNECT	":
-				print "In disconnect"
-				connected = False
-			elif writeMatch:
-				print "In writeMatch"
-				# pin = int(writeMatch.group(<1))
-				# type = writeMatch.group(2)
-				# value = int(writeMatch.group(2))
-				# if type=="A":
-				# 	self.arduino.analogWrite(pin, value)
-				# 	self.send("OK\r\n{}".format(value)
-				# elif value==0:
-				# 	self.arduino.digitalWrite(pin, "LOW")
-				# 	self.send("OK\r\n{}".format(value)
-				# elif value==0:
-				# 	self.arduino.digitalWrite(pin, "HIGH")
-				# 	self.send("OK\r\n{}".format(value))
-				# else:
-				# 	self.send("ERROR : Digital value must be 0 or 1")
-			elif readMatch:
-				print "In readMATCH"
-				print "In readMatch"
-				pin = int(readMatch.group(1))
-				type = readMatch.group(2)
-				print "Asked for {} pin #{}".format(type, pin)
+            #We send the number of measurements to the client
+            self.send(str(len(sensorData)))
 
-				value = pin/2
-				# just send half the pin's number
-		        print "Pin in range, sending : {}".format("OK\r\n{}".format(value))
-		        self.request.sendall("OK\r\n{}".format(value))
+            #... then we send the measurements one after another
+            for angle in sensorData:
+                self.send("A{}\r\nD{}\r\n".format(angle, sensorData[angle]))
 
-		        # if type=="A" and num in range(45):
-		        # 	value = self.arduino.analogRead(num)
-		        # elif type=="D" and num in range(30):
-		        # 	value = self.arduino.digitalRead(num)
-		        # else:
-		        # 	print "Pin out of range"
-		        # 	self.request.sendall("ERR : Pin number out of range\r\n")
+        self.arduino.write('0')
+        self.arduino.close()
 
-        	else:
-        		print "Can't interpret query"
-	        	self.request.sendall("ERROR : Can't interpret query")
+			# print "In connected iteration"
+			# self.data = self.request.recv(1024)
+			# print "Received : [{}]".format(self.data)
+			# self.arduino.write(self.data)
+			# if self.data == '3':
+			# 	sensorData = []
+			# 	while self.arduino.inWaiting() > 0:
+			# 		angle = int(self.arduino.readline())
+			# 		distance = int(self.arduino.readline())
+			# 		sensorData[angle] = distance
+			# 		print "Sensor at angle {} : {}".format(angle, distance)
 
-	        print "End of iteration"
+			# 	# We first send the number of measurements
+   #              self.request.send(str(len(sensorData)))
+			# 	# We send one by one the sensor measurements
+   #              for angle in sensorData:
+   #                  self.send("A{}\r\nD{}\r\n".format(angle, sensorData[angle]))
+
+   #              print '-'*15
 
 
-#TCPServer that should run on the Raspberry Pi
 class PiServer(SocketServer.TCPServer):
-    allow_reuse_address = True
-
-    def __init___(self, address, handler):
-    	super(PiServer,self).__init__(address, handler)
-    	self.arduino = Arduino(9600)
+	"""
+	A TCP server, running on the Raspberry Pi, that controls the Arduino
+	by sending serial messages
+	"""
+	allow_reuse_address = True
+	def __init___(self, address, handler):
+		super(PiServer,self).__init__(address, handler)
 
 
 if __name__ == "__main__":
-	# host = raw_input("IP ?\n")
-	# port = raw_input("PORT ?\n")
 
-	host = "127.0.0.1"
+	host = getAddress()
 	port = 4242
 
 	server = PiServer((host, port), PiHandler)
 	server.serve_forever()
-
