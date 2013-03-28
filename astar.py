@@ -1,3 +1,7 @@
+"""
+astar.py - A* algorithm implementation
+"""
+
 from geometry import Point
 from math import sqrt
 from time import sleep
@@ -27,6 +31,7 @@ class Cell(object):
     def manhattanDistance(self, cell):
         return abs(self.x - cell.x) + abs(self.y - cell.y)
 
+    # Calculates the cell's score
     def process(self, parent, goal):
         self.parent = parent
         self.g = parent.distance(self)
@@ -73,6 +78,8 @@ class DiscreteMap:
                 # We check if any of the map's shapes contain our point
                 obstacle = False
                 id = 0
+
+                # TODO : Change this to take into account the car's width
                 while not obstacle and id<len(SvgMap.shapes):
                     obstacle = point.containedIn(SvgMap.shapes[id])
                     id += 1
@@ -106,16 +113,20 @@ class DiscreteMap:
             print "Goal is unreachable"
             return []
         else:
-            curCell = begin
 
             self.cl = set()
             self.ol = set()
 
-            self.ol.add(begin)
+            curCell = begin
+            self.ol.add(curCell)
 
             while len(self.ol) > 0:
 
+                # We choose the cell in the open list having the minimum score as our current cell
+                curCell = min(self.ol, key = lambda cell : cell.f)
+
                 # We add the current cell to the closed list
+                self.ol.remove(curCell)
                 self.cl.add(curCell)
 
                 # We check the cell's (reachable) neighbours :
@@ -131,16 +142,10 @@ class DiscreteMap:
                         return self.path
                     elif cell not in self.cl:
                         # We process the cells that are not in the closed list
-                        # and add them to the open list
+                        # (processing <-> calculating the "F" score)
                         cell.process(curCell, goal)
-                        self.ol.add(cell)
 
-                # We choose the cell with the minimum score as our next next current cell
-                minF = float('inf')
-                for cell in self.ol:
-                    if cell not in self.cl and cell.f < minF:
-                        minF = cell.f
-                        curCell = cell
+                        self.ol.add(cell)
 
                 # To vizualize the algorithm in ASCII
                 # self.display()

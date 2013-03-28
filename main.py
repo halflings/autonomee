@@ -11,21 +11,29 @@ import math
 import engine
 
 class MainWindow(QtGui.QMainWindow):
+    AUTO_MODE = 0
+    MANUAL_MODE = 1
     def __init__(self):
         super(MainWindow, self).__init__()
 
         self.currentPath = ''
 
         self.view = SvgView()
+        self.manualView = ManualView()
 
+        # File menu
         fileMenu = QtGui.QMenu("&File", self)
         openAction = fileMenu.addAction("&Open...")
         openAction.setShortcut("Ctrl+O")
         quitAction = fileMenu.addAction("E&xit")
         quitAction.setShortcut("Ctrl+Q")
 
+        openAction.triggered.connect(self.openFile)
+        quitAction.triggered.connect(QtGui.qApp.quit)
+
         self.menuBar().addMenu(fileMenu)
 
+        # View menu
         viewMenu = QtGui.QMenu("&View", self)
         self.backgroundAction = viewMenu.addAction("&Background")
         self.backgroundAction.setEnabled(False)
@@ -41,11 +49,30 @@ class MainWindow(QtGui.QMainWindow):
 
         self.menuBar().addMenu(viewMenu)
 
-        openAction.triggered.connect(self.openFile)
-        quitAction.triggered.connect(QtGui.qApp.quit)
+        # Mode menu
+        modeMenu = QtGui.QMenu("&Mode", self)
 
+        manualAction = modeMenu.addAction("M&anual")
+        manualAction.setShortcut("Ctrl+M")
+        manualAction.triggered.connect(self.manualMode)
+
+        automaticAction = modeMenu.addAction("A&utomatic")
+        automaticAction.setShortcut("Ctrl+A")
+        automaticAction.triggered.connect(self.automaticMode)
+
+        self.menuBar().addMenu(modeMenu)
+
+        self.automaticMode()
+
+    def manualMode(self):
+        self.setCentralWidget(self.manualView)
+        self.view = SvgView()
+        self.setWindowTitle("Carosif - Manual mode")
+
+    def automaticMode(self):
         self.setCentralWidget(self.view)
-        self.setWindowTitle("SVG Viewer")
+        self.manualView = SvgView()
+        self.setWindowTitle("Carosif - Automatic mode")
 
     def openFile(self, path=None):
         if not path:
@@ -63,13 +90,49 @@ class MainWindow(QtGui.QMainWindow):
             self.view.openFile(svg_file)
             if not path.startswith(':/'):
                 self.currentPath = path
-                self.setWindowTitle("%s - SVGViewer" % self.currentPath)
+                self.setWindowTitle("Carosif - Automatic mode - Map : {}".format(self.currentPath))
             self.outlineAction.setEnabled(False)
             self.backgroundAction.setEnabled(True)
 
             self.resize(self.view.sizeHint() + QtCore.QSize(80, 80 + self.menuBar().height()))
 
             #self.svg = pysvg.parser.parse('mapexample.svg')
+
+class ManualView(QtGui.QGraphicsView):
+
+    def __init__(self, parent=None):
+        super(ManualView, self).__init__(parent)
+
+        self.setRenderHints(QtGui.QPainter.Antialiasing | QtGui.QPainter.SmoothPixmapTransform)
+
+        self.renderer = SvgView.Native
+        self.svgItem = None
+        self.backgroundItem = None
+        self.outlineItem = None
+        self.image = QtGui.QImage()
+
+        self.setScene(ManualScene(self))
+
+        tilePixmap = QtGui.QPixmap(64, 64)
+        tilePixmap.fill(QtGui.QColor(230, 230, 230))
+        self.setBackgroundBrush(QtGui.QBrush(tilePixmap))
+
+    def paintEvent(self, event):
+        super(ManualView, self).paintEvent(event)
+
+class ManualScene(QtGui.QGraphicsScene):
+    def __init__(self, parent=None):
+        super(ManualScene, self).__init__(parent)
+        self.car = engine.Car()
+
+    def mousePressEvent(self, event):
+        x, y = event.scenePos().x(), event.scenePos().y()
+
+        super(ManualScene,self).mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        x, y = event.scenePos().x(), event.scenePos().y()
+        super(ManualScene,self).mouseMoveEvent(event)
 
 class ViewerScene(QtGui.QGraphicsScene):
     def __init__(self, parent=None):
@@ -83,7 +146,9 @@ class ViewerScene(QtGui.QGraphicsScene):
         self.map = None
 
         self.path = None
+        self.ray = None
 
+        self.line = None
     def mousePressEvent(self, event):
         x, y = event.scenePos().x(), event.scenePos().y()
         if not self.car:
@@ -91,9 +156,17 @@ class ViewerScene(QtGui.QGraphicsScene):
             self.addItem(self.car)
         else:
             self.path = self.map.search((self.car.x, self.car.y), (x,y))
+            i = 0
+            line = QtGui.QGraphicsLineItem(self.path[i].x, self.path[i].y, self.path[i+1].x, self.path[i+1].y)
+            # if self.line is None:
+            #     self.line = line
+            #     self.addItem(self.line)
+            # else:
+            #     self.line = line
+
             if self.path is not None:
                 for i in range(len(self.path)-1):
-                    self.addItem( QtGui.QGraphicsLineItem(self.path[i].x, self.path[i].y, self.path[i+1].x, self.path[i+1].y) )
+                    self.addItem( QtGui.QGraphicsLineItem(self.path[i].x, self.path[i].y, self.path[i+1].x, self.path[i+1].y))
 
 
         super(ViewerScene,self).mousePressEvent(event)
@@ -198,7 +271,7 @@ class SvgView(QtGui.QGraphicsView):
         self.backgroundItem.setZValue(-1)
 
         self.outlineItem = QtGui.QGraphicsRectItem(self.svgItem.boundingRect())
-        outline = QtGui.QPen(QtCore.Qt.black, 2, QtCore.Qt.DashLine)
+        outline = QtGui.QPen(QtCore.Qt.black, 2, QtCore.Qt.DashDotLine)
         outline.setCosmetic(True)
         self.outlineItem.setPen(outline)
         self.outlineItem.setBrush(QtGui.QBrush(QtCore.Qt.NoBrush))

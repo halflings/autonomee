@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-
+"""
+uiclient.py - UI prototype for client / server communication with the rPi
+"""
 from PySide import QtCore, QtGui
 import socket
 import threading

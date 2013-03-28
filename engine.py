@@ -11,7 +11,7 @@ class Car(QtGui.QGraphicsItem):
 	scale_factor = 0.5
 	sprites = {"sedan" : default_image.scaledToWidth(default_image.width()*scale_factor)}
 
-	def __init__(self, map, x=0, y=0, width = default_width, length = default_length, sprite_name = "sedan"):
+	def __init__(self, map = None, x=0, y=0, width = default_width, length = default_length, sprite_name = "sedan"):
 		#QGraphicsItem's constructor
 		super(Car, self).__init__()
 
@@ -39,20 +39,24 @@ class Car(QtGui.QGraphicsItem):
 		self.sprite_name = sprite_name
 		self.img = Car.sprites[sprite_name]
 
+		# Initializing the "view ray"
+		self.ray = None
+
+
 		#print "Car width {} | Car length {} | Car sprite {}".format(self.width, self.length, self.sprite)
 
-		#Some random flags ...
+		#Some random flags ... (should be useful later)
 		self.setFlag(QtGui.QGraphicsItem.ItemIsMovable, True)
 		self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable, True)
 
 		self.rect = QtCore.QRectF()
-		self.updateBounding()
+		self.update()
 
 
 	def setPos(self, x, y):
 		self.x = x
 		self.y = y
-		self.updateBounding()
+		self.update()
 
 	def move(self, mov):
 
@@ -74,6 +78,7 @@ class Car(QtGui.QGraphicsItem):
 
 		#Make sure the car is still in the map
 		#if int(self.x+dx) in xrange(self.map.width) and int(self.y+dy) in xrange(self.map.height):
+
 		self.x += dx
 		self.y += dy
 
@@ -108,17 +113,11 @@ class Car(QtGui.QGraphicsItem):
 
 			painter.drawImage(self.topLeftX(), self.topLeftY(), self.img)
 
-
-			#FOR DEBUG ONLY
-			if self.distance:
-				distance = self.distance
-			else:
-				distance = 300
-
 			#Car's front
 			painter.drawRect(self.frontX()-1, self.frontY()-1, 1, 1)
 
-			painter.drawLine(self.frontX(), self.frontY(), self.frontX() + distance*math.cos(self.angle), self.frontY() - distance*math.sin(self.angle))
+			#Ray
+			painter.drawLine(self.ray)
 			painter.setFont(QtGui.QFont('Decorative', 10))
 			painter.drawText(self.rect, QtCore.Qt.AlignLeft, self.caption)
 
@@ -131,18 +130,27 @@ class Car(QtGui.QGraphicsItem):
 
 
 	def update(self):
-		self.distance = self.map.RayDistance(self.frontX(), self.frontY(), self.angle)
+		if self.map:
+			self.distance = self.map.RayDistance(self.frontX(), self.frontY(), self.angle)
 
 		if self.distance:
 			self.caption = "Closest object at : {}".format(int(self.distance))
+			distance = self.distance
 		else:
 			self.caption = "No object ahead"
+			distance = 0
+
+		self.ray = QtCore.QLine(self.frontX(), self.frontY(),
+			self.frontX() + distance*math.cos(self.angle), self.frontY() - distance*math.sin(self.angle))
 
 		self.updateBounding()
 
 	def updateBounding(self):
+		distance = 0
+		if self.distance is not None:
+			distance = self.distance
 
-		self.rect = QtCore.QRectF(self.topLeftX(), self.topLeftY(), self.img.width()*1.5, self.img.height()*1.5)
+		self.rect = QtCore.QRectF(self.topLeftX(), self.topLeftY(), self.img.width() + distance*3, self.img.height() + distance*3)
 
 		self.prepareGeometryChange()
 

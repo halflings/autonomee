@@ -134,7 +134,6 @@ class Ray(object):
 			return []
 
 	def polylineCollision(self, polyline):
-
 		result = []
 
 		for segment in polyline.segments:
@@ -142,8 +141,6 @@ class Ray(object):
 			if intersection:
 				result.append(intersection)
 		return result
-
-
 
 	def rectangleCollision(self, rectangle):
 		x, y = rectangle.origin.x, rectangle.origin.y

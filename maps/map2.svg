@@ -31,9 +31,9 @@
      inkscape:document-units="px"
      showgrid="false"
      inkscape:window-width="1600"
-     inkscape:window-height="845"
+     inkscape:window-height="848"
      inkscape:window-x="0"
-     inkscape:window-y="27"
+     inkscape:window-y="24"
      inkscape:window-maximized="1" />
   <metadata
      id="metadata3118">
@@ -43,7 +43,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -53,17 +53,17 @@
      inkscape:groupmode="layer">
     <text
        xml:space="preserve"
-       style="font-size:25.08806038px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
-       x="359.09879"
-       y="51.21629"
+       style="font-size:25.80001068px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="372.23267"
+       y="33.202904"
        id="Titre"
        sodipodi:linespacing="125%"
        inkscape:label="Titre"
-       transform="scale(0.98822717,1.0119131)"><tspan
+       transform="scale(0.96095707,1.0406292)"><tspan
          sodipodi:role="line"
          id="tspan3076"
-         x="359.09879"
-         y="51.21629">Carosif visualization map</tspan></text>
+         x="372.23267"
+         y="33.202904">Carosif visualization map</tspan></text>
     <rect
        style="fill:#00caff;fill-opacity:1;stroke:#000000;stroke-opacity:0.76150625999999999;stroke-width:0.5;stroke-miterlimit:4;stroke-dasharray:none"
        id="rect3053"
@@ -176,5 +176,14 @@
        height="102"
        x="103.51682"
        y="574.16443" />
+    <path
+       sodipodi:type="arc"
+       style="fill:#e3dedb;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-miterlimit:4;stroke-opacity:0.76150626;stroke-dasharray:none"
+       id="path3061"
+       sodipodi:cx="458.2052"
+       sodipodi:cy="588.3949"
+       sodipodi:rx="67.882256"
+       sodipodi:ry="62.225399"
+       d="M 526.08746,588.3949 A 67.882256,62.225399 0 1 1 390.32294,588.3949 67.882256,62.225399 0 1 1 526.08746,588.3949 z" />
   </g>
 </svg>

@@ -1,3 +1,9 @@
+"""
+server.py - communicates with the Arduino (throught serial communication) and
+sends data back to a remote clients.
+Meant to run on a RaspberryPi.
+"""
+
 import SocketServer
 import socket
 import serial
@@ -25,6 +31,7 @@ def getAddress():
 
 class PiHandler(SocketServer.BaseRequestHandler, object):
 
+
     def setup(self):
         super(PiHandler, self).setup()
         self.connected = True
@@ -34,9 +41,9 @@ class PiHandler(SocketServer.BaseRequestHandler, object):
         self.receiveThread.daemon = True
         self.receiveThread.start()
 
-	def send(self, data):
-		self.request.sendall(data)
-		print "Sent '{}'".format(data)
+    def send(self, data):
+        self.request.sendall(data)
+        print "Sent '{}'".format(data)
 
     def receptionRoutine(self):
         while self.connected:
@@ -47,9 +54,8 @@ class PiHandler(SocketServer.BaseRequestHandler, object):
         # Serial connection with the Arduno, at 9600 bauds
         # NOTE : this should be on the server, but that causes bugs
 
-
-	def handle(self):
-		print "New connection with : {}\n".format(self.request.address)
+    def handle(self):
+        print "New connection with : {}\n".format(self.request.address)
         loopNumber = 0
         while self.connected:
             loopNumber += 1
@@ -73,7 +79,6 @@ class PiHandler(SocketServer.BaseRequestHandler, object):
 
             #We send the number of measurements to the client
             self.send(str(len(sensorData)))
-
             #... then we send the measurements one after another
             for angle in sensorData:
                 self.send("A{}\r\nD{}\r\n".format(angle, sensorData[angle]))
@@ -81,21 +86,21 @@ class PiHandler(SocketServer.BaseRequestHandler, object):
         self.arduino.write('0')
         self.arduino.close()
 
-			# print "In connected iteration"
-			# self.data = self.request.recv(1024)
-			# print "Received : [{}]".format(self.data)
-			# self.arduino.write(self.data)
-			# if self.data == '3':
-			# 	sensorData = []
-			# 	while self.arduino.inWaiting() > 0:
-			# 		angle = int(self.arduino.readline())
-			# 		distance = int(self.arduino.readline())
-			# 		sensorData[angle] = distance
-			# 		print "Sensor at angle {} : {}".format(angle, distance)
+            # print "In connected iteration"
+            # self.data = self.request.recv(1024)
+            # print "Received : [{}]".format(self.data)
+            # self.arduino.write(self.data)
+            # if self.data == '3':
+            #   sensorData = []
+            #   while self.arduino.inWaiting() > 0:
+            #       angle = int(self.arduino.readline())
+            #       distance = int(self.arduino.readline())
+            #       sensorData[angle] = distance
+            #       print "Sensor at angle {} : {}".format(angle, distance)
 
-			# 	# We first send the number of measurements
+            #   # We first send the number of measurements
    #              self.request.send(str(len(sensorData)))
-			# 	# We send one by one the sensor measurements
+            #   # We send one by one the sensor measurements
    #              for angle in sensorData:
    #                  self.send("A{}\r\nD{}\r\n".format(angle, sensorData[angle]))
 
@@ -103,19 +108,19 @@ class PiHandler(SocketServer.BaseRequestHandler, object):
 
 
 class PiServer(SocketServer.TCPServer):
-	"""
-	A TCP server, running on the Raspberry Pi, that controls the Arduino
-	by sending serial messages
-	"""
-	allow_reuse_address = True
-	def __init___(self, address, handler):
-		super(PiServer,self).__init__(address, handler)
+    """
+    A TCP server, running on the Raspberry Pi, that controls the Arduino
+    by sending serial messages
+    """
+    allow_reuse_address = True
+    def __init___(self, address, handler):
+        super(PiServer,self).__init__(address, handler)
 
 
 if __name__ == "__main__":
 
-	host = getAddress()
-	port = 4242
+    host = getAddress()
+    port = 4242
 
-	server = PiServer((host, port), PiHandler)
-	server.serve_forever()
+    server = PiServer((host, port), PiHandler)
+    server.serve_forever()
