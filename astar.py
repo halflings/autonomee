@@ -137,7 +137,7 @@ class DiscreteMap:
                     if cell == goal:
                         cell.parent = curCell
                         self.path = cell.path()
-                        self.display()
+                        # self.display()
                         self.clear()
                         return self.path
                     elif cell not in self.cl:

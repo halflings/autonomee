@@ -1,5 +1,6 @@
 from PySide import QtCore, QtGui
 import math
+from math import cos, sin
 
 class Car(QtGui.QGraphicsItem):
 	#"ALL measurements must be in mm"
@@ -60,6 +61,7 @@ class Car(QtGui.QGraphicsItem):
 
 	def move(self, mov):
 
+		# Dynamic obstacle avoidance [really buggy, probably not worth the hassle]
 		# if self.distance and self.distance < 100:
 		# 	rightAngle, leftAngle = self.formatAngle(self.angle -0.5), self.formatAngle(self.angle + 0.5)
 
@@ -73,8 +75,8 @@ class Car(QtGui.QGraphicsItem):
 
 		# 	self.rotate(self.angle)
 
-		dx = mov*math.cos(self.angle)
-		dy = -mov*math.sin(self.angle)
+		dx = mov * cos(self.angle)
+		dy = -mov * sin(self.angle)
 
 		#Make sure the car is still in the map
 		#if int(self.x+dx) in xrange(self.map.width) and int(self.y+dy) in xrange(self.map.height):
@@ -106,23 +108,23 @@ class Car(QtGui.QGraphicsItem):
 		# print "New angle : {}".format(self.angle)
 
 	def paint(self, painter=None, style=None, widget=None):
-			pen = QtGui.QPen()
-			pen.setColor(QtGui.QColor(20, 124, 228))
-			pen.setWidth(3)
-			painter.setPen(pen)
+		pen = QtGui.QPen()
+		pen.setColor(QtGui.QColor(20, 124, 228))
+		pen.setWidth(3)
+		painter.setPen(pen)
 
-			painter.drawImage(self.topLeftX(), self.topLeftY(), self.img)
+		painter.drawImage(self.topLeftX(), self.topLeftY(), self.img)
 
-			#Car's front
-			painter.drawRect(self.frontX()-1, self.frontY()-1, 1, 1)
+		#Car's front
+		painter.drawRect(self.frontX()-1, self.frontY()-1, 1, 1)
 
-			#Ray
-			painter.drawLine(self.ray)
-			painter.setFont(QtGui.QFont('Decorative', 10))
-			painter.drawText(self.rect, QtCore.Qt.AlignLeft, self.caption)
+		#Ray
+		painter.drawLine(self.ray)
+		painter.setFont(QtGui.QFont('Decorative', 10))
+		painter.drawText(self.rect, QtCore.Qt.AlignLeft, self.caption)
 
-			#Car's center
-			painter.drawRect(self.x-1, self.y-1, 1, 1)
+		#Car's center
+		painter.drawRect(self.x-1, self.y-1, 1, 1)
 
 	def boundingRect(self):
 		#print self.topLeftX(), self.topLeftY()
@@ -150,15 +152,18 @@ class Car(QtGui.QGraphicsItem):
 		if self.distance is not None:
 			distance = self.distance
 
-		self.rect = QtCore.QRectF(self.topLeftX(), self.topLeftY(), self.img.width() + distance*3, self.img.height() + distance*3)
+		# width = self.img.width() * cos(self.angle) + self.img.height() * sin(self.angle)
+		# height = self.img.width() * sin(self.angle) + self.img.height() * cos(self.angle)
+
+		self.rect = QtCore.QRectF(self.topLeftX(), self.topLeftY(), self.img.width() + distance*3, self.img.height() + distance*3 )
 
 		self.prepareGeometryChange()
 
 	def frontX(self):
-		return self.x + math.cos(self.angle)*self.width
+		return self.x + cos(self.angle)*self.width
 
 	def frontY(self):
-		return self.y - math.sin(self.angle)*self.width
+		return self.y - sin(self.angle)*self.width
 
 	def topLeftX(self):
 		return self.x-self.img.width()/2
