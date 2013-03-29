@@ -2,7 +2,6 @@
 svg.py - module to parse geometric elements from an svg file.
 """
 
-
 from lxml import etree
 from geometry import Point, Rectangle, Ellipse, Polygone, Polyline, Ray
 from astar import DiscreteMap, Cell
