@@ -12,7 +12,7 @@ class Car(QtGui.QGraphicsItem):
 	scale_factor = 0.5
 	sprites = {"sedan" : default_image.scaledToWidth(default_image.width()*scale_factor)}
 
-	def __init__(self, map = None, x=0, y=0, width = default_width, length = default_length, sprite_name = "sedan"):
+	def __init__(self, map = None, x = 0, y = 0, width = default_width, length = default_length, sprite_name = "sedan"):
 		#QGraphicsItem's constructor
 		super(Car, self).__init__()
 

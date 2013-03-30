@@ -106,12 +106,6 @@ class ManualView(QtGui.QGraphicsView):
 
         self.setRenderHints(QtGui.QPainter.Antialiasing | QtGui.QPainter.SmoothPixmapTransform)
 
-        self.renderer = SvgView.Native
-        self.svgItem = None
-        self.backgroundItem = None
-        self.outlineItem = None
-        self.image = QtGui.QImage()
-
         self.setScene(ManualScene(self))
 
         tilePixmap = QtGui.QPixmap(64, 64)
@@ -125,6 +119,7 @@ class ManualScene(QtGui.QGraphicsScene):
     def __init__(self, parent=None):
         super(ManualScene, self).__init__(parent)
         self.car = engine.Car()
+        self.addItem(self.car)
 
     def mousePressEvent(self, event):
         x, y = event.scenePos().x(), event.scenePos().y()
@@ -159,9 +154,9 @@ class ViewerScene(QtGui.QGraphicsScene):
         self.ray = None
 
         # Heatmap, should be used for probabilities [WIP]
-        self.heatmap = heatmap.Heatmap( 20 ,  10 )
-        self.graphicalHeatmap = heatmap.GraphicalHeatmap(self.heatmap, 800, 600)
-        self.addItem( self.graphicalHeatmap )
+        self.heatmap = None
+        self.graphicalHeatmap = None
+        # ( initialized when pressing 'H' )
 
     def mousePressEvent(self, event):
         x, y = event.scenePos().x(), event.scenePos().y()
@@ -173,27 +168,23 @@ class ViewerScene(QtGui.QGraphicsScene):
         # If the car already exists, we generate a path from the car to where we clicked
         # and show it on the UI
         else:
-            self.heatmap = heatmap.Heatmap( self.map.width / 10 ,  self.map.height / 10 )
-            self.graphicalHeatmap = heatmap.GraphicalHeatmap(self.heatmap, self.map.width, self.map.height)
-            self.addItem( self.graphicalHeatmap )
-
             #We get the path from our 'map' object
             self.path = self.map.search((self.car.x, self.car.y), (x,y))
 
+            if len(self.path) > 0:
+                # We build a polyline graphic item
+                painterPath = QtGui.QPainterPath()
+                painterPath.moveTo(self.path[0].x, self.path[0].y)
+                for i in range(1, len(self.path)):
+                    painterPath.lineTo(self.path[i].x, self.path[i].y)
 
-            # We build a polyline graphic item
-            painterPath = QtGui.QPainterPath()
-            painterPath.moveTo(self.path[0].x, self.path[0].y)
-            for i in range(1, len(self.path)):
-                painterPath.lineTo(self.path[i].x, self.path[i].y)
-
-            # If a path is already shown on screen, we just update it with the new path
-            if self.graphicPath is not None:
-                self.graphicPath.setPath(painterPath)
-            # Else, we create a new graphical path
-            else:
-                self.graphicPath = QtGui.QGraphicsPathItem(painterPath)
-                self.addItem( self.graphicPath )
+                # If a path is already shown on screen, we just update it with the new path
+                if self.graphicPath is not None:
+                    self.graphicPath.setPath(painterPath)
+                # Else, we create a new graphical path
+                else:
+                    self.graphicPath = QtGui.QGraphicsPathItem(painterPath)
+                    self.addItem( self.graphicPath )
 
         super(ViewerScene,self).mousePressEvent(event)
 
@@ -214,6 +205,12 @@ class ViewerScene(QtGui.QGraphicsScene):
                 self.car.move(speed)
             elif event.key()==QtCore.Qt.Key_Down or event.key()==QtCore.Qt.Key_S:
                 self.car.move(-speed)
+
+        if event.key() == QtCore.Qt.Key_H:
+            self.heatmap = heatmap.Heatmap( self.map.width / 4 ,  self.map.height / 4)
+            self.graphicalHeatmap = heatmap.GraphicalHeatmap(self.heatmap, self.map.width, self.map.height)
+            self.graphicalHeatmap.setZValue(-1)
+            self.addItem( self.graphicalHeatmap )
 
     # def paintEvent(self, event):
     #     if self.path is not None:
@@ -247,7 +244,7 @@ class SvgView(QtGui.QGraphicsView):
         # tilePainter.fillRect(32, 32, 32, 32, color)
         # tilePainter.end()
 
-        tilePixmap = QtGui.QPixmap(1, 1)
+        tilePixmap = QtGui.QPixmap(30, 30)
         tilePixmap.fill(QtCore.Qt.white)
         self.setBackgroundBrush(QtGui.QBrush(tilePixmap))
 
@@ -292,7 +289,7 @@ class SvgView(QtGui.QGraphicsView):
 
         self.backgroundItem = QtGui.QGraphicsRectItem(self.svgItem.boundingRect())
         self.backgroundItem.setBrush(QtCore.Qt.white)
-        self.backgroundItem.setPen(QtGui.QPen(QtCore.Qt.NoPen))
+        self.backgroundItem.setPen(QtGui.QPen())
         self.backgroundItem.setVisible(drawBackground)
         self.backgroundItem.setZValue(-1)
 

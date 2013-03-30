@@ -33,19 +33,23 @@ class GraphicalHeatmap(QtGui.QGraphicsItem):
         self.viewWidth = vw
         self.viewHeight = vh
 
+
     def paint(self, painter=None, style=None, widget=None):
+
+        self.painted = True
         pen = QtGui.QPen()
         pen.setColor(QtGui.QColor(0, 200, 0))
         pen.setWidth(2)
         painter.setPen(pen)
 
-        # for j in range(self.heatmap.width):
-        #     for i in range(self.heatmap.height):
-        #         x = int( ( (j + 0.5)/self.heatmap.height ) * self.viewHeight )
-        #         y = int( ( (i + 0.5)/self.heatmap.width ) * self.viewWidth )
-        #         color = QtGui.QColor.fromHsvF(0.5, 0.5, self.heatmap.grid[i][j])
-        #         pen.setColor( color )
-        #         painter.drawRect(x, y, 2, 2)
+        for j in range(self.heatmap.width):
+            for i in range(self.heatmap.height):
+                x = int( ( (j + 0.5)/self.heatmap.height ) * self.viewHeight )
+                y = int( ( (i + 0.5)/self.heatmap.width ) * self.viewWidth )
+                color = QtGui.QColor.fromHsvF(self.heatmap.grid[i][j] / 3, 0.7, 1 - self.heatmap.grid[i][j] / 2)
+                pen.setColor( color )
+                painter.setPen(pen)
+                painter.drawRect(x, y, 2, 2)
 
     def boundingRect(self):
         return QtCore.QRectF(0, 0, self.viewWidth, self.viewHeight )
