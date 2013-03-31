@@ -4,52 +4,52 @@ A heatmap module for visualizing probabilities calculus - WIP
 import random
 from PySide import QtGui, QtCore
 
-class Heatmap(object):
+class ProbabilityCell(object):
+    def __init__(self, x, y, probability = None):
+        self.x = x
+        self.y = y
+        if probability is None:
+            self.p = random.random()
+        else:
+            self.p = probability
 
+class Heatmap(object):
 
     def __init__(self, width, height):
         self.width = width
         self.height = height
-        self.grid = [ [0 for x in range(self.width)] for y in range(self.height) ]
+        self.cells = set()
 
-        self.randPopulate()
+        self.randPopulate(100)
 
-    def randPopulate(self):
+    def randPopulate(self, N):
         """
         Populates the heatmap randomly
         """
-        for x in range(self.width):
-            for y in range(self.height):
-                self.grid[y][x] = random.random()
+        for i in xrange(N):
+            x = random.randint(0, self.width - 1)
+            y = random.randint(0, self.height - 1)
+            self.cells.add(ProbabilityCell(x, y))
 
+class GraphicalHeatmap(QtGui.QGraphicsObject):
 
-class GraphicalHeatmap(QtGui.QGraphicsItem):
-
-
-    def __init__(self, heatmap, vw, vh):
+    def __init__(self, heatmap):
         super(GraphicalHeatmap, self).__init__()
         self.heatmap = heatmap
-
-        self.viewWidth = vw
-        self.viewHeight = vh
-
 
     def paint(self, painter=None, style=None, widget=None):
 
         self.painted = True
         pen = QtGui.QPen()
         pen.setColor(QtGui.QColor(0, 200, 0))
-        pen.setWidth(2)
+        pen.setWidth(10)
         painter.setPen(pen)
 
-        for j in range(self.heatmap.width):
-            for i in range(self.heatmap.height):
-                x = int( ( (j + 0.5)/self.heatmap.height ) * self.viewHeight )
-                y = int( ( (i + 0.5)/self.heatmap.width ) * self.viewWidth )
-                color = QtGui.QColor.fromHsvF(self.heatmap.grid[i][j] / 3, 0.7, 1 - self.heatmap.grid[i][j] / 2)
-                pen.setColor( color )
-                painter.setPen(pen)
-                painter.drawRect(x, y, 2, 2)
+        for cell in self.heatmap.cells:
+            color = QtGui.QColor.fromHsvF(cell.p / 3, 0.5, 0.8)
+            pen.setColor( color )
+            painter.setPen(pen)
+            painter.drawEllipse(cell.x, cell.y, 9, 9)
 
     def boundingRect(self):
-        return QtCore.QRectF(0, 0, self.viewWidth, self.viewHeight )
+        return QtCore.QRectF(0, 0, self.heatmap.width, self.heatmap.height )

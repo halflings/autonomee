@@ -183,7 +183,7 @@ class ViewerScene(QtGui.QGraphicsScene):
                 # We build a polyline graphic item
                 painterPath = QtGui.QPainterPath()
                 painterPath.moveTo(self.path[0].x, self.path[0].y)
-                for i in range(1, len(self.path)):
+                for i in xrange(1, len(self.path)):
                     painterPath.lineTo(self.path[i].x, self.path[i].y)
 
                 # If a path is already shown on screen, we just update it with the new path
@@ -198,7 +198,7 @@ class ViewerScene(QtGui.QGraphicsScene):
                 self.animation = QtCore.QSequentialAnimationGroup();
 
                 speed = 20
-                for i in range(1, len(self.path)):
+                for i in xrange(1, len(self.path)):
                     lastPoint = self.path[i-1]
                     point = self.path[i]
                     distance = math.sqrt( (lastPoint.x - point.x)**2 + (lastPoint.y - point.y)**2 )
@@ -237,8 +237,8 @@ class ViewerScene(QtGui.QGraphicsScene):
 
         # Heatmap
         if event.key() == QtCore.Qt.Key_H:
-            self.heatmap = heatmap.Heatmap( self.map.width / 4 ,  self.map.height / 4)
-            self.graphicalHeatmap = heatmap.GraphicalHeatmap(self.heatmap, self.map.width, self.map.height)
+            self.heatmap = heatmap.Heatmap(self.map.width ,  self.map.height)
+            self.graphicalHeatmap = heatmap.GraphicalHeatmap(self.heatmap)
             self.graphicalHeatmap.setZValue(-1)
             self.addItem( self.graphicalHeatmap )
 
