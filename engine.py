@@ -2,7 +2,7 @@ from PySide import QtCore, QtGui
 import math
 from math import cos, sin
 
-class Car(QtGui.QGraphicsItem):
+class Car(QtGui.QGraphicsObject):
 	#"ALL measurements must be in mm"
 	# NOTE : The mm/px conversion should be done in the model ... maybe this class should do everything in px ...
 	default_width = 100
@@ -13,7 +13,6 @@ class Car(QtGui.QGraphicsItem):
 	sprites = {"sedan" : default_image.scaledToWidth(default_image.width()*scale_factor)}
 
 	def __init__(self, map = None, x = 0, y = 0, width = default_width, length = default_length, sprite_name = "sedan"):
-		#QGraphicsItem's constructor
 		super(Car, self).__init__()
 
 		#The map where the car is located
@@ -23,8 +22,7 @@ class Car(QtGui.QGraphicsItem):
 		#Model related attributes
 		self.width = width
 		self.length = length
-		self.x = x
-		self.y = y
+
 		self.speed = 0
 		self.distance = None
 		self.caption = ""
@@ -43,6 +41,7 @@ class Car(QtGui.QGraphicsItem):
 		# Initializing the "view ray"
 		self.ray = None
 
+		self.setPos(x, y)
 
 		#print "Car width {} | Car length {} | Car sprite {}".format(self.width, self.length, self.sprite)
 
@@ -51,12 +50,6 @@ class Car(QtGui.QGraphicsItem):
 		self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable, True)
 
 		self.rect = QtCore.QRectF()
-		self.update()
-
-
-	def setPos(self, x, y):
-		self.x = x
-		self.y = y
 		self.update()
 
 	def move(self, mov):
@@ -78,13 +71,9 @@ class Car(QtGui.QGraphicsItem):
 		dx = mov * cos(self.angle)
 		dy = -mov * sin(self.angle)
 
-		#Make sure the car is still in the map
-		#if int(self.x+dx) in xrange(self.map.width) and int(self.y+dy) in xrange(self.map.height):
+		self.setPos( self.x() + dx , self.y() + dy )
 
-		self.x += dx
-		self.y += dy
-
-		distance = self.map.RayDistance(self.x, self.y, self.angle)
+		distance = self.map.RayDistance(self.x(), self.y(), self.angle)
 
 		if distance:
 			self.caption = "Closest object at : {}".format(int(distance))
@@ -105,7 +94,9 @@ class Car(QtGui.QGraphicsItem):
 
 		self.update()
 
-		# print "New angle : {}".format(self.angle)
+	def setPos(self, x, y):
+		super(Car, self).setPos(x, y)
+		self.update()
 
 	def paint(self, painter=None, style=None, widget=None):
 		pen = QtGui.QPen()
@@ -113,6 +104,7 @@ class Car(QtGui.QGraphicsItem):
 		pen.setWidth(3)
 		painter.setPen(pen)
 
+		# Drawing the car's image
 		painter.drawImage(self.topLeftX(), self.topLeftY(), self.img)
 
 		#Car's front
@@ -124,14 +116,11 @@ class Car(QtGui.QGraphicsItem):
 		painter.drawText(self.rect, QtCore.Qt.AlignLeft, self.caption)
 
 		#Car's center
-		painter.drawRect(self.x-1, self.y-1, 1, 1)
-
-	def boundingRect(self):
-		#print self.topLeftX(), self.topLeftY()
-		return self.rect
-
+		painter.drawRect(self.x() - 1, self.y() - 1, 1, 1)
 
 	def update(self):
+		super(Car, self).update()
+
 		if self.map:
 			self.distance = self.map.RayDistance(self.frontX(), self.frontY(), self.angle)
 
@@ -159,17 +148,27 @@ class Car(QtGui.QGraphicsItem):
 
 		self.prepareGeometryChange()
 
+	def boundingRect(self):
+		return self.rect
+
+
+	def x(self):
+		return self.pos().x()
+
+	def y(self):
+		return self.pos().y()
+
 	def frontX(self):
-		return self.x + cos(self.angle)*self.width
+		return self.x() + cos(self.angle) * self.width
 
 	def frontY(self):
-		return self.y - sin(self.angle)*self.width
+		return self.y() - sin(self.angle) * self.width
 
 	def topLeftX(self):
-		return self.x-self.img.width()/2
+		return self.x() - ( self.img.width() / 2 )
 
 	def topLeftY(self):
-		return self.y -self.img.height()/2
+		return self.y() - ( self.img.height() / 2 )
 
 	def formatAngle(self, angle):
 		return (angle + math.pi)%(2*math.pi) - math.pi

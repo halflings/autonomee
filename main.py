@@ -169,7 +169,7 @@ class ViewerScene(QtGui.QGraphicsScene):
         # and show it on the UI
         else:
             #We get the path from our 'map' object
-            self.path = self.map.search((self.car.x, self.car.y), (x,y))
+            self.path = self.map.search((self.car.x(), self.car.y()), (x,y))
 
             if len(self.path) > 0:
                 # We build a polyline graphic item
@@ -186,19 +186,42 @@ class ViewerScene(QtGui.QGraphicsScene):
                     self.graphicPath = QtGui.QGraphicsPathItem(painterPath)
                     self.addItem( self.graphicPath )
 
+                # Animating the car on the path
+                self.animationGroup = QtCore.QSequentialAnimationGroup();
+
+                speed = 20
+                for i in range(1, len(self.path)):
+                    lastPoint = self.path[i-1]
+                    point = self.path[i]
+                    distance = math.sqrt( (lastPoint.x - point.x)**2 + (lastPoint.y - point.y)**2 )
+
+                    anim = QtCore.QPropertyAnimation(self.car, "pos")
+                    anim.setDuration(100*(distance/speed))
+                    anim.setStartValue( QtCore.QPointF(lastPoint.x, lastPoint.y) )
+                    anim.setEndValue( QtCore.QPointF(point.x, point.y) )
+                    self.animationGroup.addAnimation(anim)
+
+                self.animationGroup.start(QtCore.QAbstractAnimation.DeleteWhenStopped)
+
         super(ViewerScene,self).mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
         x, y = event.scenePos().x(), event.scenePos().y()
         if self.car:
             #We calculate the angle (in radians) and convert it to the trigonometric referential
-            angle = math.pi - math.atan2(self.car.y-y, self.car.x-x)
+            angle = math.pi - math.atan2(self.car.y() - y, self.car.x() -x)
+            print angle
+            print "CAR :", "x ", self.car.x(), "y ", self.car.y()
+            print "MOUSE :", "x ", x, "y ", y
+
             if angle > math.pi:
                 angle = angle - 2*math.pi
 
             self.car.rotate(angle)
 
     def keyPressEvent(self, event):
+
+        # Moving the car
         speed = 20
         if self.car:
             if event.key()==QtCore.Qt.Key_Up or event.key()==QtCore.Qt.Key_Z:
@@ -206,16 +229,12 @@ class ViewerScene(QtGui.QGraphicsScene):
             elif event.key()==QtCore.Qt.Key_Down or event.key()==QtCore.Qt.Key_S:
                 self.car.move(-speed)
 
+        # Heatmap
         if event.key() == QtCore.Qt.Key_H:
             self.heatmap = heatmap.Heatmap( self.map.width / 4 ,  self.map.height / 4)
             self.graphicalHeatmap = heatmap.GraphicalHeatmap(self.heatmap, self.map.width, self.map.height)
             self.graphicalHeatmap.setZValue(-1)
             self.addItem( self.graphicalHeatmap )
-
-    # def paintEvent(self, event):
-    #     if self.path is not None:
-    #         for i in range(len(self.path)-1):
-    #             painter.drawLine(self.path[i].x, self.path[i].y, self.path[i+1].x, self.path[i+1].y)
 
 class SvgView(QtGui.QGraphicsView):
     Native, OpenGL, Image = range(3)
@@ -279,20 +298,23 @@ class SvgView(QtGui.QGraphicsView):
             drawOutline = True
 
         s.clear()
-        self.resetTransform()
+        self.resetTransform
 
+        # View containg the SVG map
         self.svgItem = QtSvg.QGraphicsSvgItem(svg_file.fileName())
         self.svgItem.setFlags(QtGui.QGraphicsItem.ItemClipsToShape)
         self.svgItem.setCacheMode(QtGui.QGraphicsItem.NoCache)
         self.svgItem.setZValue(0)
 
 
+        # Background (defualt : plain white)
         self.backgroundItem = QtGui.QGraphicsRectItem(self.svgItem.boundingRect())
         self.backgroundItem.setBrush(QtCore.Qt.white)
         self.backgroundItem.setPen(QtGui.QPen())
         self.backgroundItem.setVisible(drawBackground)
         self.backgroundItem.setZValue(-1)
 
+        # A dashed (outline) of the SVG map
         self.outlineItem = QtGui.QGraphicsRectItem(self.svgItem.boundingRect())
         outline = QtGui.QPen(QtCore.Qt.black, 2, QtCore.Qt.DashDotLine)
         outline.setCosmetic(True)

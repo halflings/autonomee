@@ -44,7 +44,7 @@ class Cell(object):
         while cell.parent != None :
             resPath.append(cell.parent)
             cell = cell.parent
-        return resPath
+        return reversed(resPath)
 
     def __str__(self):
         """ String representation,  for debugging only """
