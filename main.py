@@ -210,9 +210,9 @@ class ViewerScene(QtGui.QGraphicsScene):
         if self.car:
             #We calculate the angle (in radians) and convert it to the trigonometric referential
             angle = math.pi - math.atan2(self.car.y() - y, self.car.x() -x)
-            print angle
-            print "CAR :", "x ", self.car.x(), "y ", self.car.y()
-            print "MOUSE :", "x ", x, "y ", y
+
+            # print "CAR :", "x ", self.car.x(), "y ", self.car.y()
+            # print "MOUSE :", "x ", x, "y ", y
 
             if angle > math.pi:
                 angle = angle - 2*math.pi

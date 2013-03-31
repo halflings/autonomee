@@ -134,22 +134,10 @@ class Car(QtGui.QGraphicsObject):
 		self.ray = QtCore.QLine(self.frontX(), self.frontY(),
 			self.frontX() + distance*math.cos(self.angle), self.frontY() - distance*math.sin(self.angle))
 
-		self.updateBounding()
-
-	def updateBounding(self):
-		distance = 0
-		if self.distance is not None:
-			distance = self.distance
-
-		# width = self.img.width() * cos(self.angle) + self.img.height() * sin(self.angle)
-		# height = self.img.width() * sin(self.angle) + self.img.height() * cos(self.angle)
-
-		self.rect = QtCore.QRectF(self.topLeftX(), self.topLeftY(), self.img.width() + distance*3, self.img.height() + distance*3 )
-
 		self.prepareGeometryChange()
 
 	def boundingRect(self):
-		return self.rect
+		return QtCore.QRectF(self.topLeftX(), self.topLeftY(), self.img.width() , self.img.height() )
 
 
 	def x(self):
