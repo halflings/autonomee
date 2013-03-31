@@ -25,12 +25,12 @@ class Car(QtGui.QGraphicsObject):
 
 		self.speed = 0
 		self.distance = None
+
+		# Setting up text
 		self.caption = ""
-
 		self.text = QtGui.QGraphicsTextItem("", self)
-		self.text.setFont("Ubuntu-L.ttf")
+		self.text.setFont(QtGui.QFont("Ubuntu-L.ttf"))
 		self.text.setPos(-140, -140)
-
 
 		#Angle is in radian, and follows the traditional trigonometric orientation
 		#			   pi/2

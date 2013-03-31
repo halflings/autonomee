@@ -56,7 +56,7 @@ class Cell(object):
 
 class DiscreteMap:
 
-    def __init__(self, SvgMap, division = 5):
+    def __init__(self, SvgMap, division = 5, radius = 20):
         self.division = division
 
         self.width = int(SvgMap.width/division)
@@ -85,19 +85,36 @@ class DiscreteMap:
                     id += 1
 
                 if obstacle:
-                    self.grid[y][x] = Cell(x, y, reachable=False)
+                    self.grid[y][x] = Cell(x, y, reachable = False)
                 else:
-                    self.grid[y][x] = Cell(x, y, reachable=True)
+                    self.grid[y][x] = Cell(x, y, reachable = True)
 
-    def neighbours(self, cell):
-        neighbours = []
-        for i in [-1, 0, 1]:
-            for j in [-1, 0, 1]:
+        # Then we eliminate all the cells that are too close to obstacles
+        unreachable = set()
+        for line in self.grid:
+            for cell in line:
+                # print len(unreachable)
+                if not cell.reachable:
+                    unreachable.add(cell)
+
+        print "test"
+        for cell in unreachable:
+            for nCell in self.neighbours( cell, int(radius/division) ):
+                nCell.reachable = False
+
+        for cell in unreachable:
+            cell.reachable = False
+
+
+    def neighbours(self, cell, radius = 1):
+        neighbours = set()
+        for i in xrange(-radius, radius + 1):
+            for j in xrange(-radius, radius + 1):
                 x = cell.x + j
                 y = cell.y + i
                 if y in range(0, self.height) and x in range(0, self.width):
                     if self.grid[y][x].reachable:
-                        neighbours.append(self.grid[y][x])
+                        neighbours.add(self.grid[y][x])
 
         return neighbours
 

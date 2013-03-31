@@ -168,7 +168,7 @@ class ViewerScene(QtGui.QGraphicsScene):
 
             #Fade in animation
             self.animation = QtCore.QPropertyAnimation(self.car, "opacity")
-            self.animation.setDuration(700)
+            self.animation.setDuration(300)
             self.animation.setStartValue( 0.0 )
             self.animation.setEndValue( 1.0 )
             self.animation.start( QtCore.QAbstractAnimation.DeleteWhenStopped )
@@ -197,21 +197,27 @@ class ViewerScene(QtGui.QGraphicsScene):
                 # Animating the car on the path
                 self.animation = QtCore.QSequentialAnimationGroup();
 
-                speed = 20
+                speed = 400
                 for i in xrange(1, len(self.path)):
                     lastPoint = self.path[i-1]
                     point = self.path[i]
                     distance = math.sqrt( (lastPoint.x - point.x)**2 + (lastPoint.y - point.y)**2 )
 
                     anim = QtCore.QPropertyAnimation(self.car, "pos")
-                    anim.setDuration(100*(distance/speed))
+                    anim.setDuration(1000*(distance/speed))
                     anim.setStartValue( QtCore.QPointF(lastPoint.x, lastPoint.y) )
                     anim.setEndValue( QtCore.QPointF(point.x, point.y) )
                     self.animation.addAnimation(anim)
 
+                self.animation.finished.connect(self.resetPath)
                 self.animation.start(QtCore.QAbstractAnimation.DeleteWhenStopped)
 
         super(ViewerScene,self).mousePressEvent(event)
+
+    # Called when the car have arried to the path's end
+    def resetPath(self):
+        self.path =  []
+        self.graphicPath.setPath(QtGui.QPainterPath())
 
     def mouseMoveEvent(self, event):
         x, y = event.scenePos().x(), event.scenePos().y()
