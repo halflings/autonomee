@@ -27,6 +27,10 @@ class Car(QtGui.QGraphicsObject):
 		self.distance = None
 		self.caption = ""
 
+		self.text = QtGui.QGraphicsTextItem("", self)
+		self.text.setFont("Ubuntu Light")
+
+
 		#Angle is in radian, and follows the traditional trigonometric orientation
 		#			   pi/2
 		#	pi or -pi __|__ 0
@@ -54,33 +58,15 @@ class Car(QtGui.QGraphicsObject):
 
 	def move(self, mov):
 
-		# Dynamic obstacle avoidance [really buggy, probably not worth the hassle]
-		# if self.distance and self.distance < 100:
-		# 	rightAngle, leftAngle = self.formatAngle(self.angle -0.5), self.formatAngle(self.angle + 0.5)
-
-		# 	rightDistance = self.map.RayDistance(self.frontX(), self.frontY(), rightAngle)
-		# 	leftDistance = self.map.RayDistance(self.frontX(), self.frontY(), leftAngle)
-
-		# 	if rightDistance < leftDistance:
-		# 		self.angle = leftAngle
-		# 	else:
-		# 		self.angle = rightAngle
-
-		# 	self.rotate(self.angle)
-
 		dx = mov * cos(self.angle)
 		dy = -mov * sin(self.angle)
 
 		self.setPos( self.x() + dx , self.y() + dy )
 
-		distance = self.map.RayDistance(self.x(), self.y(), self.angle)
-
-		if distance:
-			self.caption = "Closest object at : {}".format(int(distance))
-
 		self.update()
 
 	def rotate(self, angle):
+
 		#Updating angle
 		self.angle = angle
 
@@ -88,7 +74,6 @@ class Car(QtGui.QGraphicsObject):
 		transform.rotate(-math.degrees(angle/2))
 
 		self.img = Car.sprites[self.sprite_name].transformed(transform, QtCore.Qt.SmoothTransformation)
-
 
 		self.img = self.img.transformed(transform)
 
@@ -99,6 +84,7 @@ class Car(QtGui.QGraphicsObject):
 		self.update()
 
 	def paint(self, painter=None, style=None, widget=None):
+
 		pen = QtGui.QPen()
 		pen.setColor(QtGui.QColor(20, 124, 228))
 		pen.setWidth(3)
@@ -112,8 +98,6 @@ class Car(QtGui.QGraphicsObject):
 
 		#Ray
 		painter.drawLine(self.ray)
-		painter.setFont(QtGui.QFont('Decorative', 10))
-		painter.drawText(self.rect, QtCore.Qt.AlignLeft, self.caption)
 
 		#Car's center
 		painter.drawRect(self.x() - 1, self.y() - 1, 1, 1)
@@ -131,13 +115,20 @@ class Car(QtGui.QGraphicsObject):
 			self.caption = "No object ahead"
 			distance = 0
 
+		#Updating the caption
+		self.text.setPlainText(self.caption)
+
 		self.ray = QtCore.QLine(self.frontX(), self.frontY(),
 			self.frontX() + distance*math.cos(self.angle), self.frontY() - distance*math.sin(self.angle))
 
 		self.prepareGeometryChange()
 
 	def boundingRect(self):
-		return QtCore.QRectF(self.topLeftX(), self.topLeftY(), self.img.width() , self.img.height() )
+		distance = 0
+		if self.distance:
+			distance = self.distance
+
+		return QtCore.QRectF(self.topLeftX(), self.topLeftY(), self.img.width() + distance * 3 , self.img.height() + distance * 3)
 
 
 	def x(self):
