@@ -165,6 +165,14 @@ class ViewerScene(QtGui.QGraphicsScene):
         if not self.car:
             self.car = engine.Car(self.map, x, y)
             self.addItem(self.car)
+
+            #Fade in animation
+            self.animation = QtCore.QPropertyAnimation(self.car, "opacity")
+            self.animation.setDuration(700)
+            self.animation.setStartValue( 0.0 )
+            self.animation.setEndValue( 1.0 )
+            self.animation.start( QtCore.QAbstractAnimation.DeleteWhenStopped )
+
         # If the car already exists, we generate a path from the car to where we clicked
         # and show it on the UI
         else:
@@ -187,7 +195,7 @@ class ViewerScene(QtGui.QGraphicsScene):
                     self.addItem( self.graphicPath )
 
                 # Animating the car on the path
-                self.animationGroup = QtCore.QSequentialAnimationGroup();
+                self.animation = QtCore.QSequentialAnimationGroup();
 
                 speed = 20
                 for i in range(1, len(self.path)):
@@ -199,20 +207,18 @@ class ViewerScene(QtGui.QGraphicsScene):
                     anim.setDuration(100*(distance/speed))
                     anim.setStartValue( QtCore.QPointF(lastPoint.x, lastPoint.y) )
                     anim.setEndValue( QtCore.QPointF(point.x, point.y) )
-                    self.animationGroup.addAnimation(anim)
+                    self.animation.addAnimation(anim)
 
-                self.animationGroup.start(QtCore.QAbstractAnimation.DeleteWhenStopped)
+                self.animation.start(QtCore.QAbstractAnimation.DeleteWhenStopped)
 
         super(ViewerScene,self).mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
         x, y = event.scenePos().x(), event.scenePos().y()
+
         if self.car:
             #We calculate the angle (in radians) and convert it to the trigonometric referential
-            angle = math.pi - math.atan2(self.car.y() - y, self.car.x() -x)
-
-            # print "CAR :", "x ", self.car.x(), "y ", self.car.y()
-            # print "MOUSE :", "x ", x, "y ", y
+            angle = math.pi - math.atan2(self.car.y() - y, self.car.x() - x)
 
             if angle > math.pi:
                 angle = angle - 2*math.pi

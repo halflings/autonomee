@@ -28,7 +28,8 @@ class Car(QtGui.QGraphicsObject):
 		self.caption = ""
 
 		self.text = QtGui.QGraphicsTextItem("", self)
-		self.text.setFont("Ubuntu Light")
+		self.text.setFont("Ubuntu-L.ttf")
+		self.text.setPos(-140, -140)
 
 
 		#Angle is in radian, and follows the traditional trigonometric orientation
@@ -42,8 +43,14 @@ class Car(QtGui.QGraphicsObject):
 		self.sprite_name = sprite_name
 		self.img = Car.sprites[sprite_name]
 
+		self.image = QtGui.QGraphicsPixmapItem( QtGui.QPixmap( Car.sprites[sprite_name] ), self)
+		self.image.setOffset(-self.img.width()/2, -self.img.height()/2)
+		self.image.setZValue(-1)
+
+
 		# Initializing the "view ray"
-		self.ray = None
+		self.line = QtCore.QLine(x, y, 0, 0)
+		self.ray = QtGui.QGraphicsLineItem(self.line, self )
 
 		self.setPos(x, y)
 
@@ -56,26 +63,21 @@ class Car(QtGui.QGraphicsObject):
 		self.rect = QtCore.QRectF()
 		self.update()
 
-	def move(self, mov):
+	def move(self, speed):
 
-		dx = mov * cos(self.angle)
-		dy = -mov * sin(self.angle)
+		dx = speed * cos(self.angle)
+		dy = -speed * sin(self.angle)
 
-		self.setPos( self.x() + dx , self.y() + dy )
+		self.setPos( int(self.x() + dx) , int(self.y() + dy) )
 
 		self.update()
 
 	def rotate(self, angle):
-
 		#Updating angle
 		self.angle = angle
 
-		transform = QtGui.QTransform()
-		transform.rotate(-math.degrees(angle/2))
-
-		self.img = Car.sprites[self.sprite_name].transformed(transform, QtCore.Qt.SmoothTransformation)
-
-		self.img = self.img.transformed(transform)
+		# Rotating the car around its center
+		self.image.setRotation(-math.degrees(angle))
 
 		self.update()
 
@@ -84,29 +86,21 @@ class Car(QtGui.QGraphicsObject):
 		self.update()
 
 	def paint(self, painter=None, style=None, widget=None):
-
+		pass
 		pen = QtGui.QPen()
-		pen.setColor(QtGui.QColor(20, 124, 228))
-		pen.setWidth(3)
+		pen.setColor(QtGui.QColor(20, 80, 228))
+		pen.setWidth(2)
 		painter.setPen(pen)
 
-		# Drawing the car's image
-		painter.drawImage(self.topLeftX(), self.topLeftY(), self.img)
-
-		#Car's front
-		painter.drawRect(self.frontX()-1, self.frontY()-1, 1, 1)
-
-		#Ray
-		painter.drawLine(self.ray)
-
-		#Car's center
-		painter.drawRect(self.x() - 1, self.y() - 1, 1, 1)
 
 	def update(self):
 		super(Car, self).update()
 
+		#Calculating the distance to the closest object
 		if self.map:
-			self.distance = self.map.RayDistance(self.frontX(), self.frontY(), self.angle)
+			self.distance = self.map.RayDistance(self.x(), self.y(), self.angle)
+
+		#Updating the caption
 
 		if self.distance:
 			self.caption = "Closest object at : {}".format(int(self.distance))
@@ -115,39 +109,29 @@ class Car(QtGui.QGraphicsObject):
 			self.caption = "No object ahead"
 			distance = 0
 
-		#Updating the caption
 		self.text.setPlainText(self.caption)
 
-		self.ray = QtCore.QLine(self.frontX(), self.frontY(),
-			self.frontX() + distance*math.cos(self.angle), self.frontY() - distance*math.sin(self.angle))
-
-		self.prepareGeometryChange()
+		# Updating the "ray"
+		self.ray.setLine(QtCore.QLine(0, 0, distance*math.cos(self.angle), - distance*math.sin(self.angle)))
 
 	def boundingRect(self):
-		distance = 0
-		if self.distance:
-			distance = self.distance
-
-		return QtCore.QRectF(self.topLeftX(), self.topLeftY(), self.img.width() + distance * 3 , self.img.height() + distance * 3)
-
+		return QtCore.QRectF(self.x(), self.y(), self.image.boundingRect().width() , self.image.boundingRect().height())
 
 	def x(self):
 		return self.pos().x()
-
 	def y(self):
 		return self.pos().y()
 
 	def frontX(self):
-		return self.x() + cos(self.angle) * self.width
-
+		return self.x() + cos(self.angle) * self.img.width()
 	def frontY(self):
-		return self.y() - sin(self.angle) * self.width
+		return self.y() - sin(self.angle) * self.img.width()
 
 	def topLeftX(self):
-		return self.x() - ( self.img.width() / 2 )
+		return self.x() - ( self.image.boundingRect().width() / 2 )
 
 	def topLeftY(self):
-		return self.y() - ( self.img.height() / 2 )
+		return self.y() - ( self.image.boundingRect().height() / 2 )
 
 	def formatAngle(self, angle):
 		return (angle + math.pi)%(2*math.pi) - math.pi
