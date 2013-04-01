@@ -56,7 +56,7 @@ class Cell(object):
 
 class DiscreteMap:
 
-    def __init__(self, SvgMap, division = 5, radius = 20):
+    def __init__(self, SvgMap, division = 5, radius = 50):
         self.division = division
 
         self.width = int(SvgMap.width/division)
@@ -89,7 +89,35 @@ class DiscreteMap:
                 else:
                     self.grid[y][x] = Cell(x, y, reachable = True)
 
+
+
         # Then we eliminate all the cells that are too close to obstacles
+
+
+        # ALGO 1 : Go on each reachable cell, check if a neighbour is unreachable
+        # toEliminate = set()
+
+        # for line in self.grid:
+        #     for cell in line:
+        #         if cell.reachable:
+        #             neighbours = self.neighbours( cell, radius = int(radius/division), unreachables = True )
+        #             obstacle = False
+        #             for c in neighbours:
+        #                 if not c.reachable:
+        #                     obstacle = True
+        #                     break
+
+        #             if obstacle:
+        #                 toEliminate.add(cell)
+
+        # for cell in toEliminate:
+        #     cell.reachable = False
+
+        # ALGO 1 END --
+
+
+        # ALGO 2 : Go on each unreachable cell,
+
         unreachable = set()
         for line in self.grid:
             for cell in line:
@@ -97,7 +125,6 @@ class DiscreteMap:
                 if not cell.reachable:
                     unreachable.add(cell)
 
-        print "test"
         for cell in unreachable:
             for nCell in self.neighbours( cell, int(radius/division) ):
                 nCell.reachable = False
@@ -106,15 +133,14 @@ class DiscreteMap:
             cell.reachable = False
 
 
-    def neighbours(self, cell, radius = 1):
+    def neighbours(self, cell, radius = 1, unreachables = False):
         neighbours = set()
         for i in xrange(-radius, radius + 1):
             for j in xrange(-radius, radius + 1):
                 x = cell.x + j
                 y = cell.y + i
-                if y in range(0, self.height) and x in range(0, self.width):
-                    if self.grid[y][x].reachable:
-                        neighbours.add(self.grid[y][x])
+                if 0 <= y < self.height and 0 <= x < self.width and ( self.grid[y][x].reachable or unreachables ):
+                    neighbours.add(self.grid[y][x])
 
         return neighbours
 
