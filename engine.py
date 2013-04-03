@@ -23,21 +23,12 @@ class Car(QtGui.QGraphicsObject):
 		self.width = width
 		self.length = length
 
-		self.speed = 0
-		self.distance = None
-
 		# Setting up text
 		self.caption = ""
 		self.text = QtGui.QGraphicsTextItem("", self)
 		self.text.setFont(QtGui.QFont("Ubuntu-L.ttf"))
 		self.text.setPos(-140, -140)
 
-		#Angle is in radian, and follows the traditional trigonometric orientation
-		#			   pi/2
-		#	pi or -pi __|__ 0
-		#				|
-		#			  -pi/2
-		self.angle = 0
 
 		# Initializing image
 		self.sprite_name = sprite_name
@@ -47,12 +38,24 @@ class Car(QtGui.QGraphicsObject):
 		self.image.setOffset(-self.img.width()/2, -self.img.height()/2)
 		self.image.setZValue(-1)
 
-
 		# Initializing the "view ray"
 		self.line = QtCore.QLine(x, y, 0, 0)
 		self.ray = QtGui.QGraphicsLineItem(self.line, self )
 
+		self.speed = 0
+		self.distance = None
+
+		#Angle is in radian, and follows the traditional trigonometric orientation
+		#			   pi/2
+		#	pi or -pi __|__ 0
+		#				|
+		#			  -pi/2
+		self.angle = 0
+
 		self.setPos(x, y)
+
+		# True when the car is moving :
+		self.moving = False
 
 		#print "Car width {} | Car length {} | Car sprite {}".format(self.width, self.length, self.sprite)
 
@@ -72,14 +75,20 @@ class Car(QtGui.QGraphicsObject):
 
 		self.update()
 
-	def rotate(self, angle):
+	def setAngle(self, val):
 		#Updating angle
-		self.angle = angle
+		self.angle = val
 
 		# Rotating the car around its center
-		self.image.setRotation(-math.degrees(angle))
+		self.image.setRotation(-math.degrees(self.angle))
 
 		self.update()
+
+	def readAngle(self):
+		return self.angle
+
+	angleProperty = QtCore.Property(float, readAngle, setAngle)
+
 
 	def setPos(self, x, y):
 		super(Car, self).setPos(x, y)

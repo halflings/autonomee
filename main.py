@@ -10,6 +10,7 @@ import math
 
 import engine
 import heatmap
+from collections import deque
 
 class MainWindow(QtGui.QMainWindow):
     AUTO_MODE = 0
@@ -194,42 +195,76 @@ class ViewerScene(QtGui.QGraphicsScene):
                     self.graphicPath = QtGui.QGraphicsPathItem(painterPath)
                     self.addItem( self.graphicPath )
 
+                # Calculating the path's total length
+                totalLength = painterPath.length()
+                # pt = self.path[0]
+                # for i in xrange(1, len(self.path)):
+                #     totalLength += pt.distance( self.path[i] )
+                #     pt = self.path[i]
+                speed = 400.0
+                totalDuration = 1000. * (totalLength / speed)
+
                 # Animating the car on the path
-                self.animation = QtCore.QSequentialAnimationGroup();
+                self.animation = QtCore.QParallelAnimationGroup();
 
-                speed = 400
+                self.posAnim = QtCore.QPropertyAnimation(self.car, "pos")
+                self.rotationAnim = QtCore.QPropertyAnimation(self.car, "angleProperty")
+
+                self.posAnim.setDuration(totalDuration)
+                self.rotationAnim.setDuration(totalDuration)
+
+                self.posAnim.setKeyValueAt(0, self.car.pos())
+                self.rotationAnim.setKeyValueAt(0, self.car.rotation())
+
+                nKeys = len(self.path) - 1
+                angles = deque()
+                angles.append(self.car.rotation())
+
                 for i in xrange(1, len(self.path)):
-                    lastPoint = self.path[i-1]
-                    point = self.path[i]
-                    distance = math.sqrt( (lastPoint.x - point.x)**2 + (lastPoint.y - point.y)**2 )
+                    pt = self.path[i]
+                    lastPt = self.path[i-1]
 
-                    anim = QtCore.QPropertyAnimation(self.car, "pos")
-                    anim.setDuration(1000*(distance/speed))
-                    anim.setStartValue( QtCore.QPointF(lastPoint.x, lastPoint.y) )
-                    anim.setEndValue( QtCore.QPointF(point.x, point.y) )
-                    self.animation.addAnimation(anim)
+                    # Angle calculus and format according to the trigonometric sens
+                    angle = math.pi - math.atan2(lastPt.y - pt.y, lastPt.x - pt.x)
+                    if angle > math.pi:
+                        angle = angle - 2*math.pi
 
-                self.animation.finished.connect(self.resetPath)
+                    angles.append(angle)
+                    meanAngle = sum(angles) / len(angles)
+
+                    if len(angles) > 15:
+                        angles.popleft()
+
+                    self.posAnim.setKeyValueAt(float(i)/nKeys, QtCore.QPointF(pt.x, pt.y))
+                    self.rotationAnim.setKeyValueAt(float(i)/nKeys, meanAngle)
+
+                self.animation.addAnimation(self.rotationAnim)
+                self.animation.addAnimation(self.posAnim)
+
+                self.animation.finished.connect(self.pathFinished)
+
                 self.animation.start(QtCore.QAbstractAnimation.DeleteWhenStopped)
+                self.car.moving = True
 
         super(ViewerScene,self).mousePressEvent(event)
 
     # Called when the car have arried to the path's end
-    def resetPath(self):
+    def pathFinished(self):
+        self.car.moving = False
         self.path =  []
         self.graphicPath.setPath(QtGui.QPainterPath())
 
     def mouseMoveEvent(self, event):
         x, y = event.scenePos().x(), event.scenePos().y()
 
-        if self.car:
+        if self.car and not self.car.moving:
             #We calculate the angle (in radians) and convert it to the trigonometric referential
             angle = math.pi - math.atan2(self.car.y() - y, self.car.x() - x)
 
             if angle > math.pi:
                 angle = angle - 2*math.pi
 
-            self.car.rotate(angle)
+            self.car.setAngle(angle)
 
     def keyPressEvent(self, event):
 
