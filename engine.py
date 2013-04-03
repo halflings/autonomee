@@ -29,7 +29,6 @@ class Car(QtGui.QGraphicsObject):
 		self.text.setFont(QtGui.QFont("Ubuntu-L.ttf"))
 		self.text.setPos(-140, -140)
 
-
 		# Initializing image
 		self.sprite_name = sprite_name
 		self.img = Car.sprites[sprite_name]
@@ -43,7 +42,12 @@ class Car(QtGui.QGraphicsObject):
 		self.ray = QtGui.QGraphicsLineItem(self.line, self )
 
 		self.speed = 0
+
+		# Distance to the closest object ahead
 		self.distance = None
+
+		# True when the car is moving :
+		self.moving = False
 
 		#Angle is in radian, and follows the traditional trigonometric orientation
 		#			   pi/2
@@ -53,9 +57,6 @@ class Car(QtGui.QGraphicsObject):
 		self.angle = 0
 
 		self.setPos(x, y)
-
-		# True when the car is moving :
-		self.moving = False
 
 		#print "Car width {} | Car length {} | Car sprite {}".format(self.width, self.length, self.sprite)
 
@@ -106,12 +107,14 @@ class Car(QtGui.QGraphicsObject):
 		super(Car, self).update()
 
 		#Calculating the distance to the closest object
-		if self.map:
+		if self.map and not self.moving:
 			self.distance = self.map.RayDistance(self.x(), self.y(), self.angle)
 
 		#Updating the caption
-
-		if self.distance:
+		if self.moving:
+			self.caption = "Car moving... "
+			distance = 0
+		elif self.distance:
 			self.caption = "Closest object at : {}".format(int(self.distance))
 			distance = self.distance
 		else:

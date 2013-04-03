@@ -224,14 +224,16 @@ class ViewerScene(QtGui.QGraphicsScene):
                     pt = self.path[i]
                     lastPt = self.path[i-1]
 
-                    # Angle calculus and format according to the trigonometric sens
+                    # Current angle calculus and format according to the trigonometric sens
                     angle = math.pi - math.atan2(lastPt.y - pt.y, lastPt.x - pt.x)
                     if angle > math.pi:
                         angle = angle - 2*math.pi
 
+                    # We add the 'current angle' to the angles queue and calculate the mean
                     angles.append(angle)
                     meanAngle = sum(angles) / len(angles)
 
+                    # If we already have many angles, with drop the oldest one
                     if len(angles) > 15:
                         angles.popleft()
 
