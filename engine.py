@@ -97,10 +97,11 @@ class Car(QtGui.QGraphicsObject):
 
 	def paint(self, painter=None, style=None, widget=None):
 		pass
-		pen = QtGui.QPen()
-		pen.setColor(QtGui.QColor(20, 80, 228))
-		pen.setWidth(2)
-		painter.setPen(pen)
+		# pen = QtGui.QPen()
+		# pen.setColor(QtGui.QColor(20, 80, 228))
+		# pen.setWidth(10)
+		# painter.setPen(pen)
+		# super(self, Car).paint(self, painter, style, widget)
 
 
 	def update(self):

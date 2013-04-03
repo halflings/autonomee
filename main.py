@@ -149,7 +149,7 @@ class ViewerScene(QtGui.QGraphicsScene):
         self.path = None
 
         # Graphical representation of the last generated path
-        self.graphicPath = None
+        self.graphicalPath = None
 
         # Not used (as of 29/03), should be a graphic item for the car's "ray"
         self.ray = None
@@ -188,12 +188,12 @@ class ViewerScene(QtGui.QGraphicsScene):
                     painterPath.lineTo(self.path[i].x, self.path[i].y)
 
                 # If a path is already shown on screen, we just update it with the new path
-                if self.graphicPath is not None:
-                    self.graphicPath.setPath(painterPath)
+                if self.graphicalPath is not None:
+                    self.graphicalPath.setPath(painterPath)
                 # Else, we create a new graphical path
                 else:
-                    self.graphicPath = QtGui.QGraphicsPathItem(painterPath)
-                    self.addItem( self.graphicPath )
+                    self.graphicalPath = QtGui.QGraphicsPathItem(painterPath)
+                    self.addItem( self.graphicalPath )
 
                 # Calculating the path's total length
                 totalLength = painterPath.length()
@@ -254,7 +254,7 @@ class ViewerScene(QtGui.QGraphicsScene):
     def pathFinished(self):
         self.car.moving = False
         self.path =  []
-        self.graphicPath.setPath(QtGui.QPainterPath())
+        self.graphicalPath.setPath(QtGui.QPainterPath())
 
     def mouseMoveEvent(self, event):
         x, y = event.scenePos().x(), event.scenePos().y()
@@ -335,6 +335,8 @@ class SvgView(QtGui.QGraphicsView):
         s.car = None
         #Recreate a map tree by parsing the SVG
         s.map = svg.SvgTree(svg_file.fileName())
+        s.path = None
+        s.graphicalPath = None
 
         if self.backgroundItem:
             drawBackground = self.backgroundItem.isVisible()

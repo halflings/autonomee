@@ -47,9 +47,9 @@ class GraphicalHeatmap(QtGui.QGraphicsObject):
 
         for cell in self.heatmap.cells:
             color = QtGui.QColor.fromHsvF(cell.p / 3, 0.5, 0.8)
-            pen.setColor( color )
-            painter.setPen(pen)
-            painter.drawEllipse(cell.x, cell.y, 9, 9)
+            painter.setPen( color )
+            painter.setBrush( color )
+            painter.drawEllipse(cell.x, cell.y, 10 + cell.p*20, 10 + cell.p*20)
 
     def boundingRect(self):
         return QtCore.QRectF(0, 0, self.heatmap.width, self.heatmap.height )
