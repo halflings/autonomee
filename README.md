@@ -1,13 +1,13 @@
-Important:
+Important
 ==========
 
 This is a work in progress and the code base can change very radically. Don't except (for now) something working out of the box  !
 
-robot-SVGMap
+Carosif - "SVGmap-robot"
 ============
 
 A Python front-end for robot localization (and other uses) using SVG for the maps and Qt for the UI.
-This includes a *really* basic SVG parser, some "collision" methods to calculate the distance to the closest obstacle and the visualization and movement of the robot.
+This includes a *really* basic SVG parser, a pathfinder (A\*),  some "collision" methods to calculate the distance to the closest obstacle and the visualization of the robot's movements and a 'heatmap' of the probabilities.
 
 UPDATE March 2013
 =======================
