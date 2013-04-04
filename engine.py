@@ -12,8 +12,10 @@ class Car(QtGui.QGraphicsObject):
 	scale_factor = 0.5
 	sprites = {"sedan" : default_image.scaledToWidth(default_image.width()*scale_factor)}
 
-	def __init__(self, map = None, x = 0, y = 0, width = default_width, length = default_length, sprite_name = "sedan"):
+	def __init__(self, map = None, x = 0, y = 0, width = default_width, length = default_length, sprite_name = "sedan", shadow = True):
 		super(Car, self).__init__()
+
+		pen = QtGui.QPen()
 
 		#The map where the car is located
 		self.map = map
@@ -29,17 +31,33 @@ class Car(QtGui.QGraphicsObject):
 		self.text.setFont(QtGui.QFont("Ubuntu-L.ttf"))
 		self.text.setPos(-140, -140)
 
+		self.text.setDefaultTextColor(QtGui.QColor(210, 220, 250))
+		self.text.font().setBold(True)
+
 		# Initializing image
 		self.sprite_name = sprite_name
 		self.img = Car.sprites[sprite_name]
 
 		self.image = QtGui.QGraphicsPixmapItem( QtGui.QPixmap( Car.sprites[sprite_name] ), self)
 		self.image.setOffset(-self.img.width()/2, -self.img.height()/2)
-		self.image.setZValue(-1)
+
+		# Shadow effect on the car image
+		if shadow:
+			self.shadow = QtGui.QGraphicsDropShadowEffect()
+			self.shadow.setBlurRadius(80)
+			self.shadow.setColor( QtGui.QColor(80, 90, 180) )
+			self.shadow.setOffset(0, 0)
+			self.image.setGraphicsEffect( self.shadow )
+
 
 		# Initializing the "view ray"
 		self.line = QtCore.QLine(x, y, 0, 0)
 		self.ray = QtGui.QGraphicsLineItem(self.line, self )
+		self.ray.setZValue(-1)
+
+		pen.setColor(QtGui.QColor(110, 130, 180))
+		pen.setWidth(4)
+		self.ray.setPen(pen)
 
 		self.speed = 0
 
@@ -97,11 +115,6 @@ class Car(QtGui.QGraphicsObject):
 
 	def paint(self, painter=None, style=None, widget=None):
 		pass
-		# pen = QtGui.QPen()
-		# pen.setColor(QtGui.QColor(20, 80, 228))
-		# pen.setWidth(10)
-		# painter.setPen(pen)
-		# super(self, Car).paint(self, painter, style, widget)
 
 
 	def update(self):

@@ -35,6 +35,7 @@ class GraphicalHeatmap(QtGui.QGraphicsObject):
 
     def __init__(self, heatmap):
         super(GraphicalHeatmap, self).__init__()
+        self.setCacheMode( QtGui.QGraphicsItem.ItemCoordinateCache )
         self.heatmap = heatmap
 
     def paint(self, painter=None, style=None, widget=None):
@@ -46,7 +47,7 @@ class GraphicalHeatmap(QtGui.QGraphicsObject):
         painter.setPen(pen)
 
         for cell in self.heatmap.cells:
-            color = QtGui.QColor.fromHsvF(cell.p / 3, 0.5, 0.8)
+            color = QtGui.QColor.fromHsvF(cell.p / 3, 0.5, 0.8, 0.5)
             painter.setPen( color )
             painter.setBrush( color )
             painter.drawEllipse(cell.x, cell.y, 10 + cell.p*20, 10 + cell.p*20)

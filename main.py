@@ -119,8 +119,9 @@ class ManualView(QtGui.QGraphicsView):
 class ManualScene(QtGui.QGraphicsScene):
     def __init__(self, parent=None):
         super(ManualScene, self).__init__(parent)
-        self.car = engine.Car()
-        self.addItem(self.car)
+        # self.car = engine.Car()
+
+        # self.addItem(self.car)
 
     def mousePressEvent(self, event):
         x, y = event.scenePos().x(), event.scenePos().y()
@@ -132,6 +133,7 @@ class ManualScene(QtGui.QGraphicsScene):
         super(ManualScene,self).mouseMoveEvent(event)
 
 class ViewerScene(QtGui.QGraphicsScene):
+
     def __init__(self, parent=None):
         super(ViewerScene, self).__init__(parent)
         #self.setDragMode(QtGui.QGraphicsScene.ScrollHandDrag)
@@ -150,13 +152,19 @@ class ViewerScene(QtGui.QGraphicsScene):
 
         # Graphical representation of the last generated path
         self.graphicalPath = None
+        # self.graphicalPath = QtGui.QGraphicsPathItem( QtGui.QPainterPath() )
+        # self.graphicalPath.setZValue(-1)
+
+
+        # self.graphicalPath.setPen(pen)
+
+        # self.addItem( self.graphicalPath )
 
         # Not used (as of 29/03), should be a graphic item for the car's "ray"
         self.ray = None
 
         # Heatmap, should be used for probabilities [WIP]
         self.heatmap = None
-        self.graphicalHeatmap = None
         # ( initialized when pressing 'H' )
 
     def mousePressEvent(self, event):
@@ -187,22 +195,33 @@ class ViewerScene(QtGui.QGraphicsScene):
                 for i in xrange(1, len(self.path)):
                     painterPath.lineTo(self.path[i].x, self.path[i].y)
 
-                # If a path is already shown on screen, we just update it with the new path
+                # We set the path as the path to be shown on screen
+                # self.graphicalPath.setPath(painterPath)
+
+                 # If a path is already shown on screen, we just update it with the new path
                 if self.graphicalPath is not None:
                     self.graphicalPath.setPath(painterPath)
                 # Else, we create a new graphical path
                 else:
                     self.graphicalPath = QtGui.QGraphicsPathItem(painterPath)
+                    self.graphicalPath.setZValue(-1)
+
+                    pen = QtGui.QPen()
+                    pen.setColor(QtGui.QColor(180, 200, 240))
+                    pen.setWidth(3)
+                    # pen.setCapStyle(QtCore.Qt.RoundCap)
+                    pen.setMiterLimit(10)
+                    pen.setJoinStyle(QtCore.Qt.RoundJoin)
+                    space = 4
+                    pen.setDashPattern([8, space, 1, space] )
+                    self.graphicalPath.setPen(pen)
+
                     self.addItem( self.graphicalPath )
 
-                # Calculating the path's total length
+                # Calculating the animation speed
                 totalLength = painterPath.length()
-                # pt = self.path[0]
-                # for i in xrange(1, len(self.path)):
-                #     totalLength += pt.distance( self.path[i] )
-                #     pt = self.path[i]
-                speed = 400.0
-                totalDuration = 1000. * (totalLength / speed)
+                pixelsPerSecond = 200.0
+                totalDuration = 1000. * (totalLength / pixelsPerSecond)
 
                 # Animating the car on the path
                 self.animation = QtCore.QParallelAnimationGroup();
@@ -272,7 +291,7 @@ class ViewerScene(QtGui.QGraphicsScene):
 
         # Moving the car
         speed = 20
-        if self.car:
+        if self.car and not self.car.moving:
             if event.key()==QtCore.Qt.Key_Up or event.key()==QtCore.Qt.Key_Z:
                 self.car.move(speed)
             elif event.key()==QtCore.Qt.Key_Down or event.key()==QtCore.Qt.Key_S:
@@ -303,25 +322,9 @@ class SvgView(QtGui.QGraphicsView):
         self.setTransformationAnchor(QtGui.QGraphicsView.AnchorUnderMouse)
         self.setDragMode(QtGui.QGraphicsView.ScrollHandDrag)
 
-        # Prepare background check-board pattern.
-        # tilePixmap = QtGui.QPixmap(64, 64)
-        # tilePixmap.fill(QtCore.Qt.white)
-        # tilePainter = QtGui.QPainter(tilePixmap)
-        # color = QtGui.QColor(220, 220, 220)
-        # tilePainter.fillRect(0, 0, 32, 32, color)
-        # tilePainter.fillRect(32, 32, 32, 32, color)
-        # tilePainter.end()
+        self.setBackgroundBrush(QtGui.QImage("img/blueprintDark.png"))
+        self.setCacheMode(QtGui.QGraphicsView.CacheBackground)
 
-        tilePixmap = QtGui.QPixmap(30, 30)
-        tilePixmap.fill(QtCore.Qt.white)
-        self.setBackgroundBrush(QtGui.QBrush(tilePixmap))
-
-    def drawBackground(self, p, rect):
-        p.save()
-        p.resetTransform()
-        p.drawTiledPixmap(self.viewport().rect(),
-                self.backgroundBrush().texture())
-        p.restore()
 
     def openFile(self, svg_file):
         if not svg_file.exists():
@@ -357,15 +360,21 @@ class SvgView(QtGui.QGraphicsView):
         self.svgItem.setCacheMode(QtGui.QGraphicsItem.NoCache)
         self.svgItem.setZValue(0)
 
-
-        # Background (defualt : plain white)
+        # Background (blueprint image)
         self.backgroundItem = QtGui.QGraphicsRectItem(self.svgItem.boundingRect())
-        self.backgroundItem.setBrush(QtCore.Qt.white)
+        self.backgroundItem.setBrush( QtGui.QImage("img/blueprint.png") )
         self.backgroundItem.setPen(QtGui.QPen())
         self.backgroundItem.setVisible(drawBackground)
         self.backgroundItem.setZValue(-1)
 
-        # A dashed (outline) of the SVG map
+        #Shadow effect
+        self.shadow = QtGui.QGraphicsDropShadowEffect()
+        self.shadow.setBlurRadius(50)
+        self.shadow.setColor( QtGui.QColor(20, 20, 40) )
+        self.shadow.setOffset(0, 0)
+        self.backgroundItem.setGraphicsEffect( self.shadow )
+
+        # # A dashed (outline) of the SVG map
         self.outlineItem = QtGui.QGraphicsRectItem(self.svgItem.boundingRect())
         outline = QtGui.QPen(QtCore.Qt.black, 2, QtCore.Qt.DashDotLine)
         outline.setCosmetic(True)
@@ -376,7 +385,7 @@ class SvgView(QtGui.QGraphicsView):
 
         s.addItem(self.backgroundItem)
         s.addItem(self.svgItem)
-        s.addItem(self.outlineItem)
+        # s.addItem(self.outlineItem)
 
         self.x = 0
         self.y = 0
@@ -397,9 +406,6 @@ class SvgView(QtGui.QGraphicsView):
     def setViewOutline(self, enable):
         if self.outlineItem:
             self.outlineItem.setVisible(enable)
-
-    def paintEvent(self, event):
-        super(SvgView, self).paintEvent(event)
 
     def wheelEvent(self, event):
         factor = 1.2**(event.delta() / 240.0)
