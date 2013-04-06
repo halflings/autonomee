@@ -31,6 +31,13 @@ class Car(QtGui.QGraphicsObject):
 		self.text.setFont(QtGui.QFont("Ubuntu-L.ttf"))
 		self.text.setPos(-140, -140)
 
+		self.textShadow = QtGui.QGraphicsDropShadowEffect()
+		self.textShadow.setBlurRadius(3)
+		self.textShadow.setColor( QtGui.QColor(0, 0, 0) )
+		self.textShadow.setOffset(1, 1)
+		self.text.setGraphicsEffect( self.textShadow )
+
+
 		self.text.setDefaultTextColor(QtGui.QColor(210, 220, 250))
 		self.text.font().setBold(True)
 
@@ -45,7 +52,7 @@ class Car(QtGui.QGraphicsObject):
 		if shadow:
 			self.shadow = QtGui.QGraphicsDropShadowEffect()
 			self.shadow.setBlurRadius(80)
-			self.shadow.setColor( QtGui.QColor(80, 90, 180) )
+			self.shadow.setColor( QtGui.QColor(80, 90, 220) )
 			self.shadow.setOffset(0, 0)
 			self.image.setGraphicsEffect( self.shadow )
 
@@ -55,8 +62,8 @@ class Car(QtGui.QGraphicsObject):
 		self.ray = QtGui.QGraphicsLineItem(self.line, self )
 		self.ray.setZValue(-1)
 
-		pen.setColor(QtGui.QColor(110, 130, 180))
-		pen.setWidth(4)
+		pen.setColor(QtGui.QColor(180, 200, 200))
+		pen.setWidth(2)
 		self.ray.setPen(pen)
 
 		self.speed = 0

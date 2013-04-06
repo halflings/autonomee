@@ -38,16 +38,16 @@ class MainWindow(QtGui.QMainWindow):
         # View menu
         viewMenu = QtGui.QMenu("&View", self)
         self.backgroundAction = viewMenu.addAction("&Background")
-        self.backgroundAction.setEnabled(False)
+        self.backgroundAction.setEnabled(True)
         self.backgroundAction.setCheckable(True)
-        self.backgroundAction.setChecked(False)
+        self.backgroundAction.setChecked(True)
         self.backgroundAction.toggled.connect(self.view.setViewBackground)
 
-        self.outlineAction = viewMenu.addAction("&Outline")
-        self.outlineAction.setEnabled(False)
-        self.outlineAction.setCheckable(True)
-        self.outlineAction.setChecked(True)
-        self.outlineAction.toggled.connect(self.view.setViewOutline)
+        # self.outlineAction = viewMenu.addAction("&Outline")
+        # self.outlineAction.setEnabled(False)
+        # self.outlineAction.setCheckable(True)
+        # self.outlineAction.setChecked(True)
+        # self.outlineAction.toggled.connect(self.view.setViewOutline)
 
         self.menuBar().addMenu(viewMenu)
 
@@ -84,8 +84,6 @@ class MainWindow(QtGui.QMainWindow):
             if not svg_file.exists():
                 QtGui.QMessageBox.critical(self, "Open SVG File",
                         "Could not open file '%s'." % path)
-
-                self.outlineAction.setEnabled(False)
                 self.backgroundAction.setEnabled(False)
                 return
 
@@ -93,7 +91,6 @@ class MainWindow(QtGui.QMainWindow):
             if not path.startswith(':/'):
                 self.currentPath = path
                 self.setWindowTitle("Carosif - Automatic mode - Map : {}".format(self.currentPath))
-            self.outlineAction.setEnabled(False)
             self.backgroundAction.setEnabled(True)
 
             self.resize(self.view.sizeHint() + QtCore.QSize(80, 80 + self.menuBar().height()))
@@ -281,7 +278,6 @@ class ViewerScene(QtGui.QGraphicsScene):
         if self.car and not self.car.moving:
             #We calculate the angle (in radians) and convert it to the trigonometric referential
             angle = math.pi - math.atan2(self.car.y() - y, self.car.x() - x)
-
             if angle > math.pi:
                 angle = angle - 2*math.pi
 
@@ -312,7 +308,7 @@ class SvgView(QtGui.QGraphicsView):
 
         self.setRenderHints(QtGui.QPainter.Antialiasing | QtGui.QPainter.SmoothPixmapTransform)
 
-        self.renderer = SvgView.Native
+        self.renderer = SvgView.OpenGL
         self.svgItem = None
         self.backgroundItem = None
         self.outlineItem = None
@@ -346,10 +342,10 @@ class SvgView(QtGui.QGraphicsView):
         else:
             drawBackground = False
 
-        if self.outlineItem:
-            drawOutline = self.outlineItem.isVisible()
-        else:
-            drawOutline = True
+        # if self.outlineItem:
+        #     drawOutline = self.outlineItem.isVisible()
+        # else:
+        #     drawOutline = True
 
         s.clear()
         self.resetTransform
@@ -359,13 +355,22 @@ class SvgView(QtGui.QGraphicsView):
         self.svgItem.setFlags(QtGui.QGraphicsItem.ItemClipsToShape)
         self.svgItem.setCacheMode(QtGui.QGraphicsItem.NoCache)
         self.svgItem.setZValue(0)
+        s.addItem(self.svgItem)
+
+        #Title text
+        # self.titleItem = QtGui.QGraphicsTextItem("Carosif visualization UI")
+        # self.titleItem.setFont(QtGui.QFont("Ubuntu-L.ttf", 20, QtGui.QFont.Bold))
+        # # self.titleItem.setPos(self.svgItem, -140)
+        # self.titleItem.setDefaultTextColor(QtGui.QColor(210, 220, 250))
+        # s.addItem(self.titleItem)
 
         # Background (blueprint image)
         self.backgroundItem = QtGui.QGraphicsRectItem(self.svgItem.boundingRect())
         self.backgroundItem.setBrush( QtGui.QImage("img/blueprint.png") )
         self.backgroundItem.setPen(QtGui.QPen())
-        self.backgroundItem.setVisible(drawBackground)
+        self.backgroundItem.setVisible(not drawBackground)
         self.backgroundItem.setZValue(-1)
+        s.addItem(self.backgroundItem)
 
         #Shadow effect
         self.shadow = QtGui.QGraphicsDropShadowEffect()
@@ -375,16 +380,13 @@ class SvgView(QtGui.QGraphicsView):
         self.backgroundItem.setGraphicsEffect( self.shadow )
 
         # # A dashed (outline) of the SVG map
-        self.outlineItem = QtGui.QGraphicsRectItem(self.svgItem.boundingRect())
-        outline = QtGui.QPen(QtCore.Qt.black, 2, QtCore.Qt.DashDotLine)
-        outline.setCosmetic(True)
-        self.outlineItem.setPen(outline)
-        self.outlineItem.setBrush(QtGui.QBrush(QtCore.Qt.NoBrush))
-        self.outlineItem.setVisible(drawOutline)
-        self.outlineItem.setZValue(1)
-
-        s.addItem(self.backgroundItem)
-        s.addItem(self.svgItem)
+        # self.outlineItem = QtGui.QGraphicsRectItem(self.svgItem.boundingRect())
+        # outline = QtGui.QPen(QtCore.Qt.black, 2, QtCore.Qt.DashDotLine)
+        # outline.setCosmetic(True)
+        # self.outlineItem.setPen(outline)
+        # self.outlineItem.setBrush(QtGui.QBrush(QtCore.Qt.NoBrush))
+        # self.outlineItem.setVisible(drawOutline)
+        # self.outlineItem.setZValue(1)
         # s.addItem(self.outlineItem)
 
         self.x = 0
@@ -393,7 +395,7 @@ class SvgView(QtGui.QGraphicsView):
         self.updateScene()
 
     def updateScene(self):
-        self.scene().setSceneRect(self.outlineItem.boundingRect().adjusted(self.x-10, self.y-10, self.x+10, self.y+10))
+        self.scene().setSceneRect(self.svgItem.boundingRect().adjusted(self.x-10, self.y-10, self.x+10, self.y+10))
 
     def setRenderer(self, renderer):
         self.renderer = renderer

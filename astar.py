@@ -28,15 +28,29 @@ class Cell(object):
     def distance(self, cell):
         return sqrt((self.x - cell.x)**2 + (self.y - cell.y)**2)
 
+
+    diagonalCost = sqrt(2)
+    straightCost = 1
+
+    def heuristicDistance(self, cell):
+        return self.manhattanDistance(cell)
+
     def manhattanDistance(self, cell):
         return abs(self.x - cell.x) + abs(self.y - cell.y)
 
-    # Calculates the cell's score
-    def process(self, parent, goal):
-        self.parent = parent
-        self.g = parent.distance(self)
-        self.h = self.manhattanDistance(goal)
-        self.f = self.g + self.h
+    def diagonalDistance(self, cell):
+        # hDiagonal = min(abs(self.x-cell.x), abs(self.y-cell.y))
+        # hStraight = (abs(self.x-cell.x) + abs(self.y-cell.y))
+
+        # return Cell.diagonalCost * hDiagonal + Cell.straightCost * (hStraight - 2*hDiagonal)
+
+        xDist = abs(self.x - cell.x)
+        yDist = abs(self.y - cell.y)
+
+        if xDist > yDist:
+            return 1.4 * yDist + (xDist - yDist)
+        else:
+            return 1.4 * xDist + (yDist - xDist)
 
     def path(self):
         resPath = [self]
@@ -44,13 +58,14 @@ class Cell(object):
         while cell.parent != None :
             resPath.append(cell.parent)
             cell = cell.parent
+
         return reversed(resPath)
 
     def __str__(self):
         """ String representation,  for debugging only """
         strRep = "Cell [{}, {}]".format(self.x, self.y)
         if not self.reachable:
-            strRep += " | Is a wall."
+            strRep += " (wall)"
 
         return strRep
 
@@ -133,19 +148,75 @@ class DiscreteMap:
             cell.reachable = False
 
 
-    def neighbours(self, cell, radius = 1, unreachables = False):
+    def neighbours(self, cell, radius = 1, unreachables = False, diagonal = True):
         neighbours = set()
         for i in xrange(-radius, radius + 1):
             for j in xrange(-radius, radius + 1):
                 x = cell.x + j
                 y = cell.y + i
-                if 0 <= y < self.height and 0 <= x < self.width and ( self.grid[y][x].reachable or unreachables ):
+                if 0 <= y < self.height and 0 <= x < self.width and ( self.grid[y][x].reachable or unreachables ) and (diagonal or (x == cell.x or y == cell.y)) :
                     neighbours.add(self.grid[y][x])
 
         return neighbours
 
 
     def search(self, begin, goal):
+
+        if goal.x not in range(self.width) or goal.y not in range(self.height):
+            print "Goal is out of bound"
+            return []
+        elif not self.grid[begin.y][begin.x].reachable:
+            print "Beginning is unreachable"
+            return []
+        elif not self.grid[goal.y][goal.x].reachable:
+            print "Goal is unreachable"
+            return []
+        else:
+
+            #We intialize the closed and open list
+            cl  = set()
+            ol = set()
+            ol.add(begin)
+
+            #We initialize the
+            begin.g = 0
+            begin.h = begin.diagonalDistance(goal)
+            begin.f = begin.g + begin.h
+
+            while len(ol) > 0:
+                curCell = min(ol, key = lambda cell : cell.f)
+
+                if curCell == goal:
+                    path = curCell.path()
+                    self.clear()
+                    return path
+
+
+                ol.remove(curCell)
+                cl.add(curCell)
+
+                for neighbor in self.neighbours(curCell):
+                    gScore = curCell.g + curCell.distance(neighbor)
+
+                    if neighbor in cl:
+                        if gScore >= neighbor.g:
+                            continue
+
+                    if neighbor not in ol or gScore < neighbor.g:
+                        neighbor.parent = curCell
+                        neighbor.g = gScore
+                        neighbor.f = neighbor.g + neighbor.diagonalDistance(goal)
+                        if neighbor not in ol:
+                            ol.add(neighbor)
+
+            self.clear()
+            return []
+
+
+
+
+
+    def altsearch(self, begin, goal):
         if goal.x not in range(self.width) or goal.y not in range(self.height):
             print "Goal is out of bound"
             return []
@@ -173,7 +244,7 @@ class DiscreteMap:
                 self.cl.add(curCell)
 
                 # We check the cell's (reachable) neighbours :
-                neighbours = self.neighbours(curCell)
+                neighbours = self.neighbours(curCell, diagonal = True)
 
                 for cell in neighbours:
                     # If the goal is a neighbour cell :

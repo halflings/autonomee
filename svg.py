@@ -130,12 +130,9 @@ class SvgTree:
 		minDist = None
 		for shape in self.shapes:
 			intersections = ray.intersection(shape)
-			# if intersections:
-			# 	print "Intersection at :"
+
 			for intersection in intersections:
-				# print intersection
 				distance = intersection.distance(ray.origin)
-				# print "Shape {} ; Intersection {} ; Distance {}".format(shape, intersection, distance)
 				if minDist == None:
 					minDist = distance
 				elif distance < minDist:
