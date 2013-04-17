@@ -212,6 +212,7 @@ class ViewerScene(QtGui.QGraphicsScene):
                     space = 4
                     pen.setDashPattern([8, space, 1, space] )
                     self.graphicalPath.setPen(pen)
+                    self.graphicalPath.setOpacity(0.8)
 
                     self.addItem( self.graphicalPath )
 

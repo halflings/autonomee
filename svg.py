@@ -7,166 +7,173 @@ from geometry import Point, Rectangle, Ellipse, Polygone, Polyline, Ray
 from astar import DiscreteMap, Cell
 import re
 NS = {'svg': 'http://www.w3.org/2000/svg',
-'sodipodi': 'http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd'}
+      'sodipodi': 'http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd'}
 
-def remove_ns(text, namespace = NS['svg']):
-	pattern = "{" + namespace + "}([\S]+)"
-	match = re.match(pattern, text)
-	if match:
-		return match.group(1)
-	else:
-		return text
 
-def add_ns(text, namespace = NS['sodipodi']):
-	return '{' + namespace + '}' + text
+def remove_ns(text, namespace=NS['svg']):
+
+    pattern = "{" + namespace + "}([\S]+)"
+    match = re.match(pattern, text)
+    if match:
+        return match.group(1)
+    else:
+        return text
+
+
+def add_ns(text, namespace=NS['sodipodi']):
+
+    return '{' + namespace + '}' + text
+
 
 class SvgTree:
-	default_title = "Undefined title"
-	points_pattern = "(?:([-]?\d+\.?\d*),([-]?\d+\.?\d*))"
 
-	@staticmethod
-	def parse_points(svg_rep):
-		points = []
-		search = re.findall(SvgTree.points_pattern, svg_rep)
-		for point in search:
-			x = float(point[0])
-			y = float(point[1])
-			points.append(Point(x, y))
-		return points
+    default_title = "Undefined title"
+    points_pattern = "(?:([-]?\d+\.?\d*),([-]?\d+\.?\d*))"
 
-	def __init__(self, path="map/mapexample.svg"):
-		#Shapes' list
-		self.shapes = []
+    @staticmethod
+    def parse_points(svg_rep):
+        points = []
+        search = re.findall(SvgTree.points_pattern, svg_rep)
+        for point in search:
+            x = float(point[0])
+            y = float(point[1])
+            points.append(Point(x, y))
+        return points
 
-		#SVG file parsing : opening the file, setting up a custom parser
-		self.svg_file = open(path)
-		parser=etree.XMLParser(ns_clean=True, remove_comments=True, remove_blank_text=True)
-		#Generating a parsing tree
-		tree=etree.parse(self.svg_file, parser)
+    def __init__(self, path="map/mapexample.svg"):
+        #Shapes' list
+        self.shapes = []
 
-		#Parsing the title
-		titleParse =tree.xpath("//n:text[@id='Titre']/n:tspan/text()",
+        #SVG file parsing : opening the file, setting up a custom parser
+        self.svg_file = open(path)
+        parser = etree.XMLParser(ns_clean=True, remove_comments=True,
+                                 remove_blank_text=True)
+        #Generating a parsing tree
+        tree = etree.parse(self.svg_file, parser)
+
+        #Parsing the title
+        titleParse = tree.xpath("//n:text[@id='Titre']/n:tspan/text()",
+                                namespaces={'n': NS['svg']})
+        if titleParse:
+            self.title = titleParse[0]
+        else:
+            self.title = SvgTree.default_title
+
+        #Parsing the SVG's parameters (width, height, ...)
+        for attribute in ['width', 'height']:
+            param = tree.xpath("//n:svg",
+                               namespaces={'n': NS['svg']})[0]
+            regexp = re.match("([\d]+)(.+)", param.attrib[attribute])
+            if regexp:
+                setattr(self, attribute, int(regexp.group(1)))
+                setattr(self, attribute+'_unit', regexp.group(2))
+            else:
+                raise "No {} ! Can't parse SVG.".format(attribute)
+
+
+        ######################################################################
+        ### Parsing SHAPES                                                  ##
+        ### We search all the groups and subgroups and parse their elements ##
+        ######################################################################
+
+        #PARSING PATHS (polylines and ellipses)
+        paths = tree.xpath("//n:path",
                  namespaces={'n': NS['svg']})
-		if titleParse:
-			self.title = titleParse[0]
-		else:
-			self.title = SvgTree.default_title
+        #We'll add the "sodipodi" namespace here because arc shapes (like ellipsis) use it
+        sodipodi_type = add_ns('type', NS['sodipodi'])
+        if paths:
+            for path in paths:
+                if sodipodi_type in path.attrib and path.attrib[sodipodi_type]=='arc':
+                    cx = float(path.attrib[add_ns('cx', NS['sodipodi'])])
+                    cy = float(path.attrib[add_ns('cy', NS['sodipodi'])])
+                    rx = float(path.attrib[add_ns('rx', NS['sodipodi'])])
+                    ry = float(path.attrib[add_ns('ry', NS['sodipodi'])])
+                    ellipse = Ellipse(cx, cy, rx, ry)
+                    self.shapes.append(ellipse)
+                else:
+                    print "[ ! ] Paths - except ellipses - are not implemented yet"
+                    # points = self.parse_points(path.attrib['d'])
+                    # print points
 
-		#Parsing the SVG's parameters (width, height, ...)
-		for attribute in ['width', 'height']:
-			param = tree.xpath("//n:svg",
-	                 namespaces={'n': NS['svg']})[0]
-			regexp = re.match("([\d]+)(.+)", param.attrib[attribute])
-			if regexp:
-				setattr(self, attribute, int(regexp.group(1)))
-				setattr(self, attribute+'_unit', regexp.group(2))
-			else:
-				raise "No {} ! Can't parse SVG.".format(attribute)
-
-
-		######################################################################
-		### Parsing SHAPES													##
-		### We search all the groups and subgroups and parse their elements ##
-		######################################################################
-
-		#PARSING PATHS (polylines and ellipses)
-		paths = tree.xpath("//n:path",
+        #PARSING RECTANGLES
+        rectangles = tree.xpath("//n:rect",
                  namespaces={'n': NS['svg']})
-		#We'll add the "sodipodi" namespace here because arc shapes (like ellipsis) use it
-		sodipodi_type = add_ns('type', NS['sodipodi'])
-		if paths:
-			for path in paths:
-				if sodipodi_type in path.attrib and path.attrib[sodipodi_type]=='arc':
-					cx = float(path.attrib[add_ns('cx', NS['sodipodi'])])
-					cy = float(path.attrib[add_ns('cy', NS['sodipodi'])])
-					rx = float(path.attrib[add_ns('rx', NS['sodipodi'])])
-					ry = float(path.attrib[add_ns('ry', NS['sodipodi'])])
-					ellipse = Ellipse(cx, cy, rx, ry)
-					self.shapes.append(ellipse)
-				else:
-					print "[ ! ] Paths - except ellipses - are not implemented yet"
-					# points = self.parse_points(path.attrib['d'])
-					# print points
+        if rectangles:
+            for rect in rectangles:
+                x = float(rect.attrib['x'])
+                y = float(rect.attrib['y'])
+                w = float(rect.attrib['width'])
+                h = float(rect.attrib['height'])
 
-		#PARSING RECTANGLES
-		rectangles = tree.xpath("//n:rect",
+                rectangle = Rectangle(x, y, w, h)
+                self.shapes.append(rectangle)
+
+        #PARSING POLYGONES
+        polygones = tree.xpath("//n:polygone",
                  namespaces={'n': NS['svg']})
-		if rectangles:
-			for rect in rectangles:
-				x = float(rect.attrib['x'])
-				y = float(rect.attrib['y'])
-				w = float(rect.attrib['width'])
-				h = float(rect.attrib['height'])
+        if polygones:
+            for polygone in polygones:
+                points = self.parse_points(polygone.attrib['points'])
 
-				rectangle = Rectangle(x, y, w, h)
-				self.shapes.append(rectangle)
+                polygone = Polygone(points)
+                self.shapes.append(polygone)
 
-		#PARSING POLYGONES
-		polygones = tree.xpath("//n:polygone",
-                 namespaces={'n': NS['svg']})
-		if polygones:
-			for polygone in polygones:
-				points = self.parse_points(polygone.attrib['points'])
-
-				polygone = Polygone(points)
-				self.shapes.append(polygone)
-
-		#PARSING POLYLINES
-		polylines = tree.xpath("//n:polyline",
+        #PARSING POLYLINES
+        polylines = tree.xpath("//n:polyline",
          namespaces={'n': NS['svg']})
 
-		if polylines:
-			for poly in polylines:
-				points = self.parse_points(poly.attrib['points'])
-				polyline = Polyline(points)
-				self.shapes.append(polyline)
+        if polylines:
+            for poly in polylines:
+                points = self.parse_points(poly.attrib['points'])
+                polyline = Polyline(points)
+                self.shapes.append(polyline)
 
-		self.discreteMap = DiscreteMap(self)
+        self.discreteMap = DiscreteMap(self)
 
 
 
-	def RayDistance(self, x, y, headingAngle):
-		ray = Ray(x, y, headingAngle)
-		minDist = None
-		for shape in self.shapes:
-			intersections = ray.intersection(shape)
+    def RayDistance(self, x, y, headingAngle):
+        ray = Ray(x, y, headingAngle)
+        minDist = None
+        for shape in self.shapes:
+            intersections = ray.intersection(shape)
 
-			for intersection in intersections:
-				distance = intersection.distance(ray.origin)
-				if minDist == None:
-					minDist = distance
-				elif distance < minDist:
-					minDist = distance
+            for intersection in intersections:
+                distance = intersection.distance(ray.origin)
+                if minDist is None:
+                    minDist = distance
+                elif distance < minDist:
+                    minDist = distance
 
-		return minDist
+        return minDist
 
-	def search(self, begin, goal):
-		div = self.discreteMap.division
-		beginCell = Cell(begin[0]/div, begin[1]/div)
-		goalCell = Cell(goal[0]/div, goal[1]/div)
+    def search(self, begin, goal):
+        div = self.discreteMap.division
+        beginCell = Cell(begin[0] / div, begin[1] / div)
+        goalCell = Cell(goal[0] / div, goal[1] / div)
 
-		path = self.discreteMap.search(beginCell, goalCell)
-		points = []
-		if path:
-			for cell in path:
-				points.append(Point(cell.x*div, cell.y*div))
+        path = self.discreteMap.search(beginCell, goalCell)
+        points = []
+        if path:
+            for cell in path:
+                points.append(Point(cell.x * div, cell.y * div))
 
-		return points
+        return points
 
-	def __str__(self):
-		result = 'SVG Tree - "{}"\n'.format(self.title)
-		result += "Width : {}{} | Height : {}{} \n".format(self.width, self.width_unit,
-			self.height, self.height_unit)
-		result += '#'*40 + '\n'*2
-		for shape in self.shapes:
-			result += shape.__str__() + '\n'
+    def __str__(self):
+        result = 'SVG Tree - "{}"\n'.format(self.title)
+        result += "Width : {}{} | Height : {}{} \n".format(self.width, self.width_unit,
+                  self.height, self.height_unit)
+        result += '#'*40 + '\n'*2
+        for shape in self.shapes:
+            result += shape.__str__() + '\n'
 
-		return result
+        return result
 
 
 if __name__=="__main__":
 
-	mySvg = SvgTree("maps/laby.svg")
-	print mySvg
-	print ""
-	path = mySvg.discreteMap.search(Cell(0, 0), Cell(40, 40))
+    mySvg = SvgTree("maps/laby.svg")
+    print mySvg
+    print ""
+    path = mySvg.discreteMap.search(Cell(0, 0), Cell(40, 40))

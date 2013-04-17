@@ -26,7 +26,7 @@
      inkscape:pageshadow="2"
      inkscape:zoom="0.70710675"
      inkscape:cx="332.85673"
-     inkscape:cy="521.50509"
+     inkscape:cy="295.23091"
      inkscape:current-layer="layer1"
      inkscape:document-units="px"
      showgrid="false"
@@ -89,12 +89,13 @@
        y="653.44873" />
     <path
        sodipodi:type="arc"
-       style="fill:#80b3ff;fill-opacity:1;stroke:#000000;stroke-width:0.50000000000000000;stroke-miterlimit:4;stroke-opacity:0.76150625999999999;stroke-dasharray:none"
+       style="fill:#80b3ff;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-miterlimit:4;stroke-opacity:0.76150626;stroke-dasharray:none"
        id="path3049"
        sodipodi:cx="839.33582"
        sodipodi:cy="609.60809"
        sodipodi:rx="144.95689"
        sodipodi:ry="42.426407"
-       d="M 984.29271,609.60809 A 144.95689,42.426407 0 1 1 694.37892,609.60809 144.95689,42.426407 0 1 1 984.29271,609.60809 z" />
+       d="M 984.29271,609.60809 A 144.95689,42.426407 0 1 1 694.37892,609.60809 144.95689,42.426407 0 1 1 984.29271,609.60809 z"
+       transform="translate(4.2426409,-65.053827)" />
   </g>
 </svg>

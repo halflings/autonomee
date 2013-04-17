@@ -5,7 +5,8 @@ astar.py - A* algorithm implementation
 from geometry import Point
 from math import sqrt
 from time import sleep
-
+import scipy
+import scipy.signal
 class Cell(object):
     def __init__(self, x, y, reachable = True):
         self.reachable = reachable
@@ -71,7 +72,7 @@ class Cell(object):
 
 class DiscreteMap:
 
-    def __init__(self, SvgMap, division = 5, radius = 50):
+    def __init__(self, SvgMap, division = 5, radius = 20):
         self.division = division
 
         self.width = int(SvgMap.width/division)
@@ -105,6 +106,18 @@ class DiscreteMap:
                     self.grid[y][x] = Cell(x, y, reachable = True)
 
 
+        # ALGORITHM EXPLOITING CONVOLUTION
+
+        # 1 : Unreachable ; 0 : Reachable
+        car = scipy.array( [[1 for i in xrange(radius)] for j in xrange(radius)] )
+        grid = scipy.array( [[0 if self.grid[i][j].reachable else 1 for j in xrange(self.width)] for i in xrange(self.height)] )
+
+        result = scipy.signal.fftconvolve( grid, car, 'same' )
+
+        for i in xrange(self.height):
+            for j in xrange(self.width):
+                self.grid[i][j].reachable = True if int(result[i][j]) == 0 else False
+
 
         # Then we eliminate all the cells that are too close to obstacles
 
@@ -133,19 +146,17 @@ class DiscreteMap:
 
         # ALGO 2 : Go on each unreachable cell,
 
-        unreachable = set()
-        for line in self.grid:
-            for cell in line:
-                # print len(unreachable)
-                if not cell.reachable:
-                    unreachable.add(cell)
+        # unreachable = set()
+        # for line in self.grid:
+        #     for cell in line:
+        #         # print len(unreachable)
+        #         if not cell.reachable:
+        #             unreachable.add(cell)
 
-        for cell in unreachable:
-            for nCell in self.neighbours( cell, int(radius/division) ):
-                nCell.reachable = False
-
-        for cell in unreachable:
-            cell.reachable = False
+        # for cell in unreachable:
+        #     neighbours = self.neighbours( cell, int(radius/division) )
+        #     for nCell in neighbours:
+        #         nCell.reachable = False
 
 
     def neighbours(self, cell, radius = 1, unreachables = False, diagonal = True):
