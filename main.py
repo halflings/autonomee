@@ -1,13 +1,10 @@
 #!/usr/bin/env python
 
-# This is only needed for Python v2 but is harmless for Python v3.
-# import sip
-# sip.setapi('QString', 2)
-
-from PySide import QtCore, QtGui, QtSvg
-import svg
 import math
 
+from PySide import QtCore, QtGui, QtSvg
+
+import svg
 import engine
 import heatmap
 from collections import deque
@@ -20,7 +17,7 @@ class MainWindow(QtGui.QMainWindow):
 
         self.currentPath = ''
 
-        self.view = SvgView()
+        self.automaticView = SvgView()
         self.manualView = ManualView()
 
         # File menu
@@ -41,13 +38,13 @@ class MainWindow(QtGui.QMainWindow):
         self.backgroundAction.setEnabled(True)
         self.backgroundAction.setCheckable(True)
         self.backgroundAction.setChecked(True)
-        self.backgroundAction.toggled.connect(self.view.setViewBackground)
+        self.backgroundAction.toggled.connect(self.automaticView.setViewBackground)
 
         # self.outlineAction = viewMenu.addAction("&Outline")
         # self.outlineAction.setEnabled(False)
         # self.outlineAction.setCheckable(True)
         # self.outlineAction.setChecked(True)
-        # self.outlineAction.toggled.connect(self.view.setViewOutline)
+        # self.outlineAction.toggled.connect(self.automaticView.setViewOutline)
 
         self.menuBar().addMenu(viewMenu)
 
@@ -68,12 +65,12 @@ class MainWindow(QtGui.QMainWindow):
 
     def manualMode(self):
         self.setCentralWidget(self.manualView)
-        self.view = SvgView()
+        self.automaticView = SvgView()
         self.setWindowTitle("Carosif - Manual mode")
 
     def automaticMode(self):
-        self.setCentralWidget(self.view)
-        self.manualView = SvgView()
+        self.setCentralWidget(self.automaticView)
+        self.manualView = ManualView()
         self.setWindowTitle("Carosif - Automatic mode")
 
     def openFile(self, path=None):
@@ -87,13 +84,13 @@ class MainWindow(QtGui.QMainWindow):
                 self.backgroundAction.setEnabled(False)
                 return
 
-            self.view.openFile(svg_file)
+            self.automaticView.openFile(svg_file)
             if not path.startswith(':/'):
                 self.currentPath = path
                 self.setWindowTitle("Carosif - Automatic mode - Map : {}".format(self.currentPath))
             self.backgroundAction.setEnabled(True)
 
-            self.resize(self.view.sizeHint() + QtCore.QSize(80, 80 + self.menuBar().height()))
+            self.resize(self.automaticView.sizeHint() + QtCore.QSize(80, 80 + self.menuBar().height()))
 
             #self.svg = pysvg.parser.parse('mapexample.svg')
 
@@ -116,9 +113,18 @@ class ManualView(QtGui.QGraphicsView):
 class ManualScene(QtGui.QGraphicsScene):
     def __init__(self, parent=None):
         super(ManualScene, self).__init__(parent)
-        # self.car = engine.Car()
 
-        # self.addItem(self.car)
+        # POUR LORIC : Ajoute ici les objets graphiques dont t'as besoin pour ta scene
+        # Pour changer leur apparence, regarde tout ce qui est 'setPen', utilis&eacute; dans engine.py et ici
+
+        # Ex1 un rectangle
+        rect = QtGui.QGraphicsRectItem(10, 10, 200, 200)
+        self.addItem( rect )
+
+        # Ex2 une voiture
+        self.car = engine.Car()
+        self.car.setAngle(math.pi/2)
+        self.addItem(self.car)
 
     def mousePressEvent(self, event):
         x, y = event.scenePos().x(), event.scenePos().y()
@@ -358,12 +364,13 @@ class SvgView(QtGui.QGraphicsView):
         self.svgItem.setZValue(0)
         s.addItem(self.svgItem)
 
-        #Title text
-        # self.titleItem = QtGui.QGraphicsTextItem("Carosif visualization UI")
-        # self.titleItem.setFont(QtGui.QFont("Ubuntu-L.ttf", 20, QtGui.QFont.Bold))
-        # # self.titleItem.setPos(self.svgItem, -140)
-        # self.titleItem.setDefaultTextColor(QtGui.QColor(210, 220, 250))
-        # s.addItem(self.titleItem)
+        # Title text
+        self.titleItem = QtGui.QGraphicsTextItem("INSAbot visualization UI")
+        self.titleItem.setFont(QtGui.QFont("Ubuntu-L.ttf", 35, QtGui.QFont.Light))
+        # 'Dirty' centering of the text
+        self.titleItem.setPos(self.svgItem.boundingRect().width()/2 - self.titleItem.boundingRect().width()/2, 5)
+        self.titleItem.setDefaultTextColor(QtGui.QColor(210, 220, 250))
+        s.addItem(self.titleItem)
 
         # Background (blueprint image)
         self.backgroundItem = QtGui.QGraphicsRectItem(self.svgItem.boundingRect())

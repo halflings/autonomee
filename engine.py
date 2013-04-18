@@ -129,7 +129,7 @@ class Car(QtGui.QGraphicsObject):
 
 		#Calculating the distance to the closest object
 		if self.map and not self.moving:
-			self.distance = self.map.RayDistance(self.x(), self.y(), self.angle)
+			self.distance = self.map.rayDistance(self.x(), self.y(), self.angle)
 
 		#Updating the caption
 		if self.moving:

@@ -131,8 +131,22 @@ class SvgTree:
         self.discreteMap = DiscreteMap(self)
 
 
+    def isObstacle(self, x, y):
+        """
+        True if there's an obstacle in (x, y), false otherwise
+        """
+        point = Point(x, y)
+        obstacle = False
+        id = 0
 
-    def RayDistance(self, x, y, headingAngle):
+        while not obstacle and id<len(self.shapes):
+            obstacle = point.containedIn(self.shapes[id])
+            id += 1
+
+        return obstacle
+
+
+    def rayDistance(self, x, y, headingAngle):
         ray = Ray(x, y, headingAngle)
         minDist = None
         for shape in self.shapes:

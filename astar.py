@@ -72,11 +72,12 @@ class Cell(object):
 
 class DiscreteMap:
 
-    def __init__(self, SvgMap, division = 5, radius = 20):
+    def __init__(self, svgMap, division = 5, radius = 100):
+
         self.division = division
 
-        self.width = int(SvgMap.width/division)
-        self.height = int(SvgMap.height/division)
+        self.width = int(svgMap.width/division)
+        self.height = int(svgMap.height/division)
 
         self.grid = [ [ False for x in range(self.width) ] for y in range(self.height) ]
 
@@ -88,28 +89,16 @@ class DiscreteMap:
 
         for y in range(self.height):
             for x in range(self.width):
-                # The cell (x, y) will represent this point :
-                point = Point((x + 0.5)*division, (y + 0.5)*division)
-
-                # We check if any of the map's shapes contain our point
-                obstacle = False
-                id = 0
-
-                # TODO : Change this to take into account the car's width
-                while not obstacle and id<len(SvgMap.shapes):
-                    obstacle = point.containedIn(SvgMap.shapes[id])
-                    id += 1
-
-                if obstacle:
-                    self.grid[y][x] = Cell(x, y, reachable = False)
-                else:
-                    self.grid[y][x] = Cell(x, y, reachable = True)
+                # The cell (x, y) will represent the point ( (x + 0.5)*division, (y + 0.5)*division )
+                xi, yi = (x + 0.5)*division, (y + 0.5)*division
+                self.grid[y][x] = Cell(x, y, reachable = not svgMap.isObstacle(xi, yi))
 
 
-        # ALGORITHM EXPLOITING CONVOLUTION
+        # Taking into account the car's width (radius)
 
+        r = radius / division
         # 1 : Unreachable ; 0 : Reachable
-        car = scipy.array( [[1 for i in xrange(radius)] for j in xrange(radius)] )
+        car = scipy.array( [[1 for i in xrange(r)] for j in xrange(r)] )
         grid = scipy.array( [[0 if self.grid[i][j].reachable else 1 for j in xrange(self.width)] for i in xrange(self.height)] )
 
         result = scipy.signal.fftconvolve( grid, car, 'same' )
@@ -117,46 +106,6 @@ class DiscreteMap:
         for i in xrange(self.height):
             for j in xrange(self.width):
                 self.grid[i][j].reachable = True if int(result[i][j]) == 0 else False
-
-
-        # Then we eliminate all the cells that are too close to obstacles
-
-
-        # ALGO 1 : Go on each reachable cell, check if a neighbour is unreachable
-        # toEliminate = set()
-
-        # for line in self.grid:
-        #     for cell in line:
-        #         if cell.reachable:
-        #             neighbours = self.neighbours( cell, radius = int(radius/division), unreachables = True )
-        #             obstacle = False
-        #             for c in neighbours:
-        #                 if not c.reachable:
-        #                     obstacle = True
-        #                     break
-
-        #             if obstacle:
-        #                 toEliminate.add(cell)
-
-        # for cell in toEliminate:
-        #     cell.reachable = False
-
-        # ALGO 1 END --
-
-
-        # ALGO 2 : Go on each unreachable cell,
-
-        # unreachable = set()
-        # for line in self.grid:
-        #     for cell in line:
-        #         # print len(unreachable)
-        #         if not cell.reachable:
-        #             unreachable.add(cell)
-
-        # for cell in unreachable:
-        #     neighbours = self.neighbours( cell, int(radius/division) )
-        #     for nCell in neighbours:
-        #         nCell.reachable = False
 
 
     def neighbours(self, cell, radius = 1, unreachables = False, diagonal = True):
@@ -183,7 +132,6 @@ class DiscreteMap:
             print "Goal is unreachable"
             return []
         else:
-
             #We intialize the closed and open list
             cl  = set()
             ol = set()
