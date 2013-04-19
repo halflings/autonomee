@@ -171,10 +171,6 @@ class DiscreteMap:
             self.clear()
             return []
 
-
-
-
-
     def altsearch(self, begin, goal):
         if goal.x not in range(self.width) or goal.y not in range(self.height):
             print "Goal is out of bound"

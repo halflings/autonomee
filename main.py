@@ -40,12 +40,6 @@ class MainWindow(QtGui.QMainWindow):
         self.backgroundAction.setChecked(True)
         self.backgroundAction.toggled.connect(self.automaticView.setViewBackground)
 
-        # self.outlineAction = viewMenu.addAction("&Outline")
-        # self.outlineAction.setEnabled(False)
-        # self.outlineAction.setCheckable(True)
-        # self.outlineAction.setChecked(True)
-        # self.outlineAction.toggled.connect(self.automaticView.setViewOutline)
-
         self.menuBar().addMenu(viewMenu)
 
         # Mode menu
@@ -299,6 +293,7 @@ class ViewerScene(QtGui.QGraphicsScene):
                 self.car.move(speed)
             elif event.key()==QtCore.Qt.Key_Down or event.key()==QtCore.Qt.Key_S:
                 self.car.move(-speed)
+            print self.car.x(), self.car.y()
 
         # Heatmap
         if event.key() == QtCore.Qt.Key_H:
@@ -371,6 +366,13 @@ class SvgView(QtGui.QGraphicsView):
         self.titleItem.setPos(self.svgItem.boundingRect().width()/2 - self.titleItem.boundingRect().width()/2, 5)
         self.titleItem.setDefaultTextColor(QtGui.QColor(210, 220, 250))
         s.addItem(self.titleItem)
+        # Drop shadow on the text
+        self.textShadow = QtGui.QGraphicsDropShadowEffect()
+        self.textShadow.setBlurRadius(3)
+        self.textShadow.setColor( QtGui.QColor(20, 20, 40) )
+        self.textShadow.setOffset(1, 1)
+        self.titleItem.setGraphicsEffect( self.textShadow )
+
 
         # Background (blueprint image)
         self.backgroundItem = QtGui.QGraphicsRectItem(self.svgItem.boundingRect())
@@ -380,7 +382,7 @@ class SvgView(QtGui.QGraphicsView):
         self.backgroundItem.setZValue(-1)
         s.addItem(self.backgroundItem)
 
-        #Shadow effect
+        #Shadow effect on the background
         self.shadow = QtGui.QGraphicsDropShadowEffect()
         self.shadow.setBlurRadius(50)
         self.shadow.setColor( QtGui.QColor(20, 20, 40) )
@@ -420,16 +422,9 @@ class SvgView(QtGui.QGraphicsView):
     def wheelEvent(self, event):
         factor = 1.2**(event.delta() / 240.0)
 
-        self.scaleScene(factor)
+        self.scale(factor, factor)
 
         event.accept()
-
-    def scaleScene(self, factor):
-        self.factor *= factor
-        self.scale(factor, factor)
-        # self.svgItem.scale(factor, factor)
-        # self.outlineItem.scale(factor, factor)
-        # self.backgroundItem.scale(factor, factor)
 
 
 if __name__ == '__main__':

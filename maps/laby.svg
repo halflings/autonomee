@@ -9,12 +9,13 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="1024px"
-   height="768px"
+   width="1024"
+   height="768"
    id="svg3113"
    version="1.1"
    inkscape:version="0.48.3.1 r9886"
-   sodipodi:docname="laby.svg">
+   sodipodi:docname="laby.svg"
+   title="labyrinthe">
   <defs
      id="defs3115" />
   <sodipodi:namedview
@@ -27,13 +28,13 @@
      inkscape:zoom="0.70710675"
      inkscape:cx="626.41802"
      inkscape:cy="467.3027"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="svg3113"
      inkscape:document-units="px"
      showgrid="false"
      inkscape:window-width="1600"
-     inkscape:window-height="845"
+     inkscape:window-height="848"
      inkscape:window-x="0"
-     inkscape:window-y="27"
+     inkscape:window-y="24"
      inkscape:window-maximized="1" />
   <metadata
      id="metadata3118">
@@ -43,7 +44,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -51,19 +52,6 @@
      id="layer1"
      inkscape:label="Layer 1"
      inkscape:groupmode="layer">
-    <text
-       xml:space="preserve"
-       style="font-size:25.08806038px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
-       x="359.09879"
-       y="51.21629"
-       id="Titre"
-       sodipodi:linespacing="125%"
-       inkscape:label="Titre"
-       transform="scale(0.98822717,1.0119131)"><tspan
-         sodipodi:role="line"
-         id="tspan3076"
-         x="359.09879"
-         y="51.21629">Carosif visualization map</tspan></text>
     <rect
        style="fill:#00caff;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-miterlimit:4;stroke-opacity:0.76150626;stroke-dasharray:none"
        id="rect3053"
@@ -79,7 +67,7 @@
        x="610.94025"
        y="364.94913" />
     <rect
-       style="fill:#99ff55;fill-opacity:1;stroke:#000000;stroke-width:0.50000000000000000;stroke-miterlimit:4;stroke-opacity:0.76150625999999999;stroke-dasharray:none"
+       style="fill:#99ff55;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-miterlimit:4;stroke-opacity:0.76150626;stroke-dasharray:none"
        id="rect3011-4"
        width="87.681244"
        height="70.710678"
