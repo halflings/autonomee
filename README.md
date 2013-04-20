@@ -14,13 +14,6 @@ This includes:
 * Basic probability model : particle filter. (hopefully we'll also implement one based on Kalman's filter)
 * Visualization of the robot's movements and a 'heatmap' of the probabilities.
 
-UPDATE March 2013
-=======================
-
-This now also includes a server/client made to be used in a Raspberry Pi connected to the Arduino controlling the car. Check how that work out in a 'joystick controlled' mode :
-
-https://www.youtube.com/watch?v=rbX47X8HtGU
-
 Dependencies
 ============
 
@@ -29,3 +22,10 @@ Dependencies
 * numpy
 * PySerial
 * scipy
+
+March-2013 update
+=================
+
+This now also includes a server/client made to be used in a Raspberry Pi connected to the Arduino controlling the car. Check how that work out in a 'joystick controlled' mode :
+
+https://www.youtube.com/watch?v=rbX47X8HtGU
