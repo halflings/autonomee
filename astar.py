@@ -1,12 +1,11 @@
 """
 astar.py - A* algorithm implementation
 """
-
-from geometry import Point
 from math import sqrt
 from time import sleep
 import scipy
 import scipy.signal
+
 class Cell(object):
     def __init__(self, x, y, reachable = True):
         self.reachable = reachable
@@ -29,10 +28,6 @@ class Cell(object):
     def distance(self, cell):
         return sqrt((self.x - cell.x)**2 + (self.y - cell.y)**2)
 
-
-    diagonalCost = sqrt(2)
-    straightCost = 1
-
     def heuristicDistance(self, cell):
         return self.manhattanDistance(cell)
 
@@ -40,9 +35,10 @@ class Cell(object):
         return abs(self.x - cell.x) + abs(self.y - cell.y)
 
     def diagonalDistance(self, cell):
+
+        # 1st implementation :
         # hDiagonal = min(abs(self.x-cell.x), abs(self.y-cell.y))
         # hStraight = (abs(self.x-cell.x) + abs(self.y-cell.y))
-
         # return Cell.diagonalCost * hDiagonal + Cell.straightCost * (hStraight - 2*hDiagonal)
 
         xDist = abs(self.x - cell.x)
@@ -54,6 +50,7 @@ class Cell(object):
             return 1.4 * xDist + (yDist - xDist)
 
     def path(self):
+        """ Returns the path that led to this cell """
         resPath = [self]
         cell = self
         while cell.parent != None :

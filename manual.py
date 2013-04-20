@@ -1,3 +1,7 @@
+"""
+    manual.py - The view shown when controlling the car manually.
+"""
+
 from PySide import QtGui
 import engine
 import math

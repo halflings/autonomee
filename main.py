@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+"""
+    main.py - application entry point and the main window (opening files, menus, ...).
+"""
+
 from PySide import QtCore, QtGui
 
 from manual import ManualView

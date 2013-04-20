@@ -1,3 +1,7 @@
+"""
+    engine.py - all what's related to the car: model (coordinates, heading angle, ...) and graphic representation (with Qt)
+"""
+
 from PySide import QtCore, QtGui
 import math
 from math import cos, sin

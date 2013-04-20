@@ -1,3 +1,7 @@
+"""
+    probability.py - all probability-related models (particle filter, ...)
+"""
+
 import math
 from math import cos, sin, exp, pi, sqrt
 import random

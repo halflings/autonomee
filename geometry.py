@@ -1,3 +1,7 @@
+"""
+	geometry.py - geometry models (shapes, collision, ...)
+"""
+
 import math
 import numpy as np
 

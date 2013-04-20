@@ -1,5 +1,5 @@
 """
-A heatmap module for visualizing probabilities calculus - WIP
+    heatmap.py - a heatmap module for visualizing probabilities distribution
 """
 from PySide import QtGui, QtCore
 

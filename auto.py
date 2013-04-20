@@ -1,6 +1,12 @@
+"""
+    auto.py - The view shown when monitoring the car's autonomous movements
+    on the map or doing simulations.
+"""
+
 from PySide import QtCore, QtGui, QtSvg
 
 import engine
+
 import svg
 import heatmap
 

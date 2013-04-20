@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+"""
+    joystick.py - work in progress : joystick class.
+"""
+
 import pygame
 from time import sleep
 import serial
