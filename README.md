@@ -6,8 +6,13 @@ This is a work in progress and the code base can change very radically. Don't ex
 Carosif - "SVGmap-robot"
 ============
 
-A Python front-end for robot localization (and other uses) using SVG for the maps and Qt for the UI.
-This includes a *really* basic SVG parser, a pathfinder (A\*),  some "collision" methods to calculate the distance to the closest obstacle and the visualization of the robot's movements and a 'heatmap' of the probabilities.
+A Python front-end for robot localization (and other uses) using SVG for maps' representation and Qt for the UI.
+This includes:
+* A *really* basic SVG parser
+* A pathfinder (A\*)
+* Nearest obstacle detection (to simulate the sensor's measurements)
+* Basic probability model : particle filter. (hopefully we'll also implement one based on Kalman's filter)
+* Visualization of the robot's movements and a 'heatmap' of the probabilities.
 
 UPDATE March 2013
 =======================
@@ -19,7 +24,8 @@ https://www.youtube.com/watch?v=rbX47X8HtGU
 Dependencies
 ============
 
-Python 2.7
-Qt and PySide
-Numpy
-Pyserial
+* Python 2.7
+* Qt and PySide (Qt's python binding)
+* numpy
+* PySerial
+* scipy
