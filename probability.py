@@ -128,7 +128,9 @@ if __name__ == "__main__":
 
     proba.move(10, 0)
     proba.sense(204, 0)
+
     print proba
+
     proba.resample()
 
 

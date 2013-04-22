@@ -2,42 +2,64 @@
     manual.py - The view shown when controlling the car manually.
 """
 
-from PySide import QtGui
+from PySide.QtGui import *
+from PySide.QtCore import *
+
 import engine
 import math
 
 
-class ManualView(QtGui.QGraphicsView):
+class ManualView(QGraphicsView):
 
     def __init__(self, parent=None):
         super(ManualView, self).__init__(parent)
 
-        self.setRenderHints(QtGui.QPainter.Antialiasing | QtGui.QPainter.SmoothPixmapTransform)
+        self.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform)
+        scene = ManualScene(self)
+        self.setScene(scene)
 
-        self.setScene(ManualScene(self))
+        self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
+        self.setDragMode(QGraphicsView.ScrollHandDrag)
 
-        tilePixmap = QtGui.QPixmap(64, 64)
-        tilePixmap.fill(QtGui.QColor(230, 230, 230))
-        self.setBackgroundBrush(QtGui.QBrush(tilePixmap))
+        self.setAlignment(Qt.AlignHCenter)
+
+    def showEvent(self, event):
+        super(ManualView, self).showEvent(event)
+        self.fitInView(0, 0, self.scene().width(), self.scene().height())
+
 
     def paintEvent(self, event):
         super(ManualView, self).paintEvent(event)
 
-class ManualScene(QtGui.QGraphicsScene):
+class ManualScene(QGraphicsScene):
     def __init__(self, parent=None):
         super(ManualScene, self).__init__(parent)
 
-        # POUR LORIC : Ajoute ici les objets graphiques dont t'as besoin pour ta scene
-        # Pour changer leur apparence, regarde tout ce qui est 'setPen', utilis&eacute; dans engine.py et ici
+        # Background
+        self.gradient = QLinearGradient(0, -200, 0, 600)
+        lightGray = 0.1
+        darkGray = 0.03
+        self.gradient.setColorAt(0, QColor.fromRgbF(darkGray, darkGray, darkGray, 1))
+        self.gradient.setColorAt(1, QColor.fromRgbF(lightGray, lightGray, lightGray, 1))
+        self.setBackgroundBrush(self.gradient)
 
-        # Ex1 un rectangle
-        rect = QtGui.QGraphicsRectItem(10, 10, 200, 200)
-        self.addItem( rect )
+        self.rect = QGraphicsRectItem(0, 0, 500, 500)
+        self.addItem(self.rect)
 
-        # Ex2 une voiture
         self.car = engine.Car()
         self.car.setAngle(math.pi/2)
+        self.car.setCaption("")
+        self.car.setPos(200, 200)
         self.addItem(self.car)
+
+        # #Text
+
+        # self.titleItem = QGraphicsTextItem("INSAbot - manual mode")
+        # self.titleItem.setFont(QFont("Ubuntu-L.ttf", 35, QFont.Light))
+        # # 'Dirty' centering of the text
+        # self.titleItem.setPos(self.svgItem.boundingRect().width()/2 - self.titleItem.boundingRect().width()/2, 5)
+        # self.titleItem.setDefaultTextColor(QColor(210, 220, 250))
+        # self.addItem(self.titleItem)
 
     def mousePressEvent(self, event):
         x, y = event.scenePos().x(), event.scenePos().y()

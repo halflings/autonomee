@@ -5,12 +5,14 @@
 """
 
 from PySide import QtCore, QtGui
+from PySide.QtCore import *
+from PySide.QtGui import *
 
 from manual import ManualView
 from auto import AutoView
 
 
-class MainWindow(QtGui.QMainWindow):
+class MainWindow(QMainWindow):
     AUTO_MODE = 0
     MANUAL_MODE = 1
     def __init__(self):
@@ -18,23 +20,24 @@ class MainWindow(QtGui.QMainWindow):
 
         self.currentPath = ''
 
+        # Setting the views
         self.automaticView = AutoView()
         self.manualView = ManualView()
 
         # File menu
-        fileMenu = QtGui.QMenu("&File", self)
+        fileMenu = QMenu("&File", self)
         openAction = fileMenu.addAction("&Open...")
         openAction.setShortcut("Ctrl+O")
         quitAction = fileMenu.addAction("E&xit")
         quitAction.setShortcut("Ctrl+Q")
 
         openAction.triggered.connect(self.openFile)
-        quitAction.triggered.connect(QtGui.qApp.quit)
+        quitAction.triggered.connect(qApp.quit)
 
         self.menuBar().addMenu(fileMenu)
 
         # View menu
-        viewMenu = QtGui.QMenu("&View", self)
+        viewMenu = QMenu("&View", self)
         self.backgroundAction = viewMenu.addAction("&Background")
         self.backgroundAction.setEnabled(True)
         self.backgroundAction.setCheckable(True)
@@ -44,7 +47,7 @@ class MainWindow(QtGui.QMainWindow):
         self.menuBar().addMenu(viewMenu)
 
         # Mode menu
-        modeMenu = QtGui.QMenu("&Mode", self)
+        modeMenu = QMenu("&Mode", self)
 
         manualAction = modeMenu.addAction("M&anual")
         manualAction.setShortcut("Ctrl+M")
@@ -54,29 +57,33 @@ class MainWindow(QtGui.QMainWindow):
         automaticAction.setShortcut("Ctrl+A")
         automaticAction.triggered.connect(self.automaticMode)
 
+        # Adding the menu
         self.menuBar().addMenu(modeMenu)
 
-        self.automaticMode()
+        # Stacked widget
+        self.stackedWidget = QStackedWidget()
+        self.stackedWidget.addWidget(self.automaticView)
+        self.stackedWidget.addWidget(self.manualView)
+
+        self.setCentralWidget(self.stackedWidget)
 
     def manualMode(self):
-        self.setCentralWidget(self.manualView)
-        self.automaticView = AutoView()
+        self.stackedWidget.setCurrentWidget( self.manualView )
         self.setWindowTitle("Carosif - Manual mode")
 
     def automaticMode(self):
-        self.setCentralWidget(self.automaticView)
-        self.manualView = ManualView()
+        self.stackedWidget.setCurrentWidget( self.automaticView )
         self.setWindowTitle("Carosif - Automatic mode")
 
     def openFile(self, path=None):
         if not path:
-            path = QtGui.QFileDialog.getOpenFileName(self, "Open SVG File", self.currentPath, "SVG files (*.svg *.svgz *.svg.gz)")[0]
+            path = QFileDialog.getOpenFileName(self, "Open SVG File", self.currentPath, "SVG files (*.svg *.svgz *.svg.gz)")[0]
         if path:
-            svg_file = QtCore.QFile(path)
+            svg_file = QFile(path)
             if not svg_file.exists():
-                QtGui.QMessageBox.critical(self, "Open SVG File",
+                QMessageBox.critical(self, "Open SVG File",
                         "Could not open file '%s'." % path)
-                self.backgroundAction.setEnabled(False)
+                self.backgroundAction.setEnabled(True)
                 return
 
             self.automaticView.openFile(svg_file)
@@ -85,16 +92,13 @@ class MainWindow(QtGui.QMainWindow):
                 self.setWindowTitle("Carosif - Automatic mode - Map : {}".format(self.currentPath))
             self.backgroundAction.setEnabled(True)
 
-            self.resize(self.automaticView.sizeHint() + QtCore.QSize(80, 80 + self.menuBar().height()))
-
-            #self.svg = pysvg.parser.parse('mapexample.svg')
-
+            self.resize(self.automaticView.sizeHint() + QSize(80, 80 + self.menuBar().height()))
 
 if __name__ == '__main__':
 
     import sys
 
-    app = QtGui.QApplication(sys.argv)
+    app = QApplication(sys.argv)
 
     window = MainWindow()
     if len(sys.argv) == 2:

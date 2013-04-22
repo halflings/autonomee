@@ -30,7 +30,6 @@ class Car(QtGui.QGraphicsObject):
 		self.length = length
 
 		# Setting up text
-		self.caption = ""
 		self.text = QtGui.QGraphicsTextItem("", self)
 		self.text.setFont(QtGui.QFont("Ubuntu-L.ttf"))
 		self.text.setPos(-140, -140)
@@ -40,7 +39,6 @@ class Car(QtGui.QGraphicsObject):
 		self.textShadow.setColor( QtGui.QColor(0, 0, 0) )
 		self.textShadow.setOffset(1, 1)
 		self.text.setGraphicsEffect( self.textShadow )
-
 
 		self.text.setDefaultTextColor(QtGui.QColor(210, 220, 250))
 		self.text.font().setBold(True)
@@ -60,7 +58,6 @@ class Car(QtGui.QGraphicsObject):
 			self.shadow.setOffset(0, 0)
 			self.image.setGraphicsEffect( self.shadow )
 
-
 		# Initializing the "view ray"
 		self.line = QtCore.QLine(x, y, 0, 0)
 		self.ray = QtGui.QGraphicsLineItem(self.line, self )
@@ -79,25 +76,23 @@ class Car(QtGui.QGraphicsObject):
 		self.moving = False
 
 		#Angle is in radian, and follows the traditional trigonometric orientation
-		#			   pi/2
-		#	pi or -pi __|__ 0
-		#				|
-		#			  -pi/2
+		#	   pi/2
+		#  -pi __|__ 0
+		#		 |
+		# 	  -pi/2
 		self.angle = 0
 
 		self.setPos(x, y)
 
-		#print "Car width {} | Car length {} | Car sprite {}".format(self.width, self.length, self.sprite)
 
-		#Some random flags ... (should be useful later)
-		self.setFlag(QtGui.QGraphicsItem.ItemIsMovable, True)
-		self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable, True)
+		# Some config infos.
+		self.setCacheMode( QtGui.QGraphicsItem.ItemCoordinateCache )
+
 
 		self.rect = QtCore.QRectF()
 		self.update()
 
 	def move(self, speed):
-
 		dx = speed * cos(self.angle)
 		dy = -speed * sin(self.angle)
 
@@ -124,6 +119,9 @@ class Car(QtGui.QGraphicsObject):
 		super(Car, self).setPos(x, y)
 		self.update()
 
+	def setCaption(self, text):
+		self.text.setPlainText(text)
+
 	def paint(self, painter=None, style=None, widget=None):
 		pass
 
@@ -137,16 +135,14 @@ class Car(QtGui.QGraphicsObject):
 
 		#Updating the caption
 		if self.moving:
-			self.caption = "Car moving... "
+			self.setCaption( "Car moving... " )
 			distance = 0
 		elif self.distance:
-			self.caption = "Closest object at : {}".format(int(self.distance))
+			self.setCaption( "Closest object at : {}".format(int(self.distance)) )
 			distance = self.distance
 		else:
-			self.caption = "No object ahead"
+			self.setCaption( "No object ahead" )
 			distance = 0
-
-		self.text.setPlainText(self.caption)
 
 		# Updating the "ray"
 		self.ray.setLine(QtCore.QLine(0, 0, distance*math.cos(self.angle), - distance*math.sin(self.angle)))
@@ -156,6 +152,7 @@ class Car(QtGui.QGraphicsObject):
 
 	def x(self):
 		return self.pos().x()
+
 	def y(self):
 		return self.pos().y()
 

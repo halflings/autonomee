@@ -1,8 +1,8 @@
 """
-astar.py - A* algorithm implementation
+    astar.py - A* algorithm implementation
 """
+
 from math import sqrt
-from time import sleep
 import scipy
 import scipy.signal
 
@@ -169,7 +169,7 @@ class DiscreteMap:
             return []
 
     def altsearch(self, begin, goal):
-        if goal.x not in range(self.width) or goal.y not in range(self.height):
+        if not ( 0 < goal.x < self.width and 0 < goal.y < self.height ):
             print "Goal is out of bound"
             return []
         elif not self.grid[begin.y][begin.x].reachable:

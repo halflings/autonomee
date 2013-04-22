@@ -3,7 +3,9 @@
     on the map or doing simulations.
 """
 
-from PySide import QtCore, QtGui, QtSvg
+from PySide import QtSvg
+from PySide.QtGui import *
+from PySide.QtCore import *
 
 import engine
 
@@ -13,11 +15,11 @@ import heatmap
 from collections import deque
 import math
 
-class AutoScene(QtGui.QGraphicsScene):
+class AutoScene(QGraphicsScene):
 
     def __init__(self, parent=None):
         super(AutoScene, self).__init__(parent)
-        #self.setDragMode(QtGui.QGraphicsScene.ScrollHandDrag)
+        #self.setDragMode(QGraphicsScene.ScrollHandDrag)
 
         self.x = 0
         self.y =0
@@ -33,7 +35,7 @@ class AutoScene(QtGui.QGraphicsScene):
 
         # Graphical representation of the last generated path
         self.graphicalPath = None
-        # self.graphicalPath = QtGui.QGraphicsPathItem( QtGui.QPainterPath() )
+        # self.graphicalPath = QGraphicsPathItem( QPainterPath() )
         # self.graphicalPath.setZValue(-1)
 
 
@@ -52,26 +54,26 @@ class AutoScene(QtGui.QGraphicsScene):
         x, y = event.scenePos().x(), event.scenePos().y()
 
         # If the car doesn't exist yet, we place it where we clicked
-        if not self.car:
+        if self.car is None and self.map is not None:
             self.car = engine.Car(self.map, x, y)
             self.addItem(self.car)
 
             #Fade in animation
-            self.animation = QtCore.QPropertyAnimation(self.car, "opacity")
+            self.animation = QPropertyAnimation(self.car, "opacity")
             self.animation.setDuration(300)
             self.animation.setStartValue( 0.0 )
             self.animation.setEndValue( 1.0 )
-            self.animation.start( QtCore.QAbstractAnimation.DeleteWhenStopped )
+            self.animation.start( QAbstractAnimation.DeleteWhenStopped )
 
         # If the car already exists, we generate a path from the car to where we clicked
         # and show it on the UI
-        else:
+        elif self.car is not None:
             #We get the path from our 'map' object
             self.path = self.map.search((self.car.x(), self.car.y()), (x,y))
 
             if len(self.path) > 0:
                 # We build a polyline graphic item
-                painterPath = QtGui.QPainterPath()
+                painterPath = QPainterPath()
                 painterPath.moveTo(self.path[0].x, self.path[0].y)
                 for i in xrange(1, len(self.path)):
                     painterPath.lineTo(self.path[i].x, self.path[i].y)
@@ -84,15 +86,15 @@ class AutoScene(QtGui.QGraphicsScene):
                     self.graphicalPath.setPath(painterPath)
                 # Else, we create a new graphical path
                 else:
-                    self.graphicalPath = QtGui.QGraphicsPathItem(painterPath)
+                    self.graphicalPath = QGraphicsPathItem(painterPath)
                     self.graphicalPath.setZValue(-1)
 
-                    pen = QtGui.QPen()
-                    pen.setColor(QtGui.QColor(180, 200, 240))
+                    pen = QPen()
+                    pen.setColor(QColor(180, 200, 240))
                     pen.setWidth(3)
-                    # pen.setCapStyle(QtCore.Qt.RoundCap)
+                    # pen.setCapStyle(Qt.RoundCap)
                     pen.setMiterLimit(10)
-                    pen.setJoinStyle(QtCore.Qt.RoundJoin)
+                    pen.setJoinStyle(Qt.RoundJoin)
                     space = 4
                     pen.setDashPattern([8, space, 1, space] )
                     self.graphicalPath.setPen(pen)
@@ -106,10 +108,10 @@ class AutoScene(QtGui.QGraphicsScene):
                 totalDuration = 1000. * (totalLength / pixelsPerSecond)
 
                 # Animating the car on the path
-                self.animation = QtCore.QParallelAnimationGroup();
+                self.animation = QParallelAnimationGroup();
 
-                self.posAnim = QtCore.QPropertyAnimation(self.car, "pos")
-                self.rotationAnim = QtCore.QPropertyAnimation(self.car, "angleProperty")
+                self.posAnim = QPropertyAnimation(self.car, "pos")
+                self.rotationAnim = QPropertyAnimation(self.car, "angleProperty")
 
                 self.posAnim.setDuration(totalDuration)
                 self.rotationAnim.setDuration(totalDuration)
@@ -138,7 +140,7 @@ class AutoScene(QtGui.QGraphicsScene):
                     if len(angles) > 15:
                         angles.popleft()
 
-                    self.posAnim.setKeyValueAt(float(i)/nKeys, QtCore.QPointF(pt.x, pt.y))
+                    self.posAnim.setKeyValueAt(float(i)/nKeys, QPointF(pt.x, pt.y))
                     self.rotationAnim.setKeyValueAt(float(i)/nKeys, meanAngle)
 
                 self.animation.addAnimation(self.rotationAnim)
@@ -146,7 +148,7 @@ class AutoScene(QtGui.QGraphicsScene):
 
                 self.animation.finished.connect(self.pathFinished)
 
-                self.animation.start(QtCore.QAbstractAnimation.DeleteWhenStopped)
+                self.animation.start(QAbstractAnimation.DeleteWhenStopped)
                 self.car.moving = True
 
         super(AutoScene,self).mousePressEvent(event)
@@ -155,7 +157,7 @@ class AutoScene(QtGui.QGraphicsScene):
     def pathFinished(self):
         self.car.moving = False
         self.path =  []
-        self.graphicalPath.setPath(QtGui.QPainterPath())
+        self.graphicalPath.setPath(QPainterPath())
 
     def mouseMoveEvent(self, event):
         x, y = event.scenePos().x(), event.scenePos().y()
@@ -173,38 +175,38 @@ class AutoScene(QtGui.QGraphicsScene):
         # Moving the car
         speed = 20
         if self.car and not self.car.moving:
-            if event.key()==QtCore.Qt.Key_Up or event.key()==QtCore.Qt.Key_Z:
+            if event.key()==Qt.Key_Up or event.key()==Qt.Key_Z:
                 self.car.move(speed)
-            elif event.key()==QtCore.Qt.Key_Down or event.key()==QtCore.Qt.Key_S:
+            elif event.key()==Qt.Key_Down or event.key()==Qt.Key_S:
                 self.car.move(-speed)
 
         # Heatmap
-        if event.key() == QtCore.Qt.Key_H:
+        if event.key() == Qt.Key_H:
             self.heatmap = heatmap.Heatmap(self.map.width ,  self.map.height)
             self.graphicalHeatmap = heatmap.GraphicalHeatmap(self.heatmap)
             self.graphicalHeatmap.setZValue(-1)
             self.addItem( self.graphicalHeatmap )
 
-class AutoView(QtGui.QGraphicsView):
+class AutoView(QGraphicsView):
     Native, OpenGL, Image = range(3)
 
     def __init__(self, parent=None):
         super(AutoView, self).__init__(parent)
 
-        self.setRenderHints(QtGui.QPainter.Antialiasing | QtGui.QPainter.SmoothPixmapTransform)
+        self.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform)
 
         self.renderer = AutoView.OpenGL
         self.svgItem = None
         self.backgroundItem = None
         self.outlineItem = None
-        self.image = QtGui.QImage()
+        self.image = QImage()
 
         self.setScene(AutoScene(self))
-        self.setTransformationAnchor(QtGui.QGraphicsView.AnchorUnderMouse)
-        self.setDragMode(QtGui.QGraphicsView.ScrollHandDrag)
+        self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
+        self.setDragMode(QGraphicsView.ScrollHandDrag)
 
-        self.setBackgroundBrush(QtGui.QImage("img/blueprintDark.png"))
-        self.setCacheMode(QtGui.QGraphicsView.CacheBackground)
+        self.setBackgroundBrush(QImage("img/blueprintDark.png"))
+        self.setCacheMode(QGraphicsView.CacheBackground)
 
 
     def openFile(self, svg_file):
@@ -227,59 +229,59 @@ class AutoView(QtGui.QGraphicsView):
         else:
             drawBackground = False
 
-        # if self.outlineItem:
-        #     drawOutline = self.outlineItem.isVisible()
-        # else:
-        #     drawOutline = True
-
         s.clear()
         self.resetTransform
 
         # View containg the SVG map
         self.svgItem = QtSvg.QGraphicsSvgItem(svg_file.fileName())
-        self.svgItem.setFlags(QtGui.QGraphicsItem.ItemClipsToShape)
-        self.svgItem.setCacheMode(QtGui.QGraphicsItem.NoCache)
+        self.svgItem.setFlags(QGraphicsItem.ItemClipsToShape)
+        self.svgItem.setCacheMode(QGraphicsItem.NoCache)
         self.svgItem.setZValue(0)
         s.addItem(self.svgItem)
 
-        # Title text
-        self.titleItem = QtGui.QGraphicsTextItem("INSAbot visualization UI")
-        self.titleItem.setFont(QtGui.QFont("Ubuntu-L.ttf", 35, QtGui.QFont.Light))
-        # 'Dirty' centering of the text
-        self.titleItem.setPos(self.svgItem.boundingRect().width()/2 - self.titleItem.boundingRect().width()/2, 5)
-        self.titleItem.setDefaultTextColor(QtGui.QColor(210, 220, 250))
-        s.addItem(self.titleItem)
-        # Drop shadow on the text
-        self.textShadow = QtGui.QGraphicsDropShadowEffect()
-        self.textShadow.setBlurRadius(3)
-        self.textShadow.setColor( QtGui.QColor(20, 20, 40) )
-        self.textShadow.setOffset(1, 1)
-        self.titleItem.setGraphicsEffect( self.textShadow )
+        # The svg item's dimensions:
+        width, height = self.svgItem.boundingRect().width(), self.svgItem.boundingRect().height()
+
 
         # Background (blueprint image)
-        self.backgroundItem = QtGui.QGraphicsRectItem(self.svgItem.boundingRect())
-        self.backgroundItem.setBrush( QtGui.QImage("img/blueprint.png") )
-        self.backgroundItem.setPen(QtGui.QPen())
+        self.backgroundItem = QGraphicsRectItem(self.svgItem.boundingRect())
+        self.backgroundItem.setBrush( QImage("img/blueprint.png") )
+        self.backgroundItem.setPen(QPen())
         self.backgroundItem.setVisible(not drawBackground)
         self.backgroundItem.setZValue(-1)
+        self.backgroundItem.setCacheMode( QGraphicsItem.ItemCoordinateCache )
         s.addItem(self.backgroundItem)
 
         #Shadow effect on the background
-        self.shadow = QtGui.QGraphicsDropShadowEffect()
-        self.shadow.setBlurRadius(50)
-        self.shadow.setColor( QtGui.QColor(20, 20, 40) )
-        self.shadow.setOffset(0, 0)
-        self.backgroundItem.setGraphicsEffect( self.shadow )
+        # TODO : See why this is *so* slow when we zoom in ?
+        # self.shadow = QGraphicsDropShadowEffect()
+        # self.shadow.setBlurRadius(50)
+        # self.shadow.setColor( QColor(20, 20, 40) )
+        # self.shadow.setOffset(0, 0)
+        # self.backgroundItem.setGraphicsEffect( self.shadow )
 
-        # # A dashed (outline) of the SVG map
-        # self.outlineItem = QtGui.QGraphicsRectItem(self.svgItem.boundingRect())
-        # outline = QtGui.QPen(QtCore.Qt.black, 2, QtCore.Qt.DashDotLine)
-        # outline.setCosmetic(True)
-        # self.outlineItem.setPen(outline)
-        # self.outlineItem.setBrush(QtGui.QBrush(QtCore.Qt.NoBrush))
-        # self.outlineItem.setVisible(drawOutline)
-        # self.outlineItem.setZValue(1)
-        # s.addItem(self.outlineItem)
+        # Title text
+        self.titleItem = QGraphicsTextItem("INSAbot visualization UI")
+        self.titleItem.setFont(QFont("Ubuntu-L.ttf", 35, QFont.Light))
+        # 'Dirty' centering of the text
+        self.titleItem.setPos(width/2 - self.titleItem.boundingRect().width()/2, 5)
+        self.titleItem.setDefaultTextColor(QColor(210, 220, 250))
+        s.addItem(self.titleItem)
+        # Drop shadow on the text
+        self.textShadow = QGraphicsDropShadowEffect()
+        self.textShadow.setBlurRadius(3)
+        self.textShadow.setColor( QColor(20, 20, 40) )
+        self.textShadow.setOffset(1, 1)
+        self.titleItem.setGraphicsEffect( self.textShadow )
+
+
+        # Connection button
+        self.connectButton = QPushButton("Connecter la voiture")
+        bWidth, bHeight = 200, 30
+        self.connectButton.setGeometry(width - bWidth - 15, height - bHeight - 15, bWidth, bHeight)
+
+
+        s.addWidget(self.connectButton)
 
         self.x = 0
         self.y = 0
@@ -291,7 +293,7 @@ class AutoView(QtGui.QGraphicsView):
 
     def setRenderer(self, renderer):
         self.renderer = renderer
-        self.setViewport(QtGui.QWidget())
+        self.setViewport(QWidget())
 
     def setViewBackground(self, enable):
         if self.backgroundItem:
