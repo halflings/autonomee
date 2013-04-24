@@ -2,6 +2,8 @@
 
 A Python front-end for robot localization (and other uses) using SVG for maps' representation and Qt for the UI.
 
+You can also check the robot's arduino sketch, __AutoRobot.ino__. 
+
 ## Features
 
 * A *really* basic SVG parser
