@@ -43,7 +43,7 @@ class ManualScene(QGraphicsScene):
         self.gradient.setColorAt(1, QColor.fromRgbF(lightGray, lightGray, lightGray, 1))
         self.setBackgroundBrush(self.gradient)
 
-        self.rect = QGraphicsRectItem(0, 0, 500, 500)
+        self.rect = QGraphicsRectItem(0, 0, 600, 500)
         self.addItem(self.rect)
 
         # TODO : Create a different car view for the manual mode
@@ -51,14 +51,16 @@ class ManualScene(QGraphicsScene):
         self.graphicCar.setCaption("")
         self.addItem(self.graphicCar)
 
-        # #Text
+        #Text
+        self.titleItem = QGraphicsTextItem("INSAbot - manual mode")
+        self.titleItem.setFont(QFont("Ubuntu-L.ttf", 35, QFont.Light))
+        # 'Dirty' centering of the text
+        self.titleItem.setPos(self.width()/2 - self.titleItem.boundingRect().width()/2, 5)
+        self.titleItem.setDefaultTextColor(QColor(210, 220, 250))
+        self.addItem(self.titleItem)
 
-        # self.titleItem = QGraphicsTextItem("INSAbot - manual mode")
-        # self.titleItem.setFont(QFont("Ubuntu-L.ttf", 35, QFont.Light))
-        # # 'Dirty' centering of the text
-        # self.titleItem.setPos(self.svgItem.boundingRect().width()/2 - self.titleItem.boundingRect().width()/2, 5)
-        # self.titleItem.setDefaultTextColor(QColor(210, 220, 250))
-        # self.addItem(self.titleItem)
+        print self.width(), self.height()
+
 
     def mousePressEvent(self, event):
         x, y = event.scenePos().x(), event.scenePos().y()

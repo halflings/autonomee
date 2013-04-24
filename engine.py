@@ -8,6 +8,11 @@ from PySide.QtGui import *
 import math
 from math import cos, sin
 
+DEFAULT_IMAGE = QImage("img/car.png")
+SPRITES = {"sedan" : DEFAULT_IMAGE.scaledToWidth(DEFAULT_IMAGE.width()*0.4)}
+
+
+
 def formatAngle(angle):
 	""" Formats angle in the trigonometric convention """
 	return (angle + math.pi)%(2*math.pi) - math.pi
@@ -96,10 +101,11 @@ class GraphicsCarItem(QGraphicsObject):
 	# NOTE : The mm/px conversion should be done in the model ... maybe this class should do everything in px ...
 	default_width = 100
 	default_length = 200
-
-	default_image =  QImage("img/car.png")
 	scale_factor = 0.5
-	sprites = {"sedan" : default_image.scaledToWidth(default_image.width()*scale_factor)}
+
+
+	def __del__(self):
+		print "DESTORY"
 
 	def __init__(self, car, sprite_name = "sedan", shadow = True):
 		super(GraphicsCarItem, self).__init__()
@@ -126,9 +132,126 @@ class GraphicsCarItem(QGraphicsObject):
 
 		# Initializing image
 		self.sprite_name = sprite_name
-		self.img = GraphicsCarItem.sprites[sprite_name]
+		self.img = SPRITES[sprite_name]
 
-		self.image = QGraphicsPixmapItem( QPixmap( GraphicsCarItem.sprites[sprite_name] ), self)
+		self.image = QGraphicsPixmapItem( QPixmap( SPRITES[sprite_name] ), self)
+		self.image.setOffset(-self.img.width()/2, -self.img.height()/2)
+
+		# Shadow effect on the car's image
+		if shadow:
+			self.shadow = QGraphicsDropShadowEffect()
+			self.shadow.setBlurRadius(80)
+			self.shadow.setColor( QColor(80, 90, 220) )
+			self.shadow.setOffset(0, 0)
+			self.image.setGraphicsEffect( self.shadow )
+
+		# Initializing the "view ray"
+		self.line = QLine(self.car.x, self.car.y, 0, 0)
+		self.ray = QGraphicsLineItem(self.line, self )
+		self.ray.setZValue(-1)
+
+		pen.setColor(QColor(180, 200, 200))
+		pen.setWidth(2)
+		self.ray.setPen(pen)
+
+		# Caching for the graphics
+		self.setCacheMode( QGraphicsItem.ItemCoordinateCache )
+
+		self.rect = QRectF()
+		self.update()
+
+	def setCaption(self, text):
+		self.text.setPlainText(text)
+
+	def paint(self, painter=None, style=None, widget=None):
+		pass
+
+	def update(self):
+		super(GraphicsCarItem, self).update()
+
+		# Rotating the car around its center
+		if self.image.rotation() != self.car.angle:
+			self.image.setRotation(-math.degrees(self.car.angle))
+
+		self.setPos(self.car.x, self.car.y)
+
+		#Updating the caption
+		distance = 0
+		if self.car.moving:
+			self.setCaption( "Car moving... " )
+		elif self.car.distance:
+			self.setCaption( "Closest object at : {}".format(int(self.car.distance)) )
+			distance = self.car.distance
+		else:
+			self.setCaption( "No object ahead" )
+
+		# Updating the "ray"
+		self.ray.setLine(QLine(0, 0, distance*math.cos(self.car.angle), - distance*math.sin(self.car.angle)))
+
+	def boundingRect(self):
+		return QRectF(self.x(), self.y(), self.image.boundingRect().width() , self.image.boundingRect().height())
+
+	def x(self):
+		return self.pos().x()
+
+	def y(self):
+		return self.pos().y()
+
+	def frontX(self):
+		return self.x() + cos(self.car.angle) * self.img.width()
+	def frontY(self):
+		return self.y() - sin(self.car.angle) * self.img.width()
+
+	def topLeftX(self):
+		return self.x() - ( self.image.boundingRect().width() / 2 )
+
+	def topLeftY(self):
+		return self.y() - ( self.image.boundingRect().height() / 2 )
+
+	# def mousePressEvent(self, event):
+	# 	super(Car, self).mousePressEvent(event)
+	# 	print "Car mouse event at ({} , {})".format(event.pos().x(), event.pos().y())
+
+	# 	event.accept()
+
+
+
+
+class GraphicsStaticCarItem(QGraphicsObject):
+	"""
+	'Static' view of the car (not affected by the car's movements)
+	Used in the 'manual' interface
+	"""
+	default_width = 100
+	default_length = 200
+
+	def __init__(self, car, sprite_name = "sedan", shadow = True):
+		super(GraphicsCarItem, self).__init__()
+
+		pen = QPen()
+
+		self.car = car
+		self.car.addView(self)
+
+		# Setting up text
+		self.text = QGraphicsTextItem("", self)
+		self.text.setFont(QFont("Ubuntu-L.ttf"))
+		self.text.setPos(-140, -140)
+
+		self.textShadow = QGraphicsDropShadowEffect()
+		self.textShadow.setBlurRadius(3)
+		self.textShadow.setColor( QColor(0, 0, 0) )
+		self.textShadow.setOffset(1, 1)
+		self.text.setGraphicsEffect( self.textShadow )
+
+		self.text.setDefaultTextColor(QColor(210, 220, 250))
+		self.text.font().setBold(True)
+
+		# Initializing image
+		self.sprite_name = sprite_name
+		self.img = SPRITES[sprite_name]
+
+		self.image = QGraphicsPixmapItem( QPixmap(SPRITES[sprite_name] ), self)
 		self.image.setOffset(-self.img.width()/2, -self.img.height()/2)
 
 		# Shadow effect on the car's image
