@@ -11,7 +11,8 @@ from math import cos, sin
 DEFAULT_IMAGE = QImage("img/car.png")
 SPRITES = {"sedan" : DEFAULT_IMAGE.scaledToWidth(DEFAULT_IMAGE.width()*0.4)}
 
-
+COMPASS_BG = QImage("img/compass.png")
+COMPASS_NEEDLE = QImage("img/compass-needle.png")
 
 def formatAngle(angle):
 	""" Formats angle in the trigonometric convention """
@@ -64,6 +65,11 @@ class Car(QObject):
 
 		self.update()
 
+	def setMoving(self, movingStatus):
+		self.moving = movingStatus
+
+		self.update()
+
 	def readAngle(self):
 		return self.angle
 
@@ -97,19 +103,18 @@ class Car(QObject):
 
 
 class GraphicsCarItem(QGraphicsObject):
-	#"ALL measurements must be in mm"
-	# NOTE : The mm/px conversion should be done in the model ... maybe this class should do everything in px ...
+	"""
+	A dynamic graphical representation of a car.
+	Received an update signal (update() method) when the model is modified
+	"""
+
+	# In the view, everything should be expressed in px (converted from the model where mm should be used)
 	default_width = 100
 	default_length = 200
 	scale_factor = 0.5
 
-
-	def __del__(self):
-		print "DESTORY"
-
 	def __init__(self, car, sprite_name = "sedan", shadow = True):
 		super(GraphicsCarItem, self).__init__()
-
 
 		pen = QPen()
 
@@ -157,8 +162,10 @@ class GraphicsCarItem(QGraphicsObject):
 		# Caching for the graphics
 		self.setCacheMode( QGraphicsItem.ItemCoordinateCache )
 
-		self.rect = QRectF()
 		self.update()
+
+	def __del__(self):
+		self.car.removeView(self)
 
 	def setCaption(self, text):
 		self.text.setPlainText(text)
@@ -225,18 +232,37 @@ class GraphicsStaticCarItem(QGraphicsObject):
 	default_width = 100
 	default_length = 200
 
-	def __init__(self, car, sprite_name = "sedan", shadow = True):
-		super(GraphicsCarItem, self).__init__()
-
-		pen = QPen()
+	def __init__(self, car):
+		super(GraphicsStaticCarItem, self).__init__()
 
 		self.car = car
 		self.car.addView(self)
 
+		# Initializing image
+
+		# Compass's background
+		self.image = QGraphicsPixmapItem( QPixmap( COMPASS_BG ), self)
+		self.image.setOffset(-COMPASS_BG.width()/2, -COMPASS_BG.height()/2)
+
+		# Shadow effect on the compass
+		self.shadow = QGraphicsDropShadowEffect()
+		self.shadow.setBlurRadius(100)
+		self.shadow.setColor( QColor(80, 80, 80) )
+		self.shadow.setOffset(0, 0)
+		self.image.setGraphicsEffect( self.shadow )
+
+		# Compass's needle
+		self.needle = QGraphicsPixmapItem( QPixmap( COMPASS_NEEDLE ), self)
+		self.needle.setOffset(-COMPASS_NEEDLE.width()/2, -COMPASS_NEEDLE.height()/2)
+
 		# Setting up text
 		self.text = QGraphicsTextItem("", self)
-		self.text.setFont(QFont("Ubuntu-L.ttf"))
-		self.text.setPos(-140, -140)
+		self.text.setFont(QFont("Ubuntu-L.ttf", 25, QFont.Light))
+
+		tX = COMPASS_BG.width()/2. - self.text.boundingRect().width()
+		tY = COMPASS_BG.height()/2.
+
+		self.text.setPos(tX, tY)
 
 		self.textShadow = QGraphicsDropShadowEffect()
 		self.textShadow.setBlurRadius(3)
@@ -247,34 +273,9 @@ class GraphicsStaticCarItem(QGraphicsObject):
 		self.text.setDefaultTextColor(QColor(210, 220, 250))
 		self.text.font().setBold(True)
 
-		# Initializing image
-		self.sprite_name = sprite_name
-		self.img = SPRITES[sprite_name]
-
-		self.image = QGraphicsPixmapItem( QPixmap(SPRITES[sprite_name] ), self)
-		self.image.setOffset(-self.img.width()/2, -self.img.height()/2)
-
-		# Shadow effect on the car's image
-		if shadow:
-			self.shadow = QGraphicsDropShadowEffect()
-			self.shadow.setBlurRadius(80)
-			self.shadow.setColor( QColor(80, 90, 220) )
-			self.shadow.setOffset(0, 0)
-			self.image.setGraphicsEffect( self.shadow )
-
-		# Initializing the "view ray"
-		self.line = QLine(self.car.x, self.car.y, 0, 0)
-		self.ray = QGraphicsLineItem(self.line, self )
-		self.ray.setZValue(-1)
-
-		pen.setColor(QColor(180, 200, 200))
-		pen.setWidth(2)
-		self.ray.setPen(pen)
-
 		# Caching for the graphics
 		self.setCacheMode( QGraphicsItem.ItemCoordinateCache )
 
-		self.rect = QRectF()
 		self.update()
 
 	def setCaption(self, text):
@@ -284,46 +285,22 @@ class GraphicsStaticCarItem(QGraphicsObject):
 		pass
 
 	def update(self):
-		super(GraphicsCarItem, self).update()
+		super(GraphicsStaticCarItem, self).update()
 
-		# Rotating the car around its center
-		if self.image.rotation() != self.car.angle:
-			self.image.setRotation(-math.degrees(self.car.angle))
-
-		self.setPos(self.car.x, self.car.y)
+		# Rotating the NEEDLE around its center
+		if self.needle.rotation() != self.car.angle:
+			self.needle.setRotation(-math.degrees(self.car.angle))
 
 		#Updating the caption
-		distance = 0
 		if self.car.moving:
 			self.setCaption( "Car moving... " )
 		elif self.car.distance:
 			self.setCaption( "Closest object at : {}".format(int(self.car.distance)) )
-			distance = self.car.distance
 		else:
 			self.setCaption( "No object ahead" )
 
-		# Updating the "ray"
-		self.ray.setLine(QLine(0, 0, distance*math.cos(self.car.angle), - distance*math.sin(self.car.angle)))
-
 	def boundingRect(self):
-		return QRectF(self.x(), self.y(), self.image.boundingRect().width() , self.image.boundingRect().height())
-
-	def x(self):
-		return self.pos().x()
-
-	def y(self):
-		return self.pos().y()
-
-	def frontX(self):
-		return self.x() + cos(self.car.angle) * self.img.width()
-	def frontY(self):
-		return self.y() - sin(self.car.angle) * self.img.width()
-
-	def topLeftX(self):
-		return self.x() - ( self.image.boundingRect().width() / 2 )
-
-	def topLeftY(self):
-		return self.y() - ( self.image.boundingRect().height() / 2 )
+		return self.image.boundingRect()
 
 	# def mousePressEvent(self, event):
 	# 	super(Car, self).mousePressEvent(event)

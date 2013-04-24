@@ -135,13 +135,13 @@ class AutoScene(QGraphicsScene):
             self.animation.finished.connect(self.pathFinished)
 
             self.animation.start(QAbstractAnimation.DeleteWhenStopped)
-            self.car.moving = True
+            self.car.setMoving(True)
 
         super(AutoScene,self).mousePressEvent(event)
 
     # Called when the car have arrived to the path's end
     def pathFinished(self):
-        self.car.moving = False
+        self.car.setMoving(False)
         self.path =  []
         self.graphicalPath.setPath(QPainterPath())
 
@@ -216,7 +216,7 @@ class AutoView(QGraphicsView):
         if self.backgroundItem:
             drawBackground = self.backgroundItem.isVisible()
         else:
-            drawBackground = False
+            drawBackground = True
 
         s.clear()
         self.resetTransform
@@ -224,7 +224,6 @@ class AutoView(QGraphicsView):
         # Graphic visualization of the SVG map
         self.svgItem = QtSvg.QGraphicsSvgItem(svg_file.fileName())
         self.svgItem.setFlags(QGraphicsItem.ItemClipsToShape)
-        self.svgItem.setCacheMode(QGraphicsItem.NoCache)
         self.svgItem.setZValue(0)
         s.addItem(self.svgItem)
 
@@ -236,7 +235,7 @@ class AutoView(QGraphicsView):
         self.backgroundItem = QGraphicsRectItem(self.svgItem.boundingRect())
         self.backgroundItem.setBrush( QImage("img/blueprint.png") )
         self.backgroundItem.setPen(QPen())
-        self.backgroundItem.setVisible(not drawBackground)
+        self.backgroundItem.setVisible(drawBackground)
         self.backgroundItem.setZValue(-1)
         self.backgroundItem.setCacheMode( QGraphicsItem.ItemCoordinateCache )
         s.addItem(self.backgroundItem)
