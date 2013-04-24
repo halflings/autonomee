@@ -45,14 +45,10 @@ class AutoScene(QGraphicsScene):
 
         # Heatmap, should be used for probabilities [WIP]
         self.particleFilter = probability.ParticleFilter()
-        self.heatmap = heatmap.GraphicalParticleFilter(self.particleFilter)
         # ( initialized when pressing 'H' )
 
-    def mousePressEvent(self, event):
-        x, y = event.scenePos().x(), event.scenePos().y()
-
+    def pathfinding(self, x, y):
         # We generate a path from the car to where we clicked and show it on the UI
-
         #We get the path from our 'map' object
         self.path = self.map.search((self.car.x, self.car.y), (x,y))
 
@@ -137,13 +133,21 @@ class AutoScene(QGraphicsScene):
             self.animation.start(QAbstractAnimation.DeleteWhenStopped)
             self.car.setMoving(True)
 
-        super(AutoScene,self).mousePressEvent(event)
-
-    # Called when the car have arrived to the path's end
     def pathFinished(self):
+    # Called when the car has arrived to the path's end
         self.car.setMoving(False)
         self.path =  []
         self.graphicalPath.setPath(QPainterPath())
+
+
+    def mousePressEvent(self, event):
+        x, y = event.scenePos().x(), event.scenePos().y()
+
+        self.pathfinding(x, y)
+
+        super(AutoScene,self).mousePressEvent(event)
+
+
 
     def mouseMoveEvent(self, event):
         x, y = event.scenePos().x(), event.scenePos().y()
@@ -158,21 +162,34 @@ class AutoScene(QGraphicsScene):
 
     def keyPressEvent(self, event):
 
-        # Moving the car
-        speed = 20
         if not self.car.moving:
-            if event.key()==Qt.Key_Up or event.key()==Qt.Key_Z:
-                self.car.move(speed)
-                # self.heatmap.move(speed)
-                # self.heatmap.sense(self.car.distance, self.car.angle)
-                # self.heatmap.resample()
+            # Moving the car
 
+            speed = 0
+            deltaAngle = 0
+
+            if event.key()==Qt.Key_Up or event.key()==Qt.Key_Z:
+                speed = 20
             elif event.key()==Qt.Key_Down or event.key()==Qt.Key_S:
-                self.car.move(-speed)
+                speed = -20
+            elif event.key()==Qt.Key_Right or event.key()==Qt.Key_D:
+                deltaAngle = -math.pi/10
+            elif event.key()==Qt.Key_Left or event.key()==Qt.Key_Q:
+                deltaAngle = math.pi/10
+
+            if speed != 0 or deltaAngle != 0:
+                self.car.move(speed)
+                self.car.setAngle(self.car.angle + deltaAngle)
+
+                if self.heatmap.isVisible():
+                    self.heatmap.move(speed, deltaAngle)
+                    self.heatmap.sense(self.car.distance, self.car.angle)
+                    self.heatmap.resample()
+                    self.heatmap.update()
 
         # Heatmap
         if event.key() == Qt.Key_H:
-            self.addItem( self.heatmap )
+            self.heatmap.setVisible(not self.heatmap.isVisible() )
 
 class AutoView(QGraphicsView):
     Native, OpenGL, Image = range(3)
@@ -206,7 +223,6 @@ class AutoView(QGraphicsView):
         # s.car = None
         #Recreate a map tree by parsing the SVG
         s.map = svg.SvgTree(svg_file.fileName())
-        s.heatmap.setMap(s.map)
         s.path = None
         s.graphicalPath = None
 
@@ -266,22 +282,28 @@ class AutoView(QGraphicsView):
         self.connectButton = QPushButton("Connecter la voiture")
         bWidth, bHeight = 200, 30
         self.connectButton.setGeometry(width - bWidth - 15, height - bHeight - 15, bWidth, bHeight)
+        self.connectButton.clicked.connect( self.connectCar )
 
         s.addWidget(self.connectButton)
 
         # Car visualization
-
-        # TODO : Should we reset the model ?
-        # s.car.resetViews()
-
         s.car.map = s.map
         s.graphicCar = engine.GraphicsCarItem( s.car )
-        s.addItem( s.graphicCar )
+        s.addItem(s.graphicCar)
+
+        # Heatmap
+        s.particleFilter.setMap(s.map)
+        s.heatmap = heatmap.GraphicalParticleFilter(s.particleFilter)
+        s.heatmap.setVisible(False)
+        s.addItem(s.heatmap)
 
         self.x = 0
         self.y = 0
 
         self.updateScene()
+
+    def connectCar(self):
+        print "CONNECT"
 
     def updateScene(self):
         self.scene().setSceneRect(self.svgItem.boundingRect().adjusted(self.x-10, self.y-10, self.x+10, self.y+10))
