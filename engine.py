@@ -2,70 +2,33 @@
     engine.py - all what's related to the car: model (coordinates, heading angle, ...) and graphic representation (with Qt)
 """
 
-from PySide import QtCore, QtGui
+from PySide.QtCore import *
+from PySide.QtGui import *
+
 import math
 from math import cos, sin
 
-class Car(QtGui.QGraphicsObject):
-	#"ALL measurements must be in mm"
-	# NOTE : The mm/px conversion should be done in the model ... maybe this class should do everything in px ...
+def formatAngle(angle):
+	""" Formats angle in the trigonometric convention """
+	return (angle + math.pi)%(2*math.pi) - math.pi
+
+class Car(QObject):
+
+	# TODO : Should be in mm ?
 	default_width = 100
 	default_length = 200
 
-	default_image =  QtGui.QImage("img/car.png")
-	scale_factor = 0.5
-	sprites = {"sedan" : default_image.scaledToWidth(default_image.width()*scale_factor)}
-
-	def __init__(self, map = None, x = 0, y = 0, width = default_width, length = default_length, sprite_name = "sedan", shadow = True):
+	def __init__(self, map=None, x=0, y=0, width=default_width, length=default_length):
 		super(Car, self).__init__()
-
-		pen = QtGui.QPen()
 
 		#The map where the car is located
 		self.map = map
-		#This should be in the map, but keep it here for test purpose :s
 
-		#Model related attributes
+		self.x = x
+		self.y = y
+
 		self.width = width
 		self.length = length
-
-		# Setting up text
-		self.text = QtGui.QGraphicsTextItem("", self)
-		self.text.setFont(QtGui.QFont("Ubuntu-L.ttf"))
-		self.text.setPos(-140, -140)
-
-		self.textShadow = QtGui.QGraphicsDropShadowEffect()
-		self.textShadow.setBlurRadius(3)
-		self.textShadow.setColor( QtGui.QColor(0, 0, 0) )
-		self.textShadow.setOffset(1, 1)
-		self.text.setGraphicsEffect( self.textShadow )
-
-		self.text.setDefaultTextColor(QtGui.QColor(210, 220, 250))
-		self.text.font().setBold(True)
-
-		# Initializing image
-		self.sprite_name = sprite_name
-		self.img = Car.sprites[sprite_name]
-
-		self.image = QtGui.QGraphicsPixmapItem( QtGui.QPixmap( Car.sprites[sprite_name] ), self)
-		self.image.setOffset(-self.img.width()/2, -self.img.height()/2)
-
-		# Shadow effect on the car image
-		if shadow:
-			self.shadow = QtGui.QGraphicsDropShadowEffect()
-			self.shadow.setBlurRadius(80)
-			self.shadow.setColor( QtGui.QColor(80, 90, 220) )
-			self.shadow.setOffset(0, 0)
-			self.image.setGraphicsEffect( self.shadow )
-
-		# Initializing the "view ray"
-		self.line = QtCore.QLine(x, y, 0, 0)
-		self.ray = QtGui.QGraphicsLineItem(self.line, self )
-		self.ray.setZValue(-1)
-
-		pen.setColor(QtGui.QColor(180, 200, 200))
-		pen.setWidth(2)
-		self.ray.setPen(pen)
 
 		self.speed = 0
 
@@ -75,48 +38,120 @@ class Car(QtGui.QGraphicsObject):
 		# True when the car is moving :
 		self.moving = False
 
-		#Angle is in radian, and follows the traditional trigonometric orientation
+		#Angle is in radian, and follows the traditional trigonometric convention
 		#	   pi/2
 		#  -pi __|__ 0
 		#		 |
 		# 	  -pi/2
 		self.angle = 0
 
-		self.setPos(x, y)
+		self.views = set()
 
-
-		# Some config infos.
-		self.setCacheMode( QtGui.QGraphicsItem.ItemCoordinateCache )
-
-
-		self.rect = QtCore.QRectF()
-		self.update()
+	def addView(self, view):
+		self.views.add(view)
+	def removeView(self, view):
+		if view in self.views:
+			self.views.remove(view)
 
 	def move(self, speed):
-		dx = speed * cos(self.angle)
-		dy = -speed * sin(self.angle)
-
-		self.setPos( int(self.x() + dx) , int(self.y() + dy) )
-
-		self.update()
-
-	def setAngle(self, val):
-		#Updating angle
-		self.angle = val
-
-		# Rotating the car around its center
-		self.image.setRotation(-math.degrees(self.angle))
+		self.x += speed * cos(self.angle)
+		self.y += speed * -sin(self.angle)
 
 		self.update()
 
 	def readAngle(self):
 		return self.angle
 
-	angleProperty = QtCore.Property(float, readAngle, setAngle)
+	def setAngle(self, angle):
+		self.angle = formatAngle(angle)
+
+		self.update()
+
+	angleProperty = Property(float, readAngle, setAngle)
 
 
-	def setPos(self, x, y):
-		super(Car, self).setPos(x, y)
+	def readPosition(self):
+		return (self.x, self.y)
+	def setPosition(self, position):
+		self.x, self.y = position.x(), position.y()
+
+	positionProperty = Property(QPointF, readPosition, setPosition)
+
+	def update(self):
+		# Calculating the distance to the closest object
+		if self.map is not None and not self.moving:
+			self.distance = self.map.rayDistance(self.x, self.y, self.angle)
+
+		# print self
+
+		for view in self.views:
+			view.update()
+
+	def __repr__(self):
+		return "Angle : {} | Position ({}, {}) | Distance : {}".format(self.angle, self.x, self.y, self.distance)
+
+
+class GraphicsCarItem(QGraphicsObject):
+	#"ALL measurements must be in mm"
+	# NOTE : The mm/px conversion should be done in the model ... maybe this class should do everything in px ...
+	default_width = 100
+	default_length = 200
+
+	default_image =  QImage("img/car.png")
+	scale_factor = 0.5
+	sprites = {"sedan" : default_image.scaledToWidth(default_image.width()*scale_factor)}
+
+	def __init__(self, car, sprite_name = "sedan", shadow = True):
+		super(GraphicsCarItem, self).__init__()
+
+
+		pen = QPen()
+
+		self.car = car
+		self.car.addView(self)
+
+		# Setting up text
+		self.text = QGraphicsTextItem("", self)
+		self.text.setFont(QFont("Ubuntu-L.ttf"))
+		self.text.setPos(-140, -140)
+
+		self.textShadow = QGraphicsDropShadowEffect()
+		self.textShadow.setBlurRadius(3)
+		self.textShadow.setColor( QColor(0, 0, 0) )
+		self.textShadow.setOffset(1, 1)
+		self.text.setGraphicsEffect( self.textShadow )
+
+		self.text.setDefaultTextColor(QColor(210, 220, 250))
+		self.text.font().setBold(True)
+
+		# Initializing image
+		self.sprite_name = sprite_name
+		self.img = GraphicsCarItem.sprites[sprite_name]
+
+		self.image = QGraphicsPixmapItem( QPixmap( GraphicsCarItem.sprites[sprite_name] ), self)
+		self.image.setOffset(-self.img.width()/2, -self.img.height()/2)
+
+		# Shadow effect on the car's image
+		if shadow:
+			self.shadow = QGraphicsDropShadowEffect()
+			self.shadow.setBlurRadius(80)
+			self.shadow.setColor( QColor(80, 90, 220) )
+			self.shadow.setOffset(0, 0)
+			self.image.setGraphicsEffect( self.shadow )
+
+		# Initializing the "view ray"
+		self.line = QLine(self.car.x, self.car.y, 0, 0)
+		self.ray = QGraphicsLineItem(self.line, self )
+		self.ray.setZValue(-1)
+
+		pen.setColor(QColor(180, 200, 200))
+		pen.setWidth(2)
+		self.ray.setPen(pen)
+
+		# Caching for the graphics
+		self.setCacheMode( QGraphicsItem.ItemCoordinateCache )
+
+		self.rect = QRectF()
 		self.update()
 
 	def setCaption(self, text):
@@ -125,30 +160,30 @@ class Car(QtGui.QGraphicsObject):
 	def paint(self, painter=None, style=None, widget=None):
 		pass
 
-
 	def update(self):
-		super(Car, self).update()
+		super(GraphicsCarItem, self).update()
 
-		#Calculating the distance to the closest object
-		if self.map and not self.moving:
-			self.distance = self.map.rayDistance(self.x(), self.y(), self.angle)
+		# Rotating the car around its center
+		if self.image.rotation() != self.car.angle:
+			self.image.setRotation(-math.degrees(self.car.angle))
+
+		self.setPos(self.car.x, self.car.y)
 
 		#Updating the caption
-		if self.moving:
+		distance = 0
+		if self.car.moving:
 			self.setCaption( "Car moving... " )
-			distance = 0
-		elif self.distance:
-			self.setCaption( "Closest object at : {}".format(int(self.distance)) )
-			distance = self.distance
+		elif self.car.distance:
+			self.setCaption( "Closest object at : {}".format(int(self.car.distance)) )
+			distance = self.car.distance
 		else:
 			self.setCaption( "No object ahead" )
-			distance = 0
 
 		# Updating the "ray"
-		self.ray.setLine(QtCore.QLine(0, 0, distance*math.cos(self.angle), - distance*math.sin(self.angle)))
+		self.ray.setLine(QLine(0, 0, distance*math.cos(self.car.angle), - distance*math.sin(self.car.angle)))
 
 	def boundingRect(self):
-		return QtCore.QRectF(self.x(), self.y(), self.image.boundingRect().width() , self.image.boundingRect().height())
+		return QRectF(self.x(), self.y(), self.image.boundingRect().width() , self.image.boundingRect().height())
 
 	def x(self):
 		return self.pos().x()
@@ -157,18 +192,15 @@ class Car(QtGui.QGraphicsObject):
 		return self.pos().y()
 
 	def frontX(self):
-		return self.x() + cos(self.angle) * self.img.width()
+		return self.x() + cos(self.car.angle) * self.img.width()
 	def frontY(self):
-		return self.y() - sin(self.angle) * self.img.width()
+		return self.y() - sin(self.car.angle) * self.img.width()
 
 	def topLeftX(self):
 		return self.x() - ( self.image.boundingRect().width() / 2 )
 
 	def topLeftY(self):
 		return self.y() - ( self.image.boundingRect().height() / 2 )
-
-	def formatAngle(self, angle):
-		return (angle + math.pi)%(2*math.pi) - math.pi
 
 	# def mousePressEvent(self, event):
 	# 	super(Car, self).mousePressEvent(event)

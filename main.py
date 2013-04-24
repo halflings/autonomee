@@ -10,19 +10,23 @@ from PySide.QtGui import *
 
 from manual import ManualView
 from auto import AutoView
-
+import engine
 
 class MainWindow(QMainWindow):
     AUTO_MODE = 0
     MANUAL_MODE = 1
+
     def __init__(self):
         super(MainWindow, self).__init__()
 
         self.currentPath = ''
 
+        # A car shared between the different views
+        self.car = engine.Car()
+
         # Setting the views
-        self.automaticView = AutoView()
-        self.manualView = ManualView()
+        self.automaticView = AutoView( self.car )
+        self.manualView = ManualView( self.car )
 
         # File menu
         fileMenu = QMenu("&File", self)

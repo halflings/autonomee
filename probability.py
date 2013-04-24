@@ -7,45 +7,75 @@ from math import cos, sin, exp, pi, sqrt
 import random
 import svg
 
-FORWARD_NOISE = 30.
-TURN_NOISE = 10.
-SENSE_NOISE = 15.
+FORWARD_NOISE = 1.
+TURN_NOISE = 5.
+SENSE_NOISE = 5.
 
 def Gaussian(mu, sigma, x):
     # calculates the probability of x for 1-dim Gaussian with mean mu and var. sigma
     return exp(- ((mu - x) ** 2) / (sigma ** 2) / 2.0) / sqrt(2.0 * pi * (sigma ** 2))
 
 class ParticleFilter(object):
+    """A particle filter that calculates localization probability
+    based on a series of (noisy) measurements and displacements"""
 
-    def __init__(self, map, objectAngle, numParticles = 50):
+
+    def __init__(self, map = None, initAngle = 0, numParticles = 100):
         self.map = map
-        self.width = map.width
-        self.height = map.height
-
+        self.N = numParticles
+        self.initAngle = initAngle
         self.particles = list()
 
-        for i in xrange(numParticles):
+        if map is not None:
+            self.setMap(map)
+        else:
+            self.width, self.height = 0, 0
+
+
+    def setMap(self, map):
+        """Sets a map for the particle filter (and executes random population)"""
+
+        self.width = map.width
+        self.height = map.height
+        self.map = map
+        self.populate(self.N, self.initAngle)
+
+    def populate(self, N, objectAngle):
+        """Adds N random particles to the particle filter. (Useful at initialization)"""
+
+        for i in xrange(N):
             x = random.randint(0, self.width - 1)
             y = random.randint(0, self.height - 1)
 
-            while map.isObstacle(x, y):
+            while self.map.isObstacle(x, y):
                 x = random.randint(0, self.width - 1)
                 y = random.randint(0, self.height - 1)
 
-            self.particles.append( Particle(x, y, angle = objectAngle, probability = 1. ) ) # / numParticles  )
+            self.particles.append( Particle(x, y, angle = objectAngle, probability = 1. ) ) # / self.N  )
 
     def sense(self, measuredDistance, angle):
+        """Updates the probabilities to match a measurement.
+        Uses a Gaussian on the difference between measured and calculated distance
+        and takes into account the sensor's noise.
+        """
 
         for particle in self.particles:
             particleDist = self.map.rayDistance( particle.x, particle.y, angle )
 
-            # TODO : What should we do for particleDist == None ? ( eg: infinite distance => no object ahead )
+            # TODO : particleDist should never be None (== no obstacle ahead), should be a 'max' distance
             if particleDist is None:
-                particleDist = self.width + self.height # Majoration ...
+                particleDist = self.width + self.height
+
+            # TODO: Same as particleDist
+            if measuredDistance is None:
+                measuredDistance = self.width + self.height
 
             particle.p *= Gaussian(particleDist, SENSE_NOISE, measuredDistance)
 
     def move(self, distance, angle = 0.):
+        """Updates the probabilities to match a displacement.
+        Updates the particles' coordinates (taking into account 'noise')
+        """
 
         for particle in self.particles:
 
@@ -63,15 +93,16 @@ class ParticleFilter(object):
             particle.x = min( max(0, particle.x) , self.width )
             particle.y = min( max(0, particle.y) , self.height )
 
-
-    def resample(self):
-
-        # We normalize the particle's weights (probability)
+    def normalize(self):
+        """Normalizes the particles's weights.
+        (Makes the sum of all probabilities equal to 1)
+        """
         sumProba = sum( particle.p for particle in self.particles )
         for particle in self.particles:
             particle.p /= sumProba
 
-        # Resampling (resampling wheel algorithm, cf Udacity)
+    def resample(self):
+        """Resampling the particles using a 'resampling wheel' algorithm."""
         newParticles = list()
         maxProba = max( particle.p for particle in self.particles )
         index = random.randint(0, len(self.particles) - 1)

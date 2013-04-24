@@ -11,11 +11,11 @@ import math
 
 class ManualView(QGraphicsView):
 
-    def __init__(self, parent=None):
+    def __init__(self, car, parent=None):
         super(ManualView, self).__init__(parent)
 
         self.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform)
-        scene = ManualScene(self)
+        scene = ManualScene(car=car, parent=self)
         self.setScene(scene)
 
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
@@ -25,15 +25,15 @@ class ManualView(QGraphicsView):
 
     def showEvent(self, event):
         super(ManualView, self).showEvent(event)
-        self.fitInView(0, 0, self.scene().width(), self.scene().height())
-
 
     def paintEvent(self, event):
         super(ManualView, self).paintEvent(event)
 
 class ManualScene(QGraphicsScene):
-    def __init__(self, parent=None):
+    def __init__(self, car, parent=None):
         super(ManualScene, self).__init__(parent)
+
+        self.car = car
 
         # Background
         self.gradient = QLinearGradient(0, -200, 0, 600)
@@ -46,11 +46,10 @@ class ManualScene(QGraphicsScene):
         self.rect = QGraphicsRectItem(0, 0, 500, 500)
         self.addItem(self.rect)
 
-        self.car = engine.Car()
-        self.car.setAngle(math.pi/2)
-        self.car.setCaption("")
-        self.car.setPos(200, 200)
-        self.addItem(self.car)
+        # TODO : Create a different car view for the manual mode
+        self.graphicCar = engine.GraphicsCarItem( self.car )
+        self.graphicCar.setCaption("")
+        self.addItem(self.graphicCar)
 
         # #Text
 
@@ -63,6 +62,8 @@ class ManualScene(QGraphicsScene):
 
     def mousePressEvent(self, event):
         x, y = event.scenePos().x(), event.scenePos().y()
+
+        self.graphicCar.update()
 
         super(ManualScene,self).mousePressEvent(event)
 

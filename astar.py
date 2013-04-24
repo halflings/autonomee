@@ -102,7 +102,7 @@ class DiscreteMap:
 
         for i in xrange(self.height):
             for j in xrange(self.width):
-                self.grid[i][j].reachable = True if int(result[i][j]) == 0 else False
+                self.grid[i][j].reachable = int(result[i][j]) == 0
 
 
     def neighbours(self, cell, radius = 1, unreachables = False, diagonal = True):
