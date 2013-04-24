@@ -1,1 +1,0 @@
-/home/ahmed/sketchbook/AutoRobot/AutoRobot.ino
