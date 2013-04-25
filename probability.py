@@ -7,7 +7,7 @@ from math import cos, sin, exp, pi, sqrt
 import random
 import svg
 
-FORWARD_NOISE = 1.
+FORWARD_NOISE = 5.
 TURN_NOISE = 5.
 SENSE_NOISE = 5.
 
