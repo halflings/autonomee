@@ -81,7 +81,7 @@ class SvgTree:
                 raise "No {} ! Can't parse SVG.".format(attribute)
 
         #Bounding rectangle ( TODO : mm -> xp, etc.)
-        self.rect = Rectangle(0, 0, self.width, self.height)
+        self.rect = Rectangle(-1, -1, self.width+1, self.height+1)
 
 
         ######################################################################

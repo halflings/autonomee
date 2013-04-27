@@ -87,16 +87,18 @@ class ParticleFilter(object):
                 particle.move(deltaDistance)
 
             # If the particle got out of the universe, we put it on the border
-            particle.x = min(max(0, particle.x), self.width)
-            particle.y = min(max(0, particle.y), self.height)
+            particle.x = min(max(0, particle.x), self.width - 1)
+            particle.y = min(max(0, particle.y), self.height - 1)
 
     def normalize(self):
         """Normalizes the particles's weights.
         (Makes the sum of all probabilities equal to 1)
         """
         sumProba = sum(particle.p for particle in self.particles)
-        for particle in self.particles:
-            particle.p /= sumProba
+
+        if sumProba != 0:
+            for particle in self.particles:
+                particle.p /= sumProba
 
     def resample(self):
         """Resampling the particles using a 'resampling wheel' algorithm."""

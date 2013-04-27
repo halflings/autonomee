@@ -10,9 +10,6 @@ from PySide.QtGui import *
 from PySide.QtCore import *
 
 import widgets
-
-import svg
-import heatmap
 import probability
 
 from collections import deque
@@ -176,8 +173,14 @@ class AutoScene(QGraphicsScene):
                 if self.heatmap.isVisible():
                     self.heatmap.move(speed, deltaAngle)
                     self.heatmap.sense(self.car.distance, self.car.angle)
-                    self.heatmap.resample()
+                    # self.heatmap.resample()
+                    self.heatmap.normalize()
                     self.heatmap.update()
+
+                # Putting back the car into the map if it got out
+                # x = min(max(0, self.car.x), self.map.width - 1)
+                # y = min(max(0, self.car.y), self.map.height - 1)
+                # self.car.setPosition(QPointF(x, y))
 
         # Heatmap
         if event.key() == Qt.Key_H:
@@ -276,7 +279,7 @@ class AutoView(QGraphicsView):
 
         # Heatmap
         s.particleFilter = probability.ParticleFilter(car=s.car, map=s.map)
-        s.heatmap = heatmap.GraphicalParticleFilter(s.particleFilter)
+        s.heatmap = widgets.GraphicalParticleFilter(s.particleFilter)
         s.heatmap.setVisible(False)
         s.addItem(s.heatmap)
 
