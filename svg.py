@@ -9,6 +9,8 @@ import re
 NS = {'svg': 'http://www.w3.org/2000/svg',
       'sodipodi': 'http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd'}
 
+float_pattern = "-?\d+(?:[.]\d+)?"
+translatePattern = "translate[(]({}),({})[)]".format(float_pattern, float_pattern)
 
 def remove_ns(text, namespace=NS['svg']):
 
@@ -25,7 +27,7 @@ def add_ns(text, namespace=NS['sodipodi']):
 def parseTransform(element):
     if 'transform' in element.attrib:
         transform = element.attrib['transform']
-        regex = re.search("translate[(](-?[\d]+[.]?[\d]+),(-?[\d]+[.[\d]+]?)[)]", transform)
+        regex = re.search(translatePattern, transform)
         if regex:
             return float(regex.group(1)), float(regex.group(2))
 
