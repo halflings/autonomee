@@ -427,7 +427,10 @@ class GraphicalParticleFilter(QGraphicsObject):
                 color = QColor.fromHsvF(particle.p / 3, 0.5, 0.8, 0.5)
                 painter.setPen( color )
                 painter.setBrush( color )
-                painter.drawEllipse(particle.x, particle.y, 10 + particle.p*20, 10 + particle.p*20)
+
+                radius = 
+
+                painter.drawEllipse(particle.x, particle.y, radius, radius)
 
     def boundingRect(self):
         return QRectF(0, 0, self.particleFilter.width, self.particleFilter.height )

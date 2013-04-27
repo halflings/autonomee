@@ -43,7 +43,6 @@ class ParticleFilter(object):
             x = random.randint(0, self.width - 1)
             y = random.randint(0, self.height - 1)
 
-            # TODO : uncomment this (and fix it)
             while self.map.isObstacle(x, y):
                 x = random.randint(0, self.width - 1)
                 y = random.randint(0, self.height - 1)
@@ -65,7 +64,7 @@ class ParticleFilter(object):
             if measuredDistance is None:
                 measuredDistance = self.width + self.height
 
-            particle.p = Gaussian(particleDist, self.car.sensor_noise, measuredDistance)
+            particle.p *= Gaussian(particleDist, self.car.sensor_noise, measuredDistance)
 
     def move(self, distance, angle=0.):
         """Updates the probabilities to match a displacement.
@@ -99,6 +98,9 @@ class ParticleFilter(object):
         if sumProba != 0:
             for particle in self.particles:
                 particle.p /= sumProba
+                print particle.p
+
+        print ""
 
     def resample(self):
         """Resampling the particles using a 'resampling wheel' algorithm."""

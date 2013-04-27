@@ -171,9 +171,9 @@ class AutoScene(QGraphicsScene):
                 self.car.setAngle(self.car.angle + deltaAngle)
 
                 if self.heatmap.isVisible():
-                    self.heatmap.move(speed, deltaAngle)
-                    self.heatmap.sense(self.car.distance, self.car.angle)
-                    self.heatmap.resample()
+                    self.particleFilter.move(speed, deltaAngle)
+                    self.particleFilter.sense(self.car.distance, self.car.angle)
+                    self.particleFilter.resample()
                     self.heatmap.update()
 
                 # Putting back the car into the map if it got out

@@ -18,8 +18,10 @@ class Car(QObject):
     def_width = 100
     def_length = 200
 
-    # Noise parameters are in cm and degrees
-    def_sensor = 5.
+    # A noise factor, determined empirically
+    def_sensor = 100.
+
+    # Noise in cm and degrees
     def_displacement = 5.
     def_rotation = 2.
 
