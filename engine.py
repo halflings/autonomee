@@ -1,309 +1,125 @@
+# -*- coding: utf-8 -*-
+
 """
-    engine.py - all what's related to the car: model (coordinates, heading angle, ...) and graphic representation (with Qt)
+    engine.py - all what's related to the car's model (coordinates, heading angle, ...)
 """
+
 
 from PySide.QtCore import *
-from PySide.QtGui import *
 
-import math
 from math import cos, sin
 
-DEFAULT_IMAGE = QImage("img/car.png")
-SPRITES = {"sedan" : DEFAULT_IMAGE.scaledToWidth(DEFAULT_IMAGE.width()*0.4)}
-
-COMPASS_BG = QImage("img/compass.png")
-COMPASS_NEEDLE = QImage("img/compass-needle.png")
-
-def formatAngle(angle):
-	""" Formats angle in the trigonometric convention """
-	return (angle + math.pi)%(2*math.pi) - math.pi
 
 class Car(QObject):
 
-	# TODO : Should be in mm ?
-	default_width = 100
-	default_length = 200
+    max_temperature = 120.
 
-	def __init__(self, map=None, x=0, y=0, width=default_width, length=default_length):
-		super(Car, self).__init__()
+    # TODO : Should be in mm
+    def_width = 200
+    def_length = 200
 
-		#The map where the car is located
-		self.map = map
+    # Noise parameters
+    def_sensor = 5.
+    def_displacement = 5.
+    def_rotation = 5.
 
-		self.x = x
-		self.y = y
+    def __init__(self, map=None, x=0, y=0, width=def_width, length=def_length):
+        super(Car, self).__init__()
 
-		self.width = width
-		self.length = length
+        # The map where the car is located
+        self.map = map
 
-		self.speed = 0
+        self.x = x
+        self.y = y
 
-		# Distance to the closest object ahead
-		self.distance = None
+        self.width = width
+        self.length = length
 
-		# True when the car is moving :
-		self.moving = False
+        self.speed = 15
 
-		#Angle is in radian, and follows the traditional trigonometric convention
-		#	   pi/2
-		#  -pi __|__ 0
-		#		 |
-		# 	  -pi/2
-		self.angle = 0
+        # Noise parameters
+        self.sensor_noise = Car.def_sensor
+        self.displacement_noise = Car.def_displacement
+        self.rotation_noise = Car.def_rotation
 
-		self.views = set()
+        # Distance to the closest object ahead
+        self.distance = None
 
-	def addView(self, view):
-		self.views.add(view)
-	def removeView(self, view):
-		if view in self.views:
-			self.views.remove(view)
+        # True when the car is moving :
+        self.moving = False
 
-	def move(self, speed):
-		self.x += speed * cos(self.angle)
-		self.y += speed * -sin(self.angle)
+        # Angles are in radians
+        #      pi/2
+        #   pi __|__ 0
+        #        |
+        #     3*pi/2
+        self.angle = 0
 
-		self.update()
+        # Temperature is in Celcius degrees (float)
+        self.temperature = 25.
 
-	def setMoving(self, movingStatus):
-		self.moving = movingStatus
+        self.views = set()
 
-		self.update()
+    def addView(self, view):
+        self.views.add(view)
 
-	def readAngle(self):
-		return self.angle
+    def removeView(self, view):
+        if view in self.views:
+            self.views.remove(view)
 
-	def setAngle(self, angle):
-		self.angle = formatAngle(angle)
+    def move(self, speed):
+        self.x += speed * cos(self.angle)
+        self.y += speed * -sin(self.angle)
 
-		self.update()
+        self.update()
 
-	angleProperty = Property(float, readAngle, setAngle)
+    def setMoving(self, movingStatus):
+        self.moving = movingStatus
 
+        self.update()
 
-	def readPosition(self):
-		return (self.x, self.y)
-	def setPosition(self, position):
-		self.x, self.y = position.x(), position.y()
+    # Angle (in radians, from 0 to 2*pi)
+    def readAngle(self):
+        return self.angle
 
-	positionProperty = Property(QPointF, readPosition, setPosition)
+    def setAngle(self, angle):
+        self.angle = angle
 
-	def update(self):
-		# Calculating the distance to the closest object
-		if self.map is not None and not self.moving:
-			self.distance = self.map.rayDistance(self.x, self.y, self.angle)
+        self.update()
 
-		# print self
+    angleProperty = Property(float, readAngle, setAngle)
 
-		for view in self.views:
-			view.update()
+    # Position (# TODO : should be in mm)
+    def readPosition(self):
+        return QPointF(self.x, self.y)
 
-	def __repr__(self):
-		return "Angle : {} | Position ({}, {}) | Distance : {}".format(self.angle, self.x, self.y, self.distance)
+    def setPosition(self, position):
+        self.x, self.y = position.x(), position.y()
 
+    positionProperty = Property(QPointF, readPosition, setPosition)
 
-class GraphicsCarItem(QGraphicsObject):
-	"""
-	A dynamic graphical representation of a car.
-	Received an update signal (update() method) when the model is modified
-	"""
+    # Temperature (in celcius)
+    def readTemperature(self):
+        return self.temperature
 
-	# In the view, everything should be expressed in px (converted from the model where mm should be used)
-	default_width = 100
-	default_length = 200
-	scale_factor = 0.5
+    def setTemperature(self, temperature):
+        self.temperature = temperature
 
-	def __init__(self, car, sprite_name = "sedan", shadow = True):
-		super(GraphicsCarItem, self).__init__()
+    temperatureProperty = Property(float, readTemperature, setTemperature)
 
-		pen = QPen()
+    def update(self):
+        # Calculating the distance to the closest object
+        if self.map is not None and not self.moving:
+            self.distance = self.map.rayDistance(self.x, self.y, self.angle)
 
-		self.car = car
-		self.car.addView(self)
+        # TODO : Remove this, for testing  only
+        self.temperature =  (self.temperature + 1) % 100
+        self.speed = (self.speed + 1) % 180
 
-		# Setting up text
-		self.text = QGraphicsTextItem("", self)
-		self.text.setFont(QFont("Ubuntu-L.ttf"))
-		self.text.setPos(-140, -140)
 
-		self.textShadow = QGraphicsDropShadowEffect()
-		self.textShadow.setBlurRadius(3)
-		self.textShadow.setColor( QColor(0, 0, 0) )
-		self.textShadow.setOffset(1, 1)
-		self.text.setGraphicsEffect( self.textShadow )
+        for view in self.views:
+            view.update()
 
-		self.text.setDefaultTextColor(QColor(210, 220, 250))
-		self.text.font().setBold(True)
+    def __repr__(self):
+        return "Angle : {} | Position ({}, {}) | Distance : {}".format(self.angle, self.x, self.y, self.distance)
 
-		# Initializing image
-		self.sprite_name = sprite_name
-		self.img = SPRITES[sprite_name]
-
-		self.image = QGraphicsPixmapItem( QPixmap( SPRITES[sprite_name] ), self)
-		self.image.setOffset(-self.img.width()/2, -self.img.height()/2)
-
-		# Shadow effect on the car's image
-		if shadow:
-			self.shadow = QGraphicsDropShadowEffect()
-			self.shadow.setBlurRadius(80)
-			self.shadow.setColor( QColor(80, 90, 220) )
-			self.shadow.setOffset(0, 0)
-			self.image.setGraphicsEffect( self.shadow )
-
-		# Initializing the "view ray"
-		self.line = QLine(self.car.x, self.car.y, 0, 0)
-		self.ray = QGraphicsLineItem(self.line, self )
-		self.ray.setZValue(-1)
-
-		pen.setColor(QColor(180, 200, 200))
-		pen.setWidth(2)
-		self.ray.setPen(pen)
-
-		# Caching for the graphics
-		self.setCacheMode( QGraphicsItem.ItemCoordinateCache )
-
-		self.update()
-
-	def __del__(self):
-		self.car.removeView(self)
-
-	def setCaption(self, text):
-		self.text.setPlainText(text)
-
-	def paint(self, painter=None, style=None, widget=None):
-		pass
-
-	def update(self):
-		super(GraphicsCarItem, self).update()
-
-		# Rotating the car around its center
-		if self.image.rotation() != self.car.angle:
-			self.image.setRotation(-math.degrees(self.car.angle))
-
-		self.setPos(self.car.x, self.car.y)
-
-		#Updating the caption
-		distance = 0
-		if self.car.moving:
-			self.setCaption( "Car moving... " )
-		elif self.car.distance:
-			self.setCaption( "Closest object at : {}".format(int(self.car.distance)) )
-			distance = self.car.distance
-		else:
-			self.setCaption( "No object ahead" )
-
-		# Updating the "ray"
-		self.ray.setLine(QLine(0, 0, distance*math.cos(self.car.angle), - distance*math.sin(self.car.angle)))
-
-	def boundingRect(self):
-		return QRectF(self.x(), self.y(), self.image.boundingRect().width() , self.image.boundingRect().height())
-
-	def x(self):
-		return self.pos().x()
-
-	def y(self):
-		return self.pos().y()
-
-	def frontX(self):
-		return self.x() + cos(self.car.angle) * self.img.width()
-	def frontY(self):
-		return self.y() - sin(self.car.angle) * self.img.width()
-
-	def topLeftX(self):
-		return self.x() - ( self.image.boundingRect().width() / 2 )
-
-	def topLeftY(self):
-		return self.y() - ( self.image.boundingRect().height() / 2 )
-
-	# def mousePressEvent(self, event):
-	# 	super(Car, self).mousePressEvent(event)
-	# 	print "Car mouse event at ({} , {})".format(event.pos().x(), event.pos().y())
-
-	# 	event.accept()
-
-
-
-
-class GraphicsStaticCarItem(QGraphicsObject):
-	"""
-	'Static' view of the car (not affected by the car's movements)
-	Used in the 'manual' interface
-	"""
-	default_width = 100
-	default_length = 200
-
-	def __init__(self, car):
-		super(GraphicsStaticCarItem, self).__init__()
-
-		self.car = car
-		self.car.addView(self)
-
-		# Initializing image
-
-		# Compass's background
-		self.image = QGraphicsPixmapItem( QPixmap( COMPASS_BG ), self)
-		self.image.setOffset(-COMPASS_BG.width()/2, -COMPASS_BG.height()/2)
-
-		# Shadow effect on the compass
-		self.shadow = QGraphicsDropShadowEffect()
-		self.shadow.setBlurRadius(100)
-		self.shadow.setColor( QColor(80, 80, 80) )
-		self.shadow.setOffset(0, 0)
-		self.image.setGraphicsEffect( self.shadow )
-
-		# Compass's needle
-		self.needle = QGraphicsPixmapItem( QPixmap( COMPASS_NEEDLE ), self)
-		self.needle.setOffset(-COMPASS_NEEDLE.width()/2, -COMPASS_NEEDLE.height()/2)
-
-		# Setting up text
-		self.text = QGraphicsTextItem("", self)
-		self.text.setFont(QFont("Ubuntu-L.ttf", 25, QFont.Light))
-
-		tX = COMPASS_BG.width()/2. - self.text.boundingRect().width()
-		tY = COMPASS_BG.height()/2.
-
-		self.text.setPos(tX, tY)
-
-		self.textShadow = QGraphicsDropShadowEffect()
-		self.textShadow.setBlurRadius(3)
-		self.textShadow.setColor( QColor(0, 0, 0) )
-		self.textShadow.setOffset(1, 1)
-		self.text.setGraphicsEffect( self.textShadow )
-
-		self.text.setDefaultTextColor(QColor(210, 220, 250))
-		self.text.font().setBold(True)
-
-		# Caching for the graphics
-		self.setCacheMode( QGraphicsItem.ItemCoordinateCache )
-
-		self.update()
-
-	def setCaption(self, text):
-		self.text.setPlainText(text)
-
-	def paint(self, painter=None, style=None, widget=None):
-		pass
-
-	def update(self):
-		super(GraphicsStaticCarItem, self).update()
-
-		# Rotating the NEEDLE around its center
-		if self.needle.rotation() != self.car.angle:
-			self.needle.setRotation(-math.degrees(self.car.angle))
-
-		#Updating the caption
-		if self.car.moving:
-			self.setCaption( "Car moving... " )
-		elif self.car.distance:
-			self.setCaption( "Closest object at : {}".format(int(self.car.distance)) )
-		else:
-			self.setCaption( "No object ahead" )
-
-	def boundingRect(self):
-		return self.image.boundingRect()
-
-	# def mousePressEvent(self, event):
-	# 	super(Car, self).mousePressEvent(event)
-	# 	print "Car mouse event at ({} , {})".format(event.pos().x(), event.pos().y())
-
-	# 	event.accept()

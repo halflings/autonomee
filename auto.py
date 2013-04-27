@@ -1,3 +1,5 @@
+# -*- coding: utf8 -*-
+
 """
     auto.py - The view shown when monitoring the car's autonomous movements
     on the map or doing simulations.
@@ -7,7 +9,7 @@ from PySide import QtSvg
 from PySide.QtGui import *
 from PySide.QtCore import *
 
-import engine
+import widgets
 
 import svg
 import heatmap
@@ -16,14 +18,15 @@ import probability
 from collections import deque
 import math
 
+
 class AutoScene(QGraphicsScene):
 
     def __init__(self, car, parent=None):
         super(AutoScene, self).__init__(parent)
-        #self.setDragMode(QGraphicsScene.ScrollHandDrag)
+        # self.setDragMode(QGraphicsScene.ScrollHandDrag)
 
         self.x = 0
-        self.y =0
+        self.y = 0
 
         # Car object model only
         self.car = car
@@ -49,8 +52,8 @@ class AutoScene(QGraphicsScene):
 
     def pathfinding(self, x, y):
         # We generate a path from the car to where we clicked and show it on the UI
-        #We get the path from our 'map' object
-        self.path = self.map.search((self.car.x, self.car.y), (x,y))
+        # We get the path from our 'map' object
+        self.path = self.map.search((self.car.x, self.car.y), (x, y))
 
         if len(self.path) > 0:
             # We build a polyline graphic item
@@ -77,11 +80,11 @@ class AutoScene(QGraphicsScene):
                 pen.setMiterLimit(10)
                 pen.setJoinStyle(Qt.RoundJoin)
                 space = 4
-                pen.setDashPattern([8, space, 1, space] )
+                pen.setDashPattern([8, space, 1, space])
                 self.graphicalPath.setPen(pen)
                 self.graphicalPath.setOpacity(0.8)
 
-                self.addItem( self.graphicalPath )
+                self.addItem(self.graphicalPath)
 
             # Calculating the animation speed
             totalLength = painterPath.length()
@@ -97,8 +100,8 @@ class AutoScene(QGraphicsScene):
             posAnim.setDuration(totalDuration)
             rotAnim.setDuration(totalDuration)
 
-            posAnim.setKeyValueAt(0, QPointF(self.car.x, self.car.y) )
-            rotAnim.setKeyValueAt(0, self.car.readAngle() )
+            posAnim.setKeyValueAt(0, QPointF(self.car.x, self.car.y))
+            rotAnim.setKeyValueAt(0, self.car.readAngle())
 
             nKeys = len(self.path) - 1
             angles = deque()
@@ -110,8 +113,6 @@ class AutoScene(QGraphicsScene):
 
                 # Current angle calculus and format according to the trigonometric sens
                 angle = math.pi - math.atan2(lastPt.y - pt.y, lastPt.x - pt.x)
-                if angle > math.pi:
-                    angle = angle - 2*math.pi
 
                 # We add the 'current angle' to the angles queue and calculate the mean
                 angles.append(angle)
@@ -121,9 +122,8 @@ class AutoScene(QGraphicsScene):
                 if len(angles) > 10:
                     angles.popleft()
 
-                posAnim.setKeyValueAt(float(i)/nKeys, QPointF(pt.x, pt.y) )
+                posAnim.setKeyValueAt(float(i)/nKeys, QPointF(pt.x, pt.y))
                 rotAnim.setKeyValueAt(float(i)/nKeys, meanAngle)
-
 
             self.animation.addAnimation(rotAnim)
             self.animation.addAnimation(posAnim)
@@ -136,27 +136,22 @@ class AutoScene(QGraphicsScene):
     def pathFinished(self):
     # Called when the car has arrived to the path's end
         self.car.setMoving(False)
-        self.path =  []
+        self.path = []
         self.graphicalPath.setPath(QPainterPath())
-
 
     def mousePressEvent(self, event):
         x, y = event.scenePos().x(), event.scenePos().y()
 
         self.pathfinding(x, y)
 
-        super(AutoScene,self).mousePressEvent(event)
-
-
+        super(AutoScene, self).mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
         x, y = event.scenePos().x(), event.scenePos().y()
 
         if not self.car.moving:
-            #We calculate the angle (in radians) and convert it to the trigonometric referential
+            # We calculate the angle (in radians) and convert it to the trigonometric referential
             angle = math.pi - math.atan2(self.car.y - y, self.car.x - x)
-            if angle > math.pi:
-                angle = angle - 2*math.pi
 
             self.car.setAngle(angle)
 
@@ -168,13 +163,13 @@ class AutoScene(QGraphicsScene):
             speed = 0
             deltaAngle = 0
 
-            if event.key()==Qt.Key_Up or event.key()==Qt.Key_Z:
+            if event.key() == Qt.Key_Up or event.key() == Qt.Key_Z:
                 speed = 20
-            elif event.key()==Qt.Key_Down or event.key()==Qt.Key_S:
+            elif event.key() == Qt.Key_Down or event.key() == Qt.Key_S:
                 speed = -20
-            elif event.key()==Qt.Key_Right or event.key()==Qt.Key_D:
+            elif event.key() == Qt.Key_Right or event.key() == Qt.Key_D:
                 deltaAngle = -math.pi/10
-            elif event.key()==Qt.Key_Left or event.key()==Qt.Key_Q:
+            elif event.key() == Qt.Key_Left or event.key() == Qt.Key_Q:
                 deltaAngle = math.pi/10
 
             if speed != 0 or deltaAngle != 0:
@@ -189,7 +184,8 @@ class AutoScene(QGraphicsScene):
 
         # Heatmap
         if event.key() == Qt.Key_H:
-            self.heatmap.setVisible(not self.heatmap.isVisible() )
+            self.heatmap.setVisible(not self.heatmap.isVisible())
+
 
 class AutoView(QGraphicsView):
     Native, OpenGL, Image = range(3)
@@ -210,6 +206,10 @@ class AutoView(QGraphicsView):
         self.setBackgroundBrush(QImage("img/blueprintDark.png"))
         self.setCacheMode(QGraphicsView.CacheBackground)
 
+        # Disabling scrollbars
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
 
     def openFile(self, svg_file):
         if not svg_file.exists():
@@ -217,17 +217,17 @@ class AutoView(QGraphicsView):
 
         s = self.scene()
 
-        #Reset the zoom factor
+        # Reset the zoom factor
         self.factor = 1
-        # #Reset the car
+        # Reset the car
         # s.car = None
-        #Recreate a map tree by parsing the SVG
+        # Recreate a map tree by parsing the SVG
         s.map = svg.SvgTree(svg_file.fileName())
         s.path = None
         s.graphicalPath = None
 
         # We remove the current view from the car's model
-        s.car.removeView( s.graphicCar )
+        s.car.removeView(s.graphicCar)
 
         if self.backgroundItem:
             drawBackground = self.backgroundItem.isVisible()
@@ -246,17 +246,16 @@ class AutoView(QGraphicsView):
         # The svg item's dimensions:
         width, height = self.svgItem.boundingRect().width(), self.svgItem.boundingRect().height()
 
-
         # Background (blueprint image)
         self.backgroundItem = QGraphicsRectItem(self.svgItem.boundingRect())
-        self.backgroundItem.setBrush( QImage("img/blueprint.png") )
+        self.backgroundItem.setBrush(QImage("img/blueprint.png"))
         self.backgroundItem.setPen(QPen())
         self.backgroundItem.setVisible(drawBackground)
         self.backgroundItem.setZValue(-1)
-        self.backgroundItem.setCacheMode( QGraphicsItem.ItemCoordinateCache )
+        self.backgroundItem.setCacheMode(QGraphicsItem.ItemCoordinateCache)
         s.addItem(self.backgroundItem)
 
-        #Shadow effect on the background
+        # Shadow effect on the background
         # TODO : See why this is *so* slow when we zoom in ?
         # self.shadow = QGraphicsDropShadowEffect()
         # self.shadow.setBlurRadius(50)
@@ -274,21 +273,13 @@ class AutoView(QGraphicsView):
         # Drop shadow on the text
         self.textShadow = QGraphicsDropShadowEffect()
         self.textShadow.setBlurRadius(3)
-        self.textShadow.setColor( QColor(20, 20, 40) )
+        self.textShadow.setColor(QColor(20, 20, 40))
         self.textShadow.setOffset(1, 1)
-        self.titleItem.setGraphicsEffect( self.textShadow )
-
-        # Connection button
-        self.connectButton = QPushButton("Connecter la voiture")
-        bWidth, bHeight = 200, 30
-        self.connectButton.setGeometry(width - bWidth - 15, height - bHeight - 15, bWidth, bHeight)
-        self.connectButton.clicked.connect( self.connectCar )
-
-        s.addWidget(self.connectButton)
+        self.titleItem.setGraphicsEffect(self.textShadow)
 
         # Car visualization
         s.car.map = s.map
-        s.graphicCar = engine.GraphicsCarItem( s.car )
+        s.graphicCar = widgets.GraphicsCarItem(s.car)
         s.addItem(s.graphicCar)
 
         # Heatmap
@@ -301,9 +292,6 @@ class AutoView(QGraphicsView):
         self.y = 0
 
         self.updateScene()
-
-    def connectCar(self):
-        print "CONNECT"
 
     def updateScene(self):
         self.scene().setSceneRect(self.svgItem.boundingRect().adjusted(self.x-10, self.y-10, self.x+10, self.y+10))
