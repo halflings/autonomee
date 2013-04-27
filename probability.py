@@ -65,7 +65,7 @@ class ParticleFilter(object):
             if measuredDistance is None:
                 measuredDistance = self.width + self.height
 
-            particle.p *= Gaussian(particleDist, self.car.sensor_noise, measuredDistance)
+            particle.p = Gaussian(particleDist, self.car.sensor_noise, measuredDistance)
 
     def move(self, distance, angle=0.):
         """Updates the probabilities to match a displacement.
@@ -102,13 +102,15 @@ class ParticleFilter(object):
 
     def resample(self):
         """Resampling the particles using a 'resampling wheel' algorithm."""
+        self.normalize()
+
         newParticles = list()
         maxProba = max(particle.p for particle in self.particles)
         index = random.randint(0, len(self.particles) - 1)
         B = 0.0
 
         for i in xrange(len(self.particles)):
-            B += random.randint(0, int(2 * maxProba))
+            B += random.random() * 2 * maxProba
 
             while self.particles[index].p < B:
                 B -= self.particles[index].p

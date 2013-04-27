@@ -173,8 +173,7 @@ class AutoScene(QGraphicsScene):
                 if self.heatmap.isVisible():
                     self.heatmap.move(speed, deltaAngle)
                     self.heatmap.sense(self.car.distance, self.car.angle)
-                    # self.heatmap.resample()
-                    self.heatmap.normalize()
+                    self.heatmap.resample()
                     self.heatmap.update()
 
                 # Putting back the car into the map if it got out
