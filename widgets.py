@@ -428,7 +428,7 @@ class GraphicalParticleFilter(QGraphicsObject):
                 painter.setPen( color )
                 painter.setBrush( color )
 
-                radius = 
+                radius = 10 + particle.p*20
 
                 painter.drawEllipse(particle.x, particle.y, radius, radius)
 
