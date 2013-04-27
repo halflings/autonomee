@@ -15,7 +15,7 @@ class Car(QObject):
     max_temperature = 120.
 
     # TODO : Should be in mm
-    def_width = 200
+    def_width = 100
     def_length = 200
 
     # Noise parameters
@@ -106,6 +106,9 @@ class Car(QObject):
         self.temperature = temperature
 
     temperatureProperty = Property(float, readTemperature, setTemperature)
+
+    def updateMap(self):
+        self.map.setRadius(max(self.width, self.length))
 
     def update(self):
         # Calculating the distance to the closest object

@@ -11,9 +11,8 @@ from PySide.QtUiTools import *
 
 from manual import ManualView
 from auto import AutoView
+from svg import SvgTree
 import engine
-import configdialog
-
 
 class MainWindow(QMainWindow):
     AUTO_MODE = 0
@@ -119,8 +118,12 @@ class MainWindow(QMainWindow):
 
             self.car.update()
 
+            self.car.updateMap()
+
             self.config.accept()
-        except:
+
+            
+        except ValueError:
             print "Parsing error"
             # TODO : Do this in the status bar, not in the console
 
@@ -141,14 +144,15 @@ class MainWindow(QMainWindow):
         if not path:
             path = QFileDialog.getOpenFileName(self, "Open SVG File", self.currentPath, "SVG files (*.svg *.svgz *.svg.gz)")[0]
         if path:
-            svg_file = QFile(path)
-            if not svg_file.exists():
-                QMessageBox.critical(self, "Open SVG File",
-                                     "Could not open file '%s'." % path)
+            svgFile = QFile(path)
+            if not svgFile.exists():
+                QMessageBox.critical(self, "Open SVG File", "Could not open file '%s'." % path)
                 self.backgroundAction.setEnabled(True)
                 return
 
-            self.automaticView.openFile(svg_file)
+            self.svgMap = SvgTree(svgFile.fileName(), radius=max(self.car.width, self.car.length))
+            self.automaticView.openMap(self.svgMap)
+
             if not path.startswith(':/'):
                 self.currentPath = path
                 self.setWindowTitle("Carosif - Automatic mode - Map : {}".format(self.currentPath))

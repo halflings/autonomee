@@ -19,11 +19,17 @@ def remove_ns(text, namespace=NS['svg']):
     else:
         return text
 
-
 def add_ns(text, namespace=NS['sodipodi']):
-
     return '{' + namespace + '}' + text
 
+def parseTransform(element):
+    if 'transform' in element.attrib:
+        transform = element.attrib['transform']
+        regex = re.search("translate[(](-?[\d]+[.]?[\d]+),(-?[\d]+[.[\d]+]?)[)]", transform)
+        if regex:
+            return float(regex.group(1)), float(regex.group(2))
+
+    return 0, 0
 
 class SvgTree:
 
@@ -40,9 +46,11 @@ class SvgTree:
             points.append(Point(x, y))
         return points
 
-    def __init__(self, path="map/mapexample.svg"):
+    def __init__(self, path, radius):
         #Shapes' list
         self.shapes = []
+
+        self.path = path
 
         #SVG file parsing : opening the file, setting up a custom parser
         self.svg_file = open(path)
@@ -88,6 +96,10 @@ class SvgTree:
                     cy = float(path.attrib[add_ns('cy', NS['sodipodi'])])
                     rx = float(path.attrib[add_ns('rx', NS['sodipodi'])])
                     ry = float(path.attrib[add_ns('ry', NS['sodipodi'])])
+
+                    dx, dy = parseTransform(path)
+                    cx, cy = cx + dx, cy + dy
+
                     ellipse = Ellipse(cx, cy, rx, ry)
                     self.shapes.append(ellipse)
                 else:
@@ -105,6 +117,9 @@ class SvgTree:
                 w = float(rect.attrib['width'])
                 h = float(rect.attrib['height'])
 
+                dx, dy = parseTransform(rect)
+                x, y = x + dx, y + dy
+
                 rectangle = Rectangle(x, y, w, h)
                 self.shapes.append(rectangle)
 
@@ -114,6 +129,11 @@ class SvgTree:
         if polygones:
             for polygone in polygones:
                 points = self.parse_points(polygone.attrib['points'])
+
+                dx, dy = parseTransform(polygone)
+                for point in points:
+                    point.x += dx
+                    point.y += dy
 
                 polygone = Polygone(points)
                 self.shapes.append(polygone)
@@ -125,11 +145,20 @@ class SvgTree:
         if polylines:
             for poly in polylines:
                 points = self.parse_points(poly.attrib['points'])
+
+                dx, dy = parseTransform(poly)
+                for point in points:
+                    point.x += dx
+                    point.y += dy
+
                 polyline = Polyline(points)
                 self.shapes.append(polyline)
 
-        self.discreteMap = DiscreteMap(self)
+        self.discreteMap = DiscreteMap(self, radius=radius)
 
+
+    def setRadius(self, radius):
+        self.discreteMap.setRadius(radius)
 
     def isObstacle(self, x, y):
         """

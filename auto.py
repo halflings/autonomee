@@ -211,18 +211,13 @@ class AutoView(QGraphicsView):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
 
-    def openFile(self, svg_file):
-        if not svg_file.exists():
-            return
-
+    def openMap(self, svg_map):
         s = self.scene()
 
         # Reset the zoom factor
         self.factor = 1
-        # Reset the car
-        # s.car = None
         # Recreate a map tree by parsing the SVG
-        s.map = svg.SvgTree(svg_file.fileName())
+        s.map = svg_map
         s.path = None
         s.graphicalPath = None
 
@@ -238,7 +233,7 @@ class AutoView(QGraphicsView):
         self.resetTransform
 
         # Graphic visualization of the SVG map
-        self.svgItem = QtSvg.QGraphicsSvgItem(svg_file.fileName())
+        self.svgItem = QtSvg.QGraphicsSvgItem(svg_map.path)
         self.svgItem.setFlags(QGraphicsItem.ItemClipsToShape)
         self.svgItem.setZValue(0)
         s.addItem(self.svgItem)

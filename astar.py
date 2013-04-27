@@ -75,35 +75,39 @@ class DiscreteMap:
 
         self.width = int(svgMap.width/division)
         self.height = int(svgMap.height/division)
-
-        self.grid = [ [ False for x in range(self.width) ] for y in range(self.height) ]
+        self.division = division
 
         # Open and closed list, used for A* algorithm
         self.ol = set()
         self.cl = set()
 
-        self.path = []
+        self.svgMap = svgMap
 
-        for y in range(self.height):
-            for x in range(self.width):
+        self.initgrid = [ [ Cell(x, y) for x in xrange(self.width) ] for y in xrange(self.height) ]
+        self.grid = [ [ Cell(x, y) for x in xrange(self.width) ] for y in xrange(self.height) ]
+
+        for y in xrange(self.height):
+            for x in xrange(self.width):
                 # The cell (x, y) will represent the point ( (x + 0.5)*division, (y + 0.5)*division )
-                xi, yi = (x + 0.5)*division, (y + 0.5)*division
-                self.grid[y][x] = Cell(x, y, reachable = not svgMap.isObstacle(xi, yi))
+                xi, yi = (x + 0.5)*self.division, (y + 0.5)*self.division
+                obstacle = self.svgMap.isObstacle(xi, yi)
+                self.initgrid[y][x].reachable = not obstacle
+                self.grid[y][x].reachable = not obstacle
 
+        self.setRadius(radius)
 
+    def setRadius(self, radius=0):
         # Taking into account the car's width (radius)
-
-        r = radius / division
+        r = radius / self. division
         # 1 : Unreachable ; 0 : Reachable
         car = scipy.array( [[1 for i in xrange(r)] for j in xrange(r)] )
-        grid = scipy.array( [[0 if self.grid[i][j].reachable else 1 for j in xrange(self.width)] for i in xrange(self.height)] )
+        grid = scipy.array( [[0 if self.initgrid[i][j].reachable else 1 for j in xrange(self.width)] for i in xrange(self.height)] )
 
         result = scipy.signal.fftconvolve( grid, car, 'same' )
 
         for i in xrange(self.height):
             for j in xrange(self.width):
                 self.grid[i][j].reachable = int(result[i][j]) == 0
-
 
     def neighbours(self, cell, radius = 1, unreachables = False, diagonal = True):
         neighbours = set()
