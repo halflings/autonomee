@@ -80,6 +80,9 @@ class SvgTree:
             else:
                 raise "No {} ! Can't parse SVG.".format(attribute)
 
+        #Bounding rectangle ( TODO : mm -> xp, etc.)
+        self.rect = Rectangle(0, 0, self.width, self.height)
+
 
         ######################################################################
         ### Parsing SHAPES                                                  ##
@@ -183,12 +186,12 @@ class SvgTree:
         for shape in self.shapes:
             intersections = ray.intersection(shape)
 
-            for intersection in intersections:
-                distance = intersection.distance(ray.origin)
-                if minDist is None:
-                    minDist = distance
-                elif distance < minDist:
-                    minDist = distance
+            if intersections:
+                minDist = min(intersect.distance(ray.origin) for intersect in intersections)
+
+        if minDist == None:
+            # If there's no intersection with any shape, we test for intersections with the map's borders
+            minDist = min(intersect.distance(ray.origin) for intersect in ray.intersection(self.rect))
 
         return minDist
 

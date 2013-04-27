@@ -21,7 +21,7 @@ class Car(QObject):
     # Noise parameters are in cm and degrees
     def_sensor = 5.
     def_displacement = 5.
-    def_rotation = 5.
+    def_rotation = 2.
 
     def __init__(self, map=None, x=0, y=0, width=def_width, length=def_length):
         super(Car, self).__init__()

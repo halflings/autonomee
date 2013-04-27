@@ -38,10 +38,12 @@ class ParticleFilter(object):
     def populate(self, N, objectAngle):
         """Adds N random particles to the particle filter. (Useful at initialization)"""
 
+
         for i in xrange(N):
             x = random.randint(0, self.width - 1)
             y = random.randint(0, self.height - 1)
 
+            # TODO : uncomment this (and fix it)
             while self.map.isObstacle(x, y):
                 x = random.randint(0, self.width - 1)
                 y = random.randint(0, self.height - 1)
@@ -57,11 +59,9 @@ class ParticleFilter(object):
         for particle in self.particles:
             particleDist = self.map.rayDistance(particle.x, particle.y, angle)
 
-            # TODO : particleDist should never be None (== no obstacle ahead), should be a 'max' distance
+            # Those two tests are here just out of caution. distances shouldn't be None
             if particleDist is None:
                 particleDist = self.width + self.height
-
-            # TODO: Same as particleDist
             if measuredDistance is None:
                 measuredDistance = self.width + self.height
 
@@ -76,12 +76,14 @@ class ParticleFilter(object):
 
             if angle != 0:
                 # We update the particle's orientation
-                deltaAngle = angle + random.gauss(0.0, math.radians(self.car.rotation_noise))
+                angularNoise = random.gauss(0.0, math.radians(self.car.rotation_noise))
+                deltaAngle = angle + angularNoise
                 particle.turnAngle(deltaAngle)
 
             if distance != 0:
                 # ...  and it's position
-                deltaDistance = distance + random.gauss(0.0, self.car.displacement_noise)
+                distanceNoise = random.gauss(0.0, self.car.displacement_noise)
+                deltaDistance = distance + distanceNoise
                 particle.move(deltaDistance)
 
             # If the particle got out of the universe, we put it on the border
@@ -147,11 +149,11 @@ class Particle(object):
 
 if __name__ == "__main__":
 
-    myMap = svg.SvgTree("maps/mapexample.svg")
+    myMap = svg.SvgTree("maps/mapexamplewithborder.svg")
     myCar = engine.Car(myMap)
     proba = ParticleFilter(map=myMap, car=myCar, n=20)
 
-    proba.move(10, 0)
+    proba.move(10, 0.7)
     proba.sense(204, 0)
 
     print proba
