@@ -7,7 +7,7 @@
 
 from PySide.QtCore import *
 
-from math import cos, sin
+from math import cos, sin, pi
 
 
 class Car(QObject):
@@ -83,7 +83,7 @@ class Car(QObject):
         return self.angle
 
     def setAngle(self, angle):
-        self.angle = angle
+        self.angle = angle % (2*pi)
 
         self.update()
 

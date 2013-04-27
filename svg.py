@@ -48,7 +48,7 @@ class SvgTree:
             points.append(Point(x, y))
         return points
 
-    def __init__(self, path, radius):
+    def __init__(self, path, radius=5):
         #Shapes' list
         self.shapes = []
 

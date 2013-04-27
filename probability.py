@@ -6,24 +6,26 @@ import math
 from math import cos, sin, exp, pi, sqrt
 import random
 import svg
+import engine
+
 
 def Gaussian(mu, sigma, x):
     # calculates the probability of x for 1-dim Gaussian with mean mu and var. sigma
-    return exp(- ((mu - x) ** 2) / (sigma ** 2) / 2.0) / sqrt(2.0 * pi * (sigma ** 2))
+    return exp(- ((mu - x) ** 2) / (sigma ** 2) / 2.0) / sqrt(2.0 * pi * (sigma ** 2 ))
+
 
 class ParticleFilter(object):
+
     """A particle filter that calculates localization probability
     based on a series of (noisy) measurements and displacements"""
 
-
-    def __init__(self, car, map=None, initAngle = 0, numParticles = 100):
+    def __init__(self, car, map=None, initAngle=0, n=100):
         self.car = car
-        self.N = numParticles
+        self.N = n
         self.initAngle = initAngle
         self.particles = list()
 
         self.setMap(map)
-
 
     def setMap(self, map):
         """Sets a map for the particle filter (and executes random population)"""
@@ -44,7 +46,7 @@ class ParticleFilter(object):
                 x = random.randint(0, self.width - 1)
                 y = random.randint(0, self.height - 1)
 
-            self.particles.append( Particle(x, y, angle = objectAngle, probability = 1. ) ) # / self.N  )
+            self.particles.append(Particle(x, y, angle=objectAngle, probability=1./self.N))  # / self.N  )
 
     def sense(self, measuredDistance, angle):
         """Updates the probabilities to match a measurement.
@@ -53,7 +55,7 @@ class ParticleFilter(object):
         """
 
         for particle in self.particles:
-            particleDist = self.map.rayDistance( particle.x, particle.y, angle )
+            particleDist = self.map.rayDistance(particle.x, particle.y, angle)
 
             # TODO : particleDist should never be None (== no obstacle ahead), should be a 'max' distance
             if particleDist is None:
@@ -65,7 +67,7 @@ class ParticleFilter(object):
 
             particle.p *= Gaussian(particleDist, self.car.sensor_noise, measuredDistance)
 
-    def move(self, distance, angle = 0.):
+    def move(self, distance, angle=0.):
         """Updates the probabilities to match a displacement.
         Updates the particles' coordinates (taking into account 'noise')
         """
@@ -83,35 +85,34 @@ class ParticleFilter(object):
                 particle.move(deltaDistance)
 
             # If the particle got out of the universe, we put it on the border
-            particle.x = min( max(0, particle.x) , self.width )
-            particle.y = min( max(0, particle.y) , self.height )
+            particle.x = min(max(0, particle.x), self.width)
+            particle.y = min(max(0, particle.y), self.height)
 
     def normalize(self):
         """Normalizes the particles's weights.
         (Makes the sum of all probabilities equal to 1)
         """
-        sumProba = sum( particle.p for particle in self.particles )
+        sumProba = sum(particle.p for particle in self.particles)
         for particle in self.particles:
             particle.p /= sumProba
 
     def resample(self):
         """Resampling the particles using a 'resampling wheel' algorithm."""
         newParticles = list()
-        maxProba = max( particle.p for particle in self.particles )
+        maxProba = max(particle.p for particle in self.particles)
         index = random.randint(0, len(self.particles) - 1)
         B = 0.0
 
-        for i in xrange( len(self.particles) ):
+        for i in xrange(len(self.particles)):
             B += random.randint(0, int(2 * maxProba))
 
             while self.particles[index].p < B:
                 B -= self.particles[index].p
                 index = (index + 1) % len(self.particles)
 
-            newParticles.append( self.particles[index] )
+            newParticles.append(self.particles[index])
 
         self.particles = newParticles
-
 
     def __repr__(self):
         repr = ""
@@ -123,7 +124,7 @@ class ParticleFilter(object):
 
 class Particle(object):
 
-    def __init__(self, x, y, angle = 0., probability = 1.):
+    def __init__(self, x, y, angle=0., probability=1.):
 
         self.x, self.y = x, y
         self.angle = angle
@@ -138,7 +139,7 @@ class Particle(object):
         dx = displacement * cos(self.angle)
         dy = - displacement * sin(self.angle)
 
-        self.x, self.y = int(self.x + dx) , int(self.y + dy)
+        self.x, self.y = int(self.x + dx), int(self.y + dy)
 
     def __repr__(self):
         return '[x = {} y = {} angle = {} degree | proba = {}]'.format(self.x, self.y, int(math.degrees(self.angle)), self.p)
@@ -147,8 +148,8 @@ class Particle(object):
 if __name__ == "__main__":
 
     myMap = svg.SvgTree("maps/mapexample.svg")
-
-    proba = ParticleFilter(myMap, 0)
+    myCar = engine.Car(myMap)
+    proba = ParticleFilter(map=myMap, car=myCar, n=20)
 
     proba.move(10, 0)
     proba.sense(204, 0)
