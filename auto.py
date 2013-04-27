@@ -43,11 +43,8 @@ class AutoScene(QGraphicsScene):
         # Graphical representation of the last generated path
         self.graphicalPath = None
 
-        # Not used (as of 29/03), should be a graphic item for the car's "ray"
-        self.ray = None
-
         # Heatmap, should be used for probabilities [WIP]
-        self.particleFilter = probability.ParticleFilter()
+        self.particleFilter = None
         # ( initialized when pressing 'H' )
 
     def pathfinding(self, x, y):
@@ -278,7 +275,7 @@ class AutoView(QGraphicsView):
         s.addItem(s.graphicCar)
 
         # Heatmap
-        s.particleFilter.setMap(s.map)
+        s.particleFilter = probability.ParticleFilter(car=s.car, map=s.map)
         s.heatmap = heatmap.GraphicalParticleFilter(s.particleFilter)
         s.heatmap.setVisible(False)
         s.addItem(s.heatmap)

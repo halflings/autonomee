@@ -7,10 +7,6 @@ from math import cos, sin, exp, pi, sqrt
 import random
 import svg
 
-FORWARD_NOISE = 5.
-TURN_NOISE = 5.
-SENSE_NOISE = 5.
-
 def Gaussian(mu, sigma, x):
     # calculates the probability of x for 1-dim Gaussian with mean mu and var. sigma
     return exp(- ((mu - x) ** 2) / (sigma ** 2) / 2.0) / sqrt(2.0 * pi * (sigma ** 2))
@@ -20,16 +16,13 @@ class ParticleFilter(object):
     based on a series of (noisy) measurements and displacements"""
 
 
-    def __init__(self, map = None, initAngle = 0, numParticles = 100):
-        self.map = map
+    def __init__(self, car, map=None, initAngle = 0, numParticles = 100):
+        self.car = car
         self.N = numParticles
         self.initAngle = initAngle
         self.particles = list()
 
-        if map is not None:
-            self.setMap(map)
-        else:
-            self.width, self.height = 0, 0
+        self.setMap(map)
 
 
     def setMap(self, map):
@@ -70,7 +63,7 @@ class ParticleFilter(object):
             if measuredDistance is None:
                 measuredDistance = self.width + self.height
 
-            particle.p *= Gaussian(particleDist, SENSE_NOISE, measuredDistance)
+            particle.p *= Gaussian(particleDist, self.car.sensor_noise, measuredDistance)
 
     def move(self, distance, angle = 0.):
         """Updates the probabilities to match a displacement.
@@ -81,12 +74,12 @@ class ParticleFilter(object):
 
             if angle != 0:
                 # We update the particle's orientation
-                deltaAngle = angle + random.gauss(0.0, TURN_NOISE)
+                deltaAngle = angle + random.gauss(0.0, math.radians(self.car.rotation_noise))
                 particle.turnAngle(deltaAngle)
 
             if distance != 0:
                 # ...  and it's position
-                deltaDistance = distance + random.gauss(0.0, FORWARD_NOISE)
+                deltaDistance = distance + random.gauss(0.0, self.car.displacement_noise)
                 particle.move(deltaDistance)
 
             # If the particle got out of the universe, we put it on the border

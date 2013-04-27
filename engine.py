@@ -18,7 +18,7 @@ class Car(QObject):
     def_width = 100
     def_length = 200
 
-    # Noise parameters
+    # Noise parameters are in cm and degrees
     def_sensor = 5.
     def_displacement = 5.
     def_rotation = 5.

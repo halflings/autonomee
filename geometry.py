@@ -147,7 +147,8 @@ class Ray(object):
         elif isinstance(shape, Polyline):
             return self.polylineCollision(shape)
         elif isinstance(shape, Ellipse):
-            return self.ellipseCollision(shape)
+            return []
+            # return self.ellipseCollision(shape)
         else:
             return []
 
@@ -179,10 +180,15 @@ class Ray(object):
         return result
 
     def ellipseCollision(self, ellipse):
-        # Implementation by Ianic
+        # by Ianic
+
+        if self.angle > math.pi:
+            angle = -self.angle
+        else:
+            angle = -2*math.pi + self.angle 
 
         a, b, h, k = ellipse.rx, ellipse.ry, ellipse.center.x, ellipse.center.y
-        c = math.tan(-self.angle)
+        c = math.tan(angle)
         d = -c*self.origin.x + self.origin.y
 
         alpha = c**2 / b**2 + 1. / a**2
@@ -190,6 +196,7 @@ class Ray(object):
         gamma = h**2/a**2 + (d-k)**2 / b**2 - 1
 
         delta = beta**2 - 4*alpha*gamma
+
         if delta < 0:
             return []
         else:
