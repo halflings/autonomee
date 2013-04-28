@@ -148,7 +148,7 @@ class Ray(object):
             return self.polylineCollision(shape)
         elif isinstance(shape, Ellipse):
             return [] 
-            #return self.ellipseCollision(shape)
+            # return self.ellipseCollision(shape)
         else:
             return []
 

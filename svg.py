@@ -182,18 +182,23 @@ class SvgTree:
 
     def rayDistance(self, x, y, headingAngle):
         ray = Ray(x, y, headingAngle)
-        minDist = None
+        dist = None
+
         for shape in self.shapes:
             intersections = ray.intersection(shape)
 
-            if intersections:
-                minDist = min(intersect.distance(ray.origin) for intersect in intersections)
+            if len(intersections) > 0:
+                closestIntersect = min(intersect.distance(ray.origin) for intersect in intersections)
+                if dist is None:
+                    dist = closestIntersect
+                else:
+                    dist = min(dist, closestIntersect)
 
-        if minDist == None:
+        if dist is None:
             # If there's no intersection with any shape, we test for intersections with the map's borders
-            minDist = min(intersect.distance(ray.origin) for intersect in ray.intersection(self.rect))
+            dist = min(intersect.distance(ray.origin) for intersect in ray.intersection(self.rect))
 
-        return minDist
+        return dist
 
     def search(self, begin, goal):
         div = self.discreteMap.division
