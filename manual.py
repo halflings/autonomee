@@ -85,6 +85,10 @@ class ManualScene(QGraphicsScene):
         self.thermometer.setPos(x, y)
         self.addItem(self.thermometer)
 
+        # "Obstacle warner"
+        self.obstacleWarning = widgets.ObstacleWarning(self.car)
+        self.addItem(self.obstacleWarning)
+
     def mousePressEvent(self, event):
         x, y = event.scenePos().x(), event.scenePos().y()
 

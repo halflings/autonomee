@@ -25,6 +25,9 @@ class Car(QObject):
     def_displacement = 5.
     def_rotation = 2.
 
+    # Distance at which the car is 'in danger' (obstacle too close)
+    danger_distance = 120
+
     def __init__(self, map=None, x=0, y=0, width=def_width, length=def_length):
         super(Car, self).__init__()
 

@@ -56,8 +56,6 @@ class InfoBox(QGraphicsObject):
         # Caching
         self.setCacheMode(QGraphicsItem.ItemCoordinateCache)
 
-        self.update()
-
     def paint(self, painter=None, style=None, widget=None):
         pass
 
@@ -66,10 +64,34 @@ class InfoBox(QGraphicsObject):
         w = self.text.boundingRect().width() + 2 * InfoBox.padding
         h = self.text.boundingRect().height() + 2 * InfoBox.padding
         self.background.setRect(QRect(0, 0, w, h, parent=self))
-        self.update()
+
+    def setColor(self, color):
+        self.background.setBrush(color)
+
+    def setBackgroundOpacity(self, opacity):
+        self.background.setOpacity(opacity)
 
     def boundingRect(self):
         return self.background.boundingRect()
+
+class ObstacleWarning(InfoBox):
+    def __init__(self, car):
+        self.car = car
+        car.addView(self)
+
+        super(ObstacleWarning, self).__init__(fontsize=25)
+
+        self.update()
+
+    def update(self):
+
+        if self.car.distance is None:
+            self.setCaption("No obstacle ahead")
+            self.setColor(QColor(255, 255, 255))
+        else:
+            self.setCaption("Obstacle at : {}".format(self.car.distance))
+            hue = 1./3 - min(1./3, self.car.distance/Car.danger_distance)
+            self.setColor( QColor.fromHsvF(hue, 0.5, 0.8, 0.5) )
 
 
 class GraphicsCarItem(QGraphicsObject):
@@ -96,22 +118,8 @@ class GraphicsCarItem(QGraphicsObject):
         self.car = car
         self.car.addView(self)
 
-        # TODO : add conversion
+        # TODO : add conversion (px <-> mm or cm)
         self.w = self.car.length
-
-        # Setting up text
-        self.text = QGraphicsTextItem("", self)
-        self.text.setFont(QFont("Ubuntu"))
-        self.text.setPos(-140, -140)
-
-        self.textShadow = QGraphicsDropShadowEffect()
-        self.textShadow.setBlurRadius(3)
-        self.textShadow.setColor(QColor(0, 0, 0))
-        self.textShadow.setOffset(1, 1)
-        self.text.setGraphicsEffect(self.textShadow)
-
-        self.text.setDefaultTextColor(QColor(210, 220, 250))
-        self.text.font().setBold(True)
 
         # Initializing image
         self.img = GraphicsCarItem.default_image.scaledToWidth(self.w)
@@ -126,6 +134,21 @@ class GraphicsCarItem(QGraphicsObject):
             self.shadow.setColor(QColor(80, 90, 220))
             self.shadow.setOffset(0, 0)
             self.image.setGraphicsEffect(self.shadow)
+
+
+        # Setting up the caption
+        self.text = QGraphicsTextItem("", self)
+        self.text.setFont(QFont("Ubuntu"))
+        self.text.setPos(-140, -140)
+
+        self.textShadow = QGraphicsDropShadowEffect()
+        self.textShadow.setBlurRadius(3)
+        self.textShadow.setColor(QColor(0, 0, 0))
+        self.textShadow.setOffset(1, 1)
+        self.text.setGraphicsEffect(self.textShadow)
+
+        self.text.setDefaultTextColor(QColor(210, 220, 250))
+        self.text.font().setBold(True)
 
         # Initializing the "view ray"
         self.line = QLine(self.car.x, self.car.y, 0, 0)
@@ -417,20 +440,33 @@ class GraphicalParticleFilter(QGraphicsObject):
 
     def paint(self, painter=None, style=None, widget=None):
 
-        if self.particleFilter.map is not None:
-            pen = QPen()
-            pen.setColor(QColor(0, 200, 0))
-            pen.setWidth(10)
-            painter.setPen(pen)
+        pen = QPen()
+        pen.setColor(QColor(0, 200, 0))
+        pen.setWidth(10)
+        painter.setPen(pen)
 
-            for particle in self.particleFilter.particles:
-                color = QColor.fromHsvF(particle.p / 3, 0.5, 0.8, 0.5)
-                painter.setPen( color )
-                painter.setBrush( color )
+        # Barycenter
+        bX, bY = 0., 0.
+        numParticles = len(self.particleFilter.particles)
+        maxProba = max(particle.p for particle in self.particleFilter.particles)
 
-                radius = 10 + particle.p*20
+        for particle in self.particleFilter.particles:
+            bX += particle.x
+            bY += particle.y
 
-                painter.drawEllipse(particle.x, particle.y, radius, radius)
+            # Importance of the particle ranges from 0.0 to 1.0
+            importance = particle.p / maxProba
+            color = QColor.fromHsvF(importance * (0.30), 0.5, 0.8, 0.5)
+            painter.setPen( color )
+            painter.setBrush( color )
+            radius = 5 + importance*10
+            painter.drawEllipse(particle.x, particle.y, radius, radius)
+
+
+        color = QColor.fromHsvF(0.5, 0.5, 0.8, 0.8)
+        painter.setPen( color )
+        painter.setBrush( color )
+        painter.drawEllipse(bX / numParticles, bY/numParticles, 50, 50)
 
     def boundingRect(self):
         return QRectF(0, 0, self.particleFilter.width, self.particleFilter.height )

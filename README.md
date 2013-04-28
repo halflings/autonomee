@@ -6,11 +6,11 @@ You can also check the robot's arduino sketch, __AutoRobot.ino__.
 
 ## Features
 
-* A *really* basic SVG parser
+* A basic SVG parser
 * A pathfinder (A\*)
 * Nearest obstacle detection (to simulate the sensor's measurements)
 * Basic probability model : particle filter. (hopefully we'll also implement one based on Kalman's filter)
-* Visualization of the robot's movements and a 'heatmap' of the probabilities.
+* Visualization of the robot's movements and the particles used to localize it.
 
 ## Dependencies
 
@@ -26,7 +26,15 @@ This is a work in progress and the code base can change very radically. Don't ex
 
 ## Updates :
 
-### March-2013
+### 28 April 2013
+
+We've added many major features, including a dashboard showing the sensors' data, a dialog to configure the car's properties and the visualization of the particle filter.
+
+Here's a video showing the particle filter in action :
+
+http://www.youtube.com/watch?v=Mcl2Vz46rro
+
+### 25 March-2013
 
 This now also includes a server/client made to be used in a Raspberry Pi connected to the Arduino controlling the car. Check how that work out in a 'joystick controlled' mode :
 

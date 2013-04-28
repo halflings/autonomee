@@ -3,6 +3,7 @@
 """
 
 import math
+import copy
 from math import cos, sin, exp, pi, sqrt
 import random
 import svg
@@ -43,6 +44,7 @@ class ParticleFilter(object):
             x = random.randint(0, self.width - 1)
             y = random.randint(0, self.height - 1)
 
+            # TODO : uncomment this (and fix it)
             while self.map.isObstacle(x, y):
                 x = random.randint(0, self.width - 1)
                 y = random.randint(0, self.height - 1)
@@ -85,7 +87,7 @@ class ParticleFilter(object):
                 deltaDistance = distance + distanceNoise
                 particle.move(deltaDistance)
 
-            # If the particle got out of the universe, we put it on the border
+            # If the particle goes out of the universe, we put it on the border
             particle.x = min(max(0, particle.x), self.width - 1)
             particle.y = min(max(0, particle.y), self.height - 1)
 
@@ -93,18 +95,16 @@ class ParticleFilter(object):
         """Normalizes the particles's weights.
         (Makes the sum of all probabilities equal to 1)
         """
-        sumProba = sum(particle.p for particle in self.particles)
+        sumProba = 0
+        for particle in self.particles:
+            sumProba += particle.p
 
         if sumProba != 0:
             for particle in self.particles:
                 particle.p /= sumProba
-                print particle.p
-
-        print ""
 
     def resample(self):
         """Resampling the particles using a 'resampling wheel' algorithm."""
-        self.normalize()
 
         newParticles = list()
         maxProba = max(particle.p for particle in self.particles)
@@ -118,15 +118,17 @@ class ParticleFilter(object):
                 B -= self.particles[index].p
                 index = (index + 1) % len(self.particles)
 
-            newParticles.append(self.particles[index])
+            newParticles.append(copy.copy(self.particles[index]))
 
         self.particles = newParticles
+
+        self.normalize()
 
     def __repr__(self):
         repr = ""
         for particle in self.particles:
             repr += particle.__repr__() + '\n'
-
+        repr.normalize()
         return repr
 
 
@@ -146,7 +148,6 @@ class Particle(object):
 
         dx = displacement * cos(self.angle)
         dy = - displacement * sin(self.angle)
-
         self.x, self.y = int(self.x + dx), int(self.y + dy)
 
     def __repr__(self):
@@ -159,12 +160,6 @@ if __name__ == "__main__":
     myCar = engine.Car(myMap)
     proba = ParticleFilter(map=myMap, car=myCar, n=20)
 
-    proba.move(10, 0.7)
-    proba.sense(204, 0)
-
-    print proba
-
-    proba.resample()
 
 
 # x = 147.0  y = 483.0 ; angle = 0 => dist = 204
