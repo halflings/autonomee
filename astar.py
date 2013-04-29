@@ -2,12 +2,30 @@
     astar.py - A* algorithm implementation
 """
 
-from math import sqrt
+from math import sqrt, atan2
 import scipy
 import scipy.signal
 
+
+# def simplifyPath(path):
+#     sPath = [path[0]]
+#     lastPoint = path[1]
+#     lineCoef = atan2( path[1].y - path[0].y, path[1].x - path[0].x)
+
+#     for i in xrange(2, len(path)):
+#         coef = atan2(path[i].y - path[i - 1].y, path[i].x - path[i - 1].x)
+#         if coef != lineCoef:
+#             # New line
+#             sPath.append(lastPoint)
+#             lineCoef = coef
+#         lastPoint = path[i]
+
+#     sPath.append(lastPoint)
+#     return sPath
+
 class Cell(object):
-    def __init__(self, x, y, reachable = True):
+
+    def __init__(self, x, y, reachable=True):
         self.reachable = reachable
         self.x = int(x)
         self.y = int(y)
@@ -36,11 +54,6 @@ class Cell(object):
 
     def diagonalDistance(self, cell):
 
-        # 1st implementation :
-        # hDiagonal = min(abs(self.x-cell.x), abs(self.y-cell.y))
-        # hStraight = (abs(self.x-cell.x) + abs(self.y-cell.y))
-        # return Cell.diagonalCost * hDiagonal + Cell.straightCost * (hStraight - 2*hDiagonal)
-
         xDist = abs(self.x - cell.x)
         yDist = abs(self.y - cell.y)
 
@@ -53,11 +66,12 @@ class Cell(object):
         """ Returns the path that led to this cell """
         resPath = [self]
         cell = self
-        while cell.parent != None :
+        while cell.parent != None:
             resPath.append(cell.parent)
             cell = cell.parent
 
-        return reversed(resPath)
+        # Returning the reversed list (as resPath goes bottom-up)
+        return resPath[::-1]
 
     def __str__(self):
         """ String representation,  for debugging only """
@@ -67,9 +81,10 @@ class Cell(object):
 
         return strRep
 
+
 class DiscreteMap:
 
-    def __init__(self, svgMap, division = 5, radius = 100):
+    def __init__(self, svgMap, division=5, radius=100):
 
         self.division = division
 
@@ -83,8 +98,8 @@ class DiscreteMap:
 
         self.svgMap = svgMap
 
-        self.initgrid = [ [ Cell(x, y) for x in xrange(self.width) ] for y in xrange(self.height) ]
-        self.grid = [ [ Cell(x, y) for x in xrange(self.width) ] for y in xrange(self.height) ]
+        self.initgrid = [[Cell(x, y) for x in xrange(self.width)] for y in xrange(self.height)]
+        self.grid = [[Cell(x, y) for x in xrange(self.width)] for y in xrange(self.height)]
 
         for y in xrange(self.height):
             for x in xrange(self.width):
@@ -100,26 +115,26 @@ class DiscreteMap:
         # Taking into account the car's width (radius)
         r = radius / self. division
         # 1 : Unreachable ; 0 : Reachable
-        car = scipy.array( [[1 for i in xrange(r)] for j in xrange(r)] )
-        grid = scipy.array( [[0 if self.initgrid[i][j].reachable else 1 for j in xrange(self.width)] for i in xrange(self.height)] )
+        car = scipy.array([[1 for i in xrange(r)] for j in xrange(r)])
+        grid = scipy.array([[0 if self.initgrid[i][j].reachable else 1 for j in xrange(
+            self.width)] for i in xrange(self.height)])
 
-        result = scipy.signal.fftconvolve( grid, car, 'same' )
+        result = scipy.signal.fftconvolve(grid, car, 'same')
 
         for i in xrange(self.height):
             for j in xrange(self.width):
                 self.grid[i][j].reachable = int(result[i][j]) == 0
 
-    def neighbours(self, cell, radius = 1, unreachables = False, diagonal = True):
+    def neighbours(self, cell, radius=1, unreachables=False, diagonal=True):
         neighbours = set()
         for i in xrange(-radius, radius + 1):
             for j in xrange(-radius, radius + 1):
                 x = cell.x + j
                 y = cell.y + i
-                if 0 <= y < self.height and 0 <= x < self.width and ( self.grid[y][x].reachable or unreachables ) and (diagonal or (x == cell.x or y == cell.y)) :
+                if 0 <= y < self.height and 0 <= x < self.width and (self.grid[y][x].reachable or unreachables) and (diagonal or (x == cell.x or y == cell.y)):
                     neighbours.add(self.grid[y][x])
 
         return neighbours
-
 
     def search(self, begin, goal):
 
@@ -133,24 +148,28 @@ class DiscreteMap:
             print "Goal is unreachable"
             return []
         else:
-            #We intialize the closed and open list
-            cl  = set()
+            # We intialize the closed and open list
+            cl = set()
             ol = set()
             ol.add(begin)
 
-            #We initialize the
+            # We initialize the
             begin.g = 0
             begin.h = begin.diagonalDistance(goal)
             begin.f = begin.g + begin.h
 
             while len(ol) > 0:
-                curCell = min(ol, key = lambda cell : cell.f)
+                curCell = min(ol, key=lambda cell: cell.f)
 
                 if curCell == goal:
                     path = curCell.path()
+                    
+                    # We simplify this path to transform it into waypoints
+                    # path = simplifyPath(path)
+
+                    # We clear the grid (from all weights, parents, ...)
                     self.clear()
                     return path
-
 
                 ol.remove(curCell)
                 cl.add(curCell)
@@ -173,7 +192,7 @@ class DiscreteMap:
             return []
 
     def altsearch(self, begin, goal):
-        if not ( 0 < goal.x < self.width and 0 < goal.y < self.height ):
+        if not (0 < goal.x < self.width and 0 < goal.y < self.height):
             print "Goal is out of bound"
             return []
         elif not self.grid[begin.y][begin.x].reachable:
@@ -193,14 +212,14 @@ class DiscreteMap:
             while len(self.ol) > 0:
 
                 # We choose the cell in the open list having the minimum score as our current cell
-                curCell = min(self.ol, key = lambda cell : cell.f)
+                curCell = min(self.ol, key=lambda cell: cell.f)
 
                 # We add the current cell to the closed list
                 self.ol.remove(curCell)
                 self.cl.add(curCell)
 
                 # We check the cell's (reachable) neighbours :
-                neighbours = self.neighbours(curCell, diagonal = True)
+                neighbours = self.neighbours(curCell, diagonal=True)
 
                 for cell in neighbours:
                     # If the goal is a neighbour cell :
@@ -235,7 +254,7 @@ class DiscreteMap:
 
     def display(self):
 
-        dispMatrix = [ [ ' ' for x in range(self.width) ] for y in range(self.height) ]
+        dispMatrix = [[' ' for x in range(self.width)] for y in range(self.height)]
         for x in range(self.width):
             for y in range(self.height):
                 if self.grid[y][x].reachable:
@@ -248,7 +267,6 @@ class DiscreteMap:
             print len(self.path)
             dispMatrix[cell.y][cell.x] = 'o'
 
-
         print ' ' + '__'*(1 + self.width)
         for i in range(self.height):
             print '| ',
@@ -256,4 +274,4 @@ class DiscreteMap:
                 print dispMatrix[i][j],
             # End of line
             print "|\n",
-        print '|'+ '__'*(1 + self.width) + '|'
+        print '|' + '__'*(1 + self.width) + '|'

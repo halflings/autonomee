@@ -28,7 +28,8 @@ class ParticleFilter(object):
         self.particles = list()
         self.mode = mode
 
-        self.setMap(map)
+        if map is not None:
+            self.setMap(map)
 
     # TODO : Change this 'initAngle' ... this should be the real angle of the car
 

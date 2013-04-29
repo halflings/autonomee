@@ -52,9 +52,24 @@ class AutoScene(QGraphicsScene):
         if len(self.path) > 0:
             # We build a polyline graphic item
             painterPath = QPainterPath()
+            self.waypointsGraphics = QGraphicsItemGroup()
+            self.addItem(self.waypointsGraphics) 
+
             painterPath.moveTo(self.path[0].x, self.path[0].y)
+
+            point = QGraphicsEllipseItem(self.path[0].x, self.path[0].y, 20, 20)
+            point.setBrush(QColor(200, 200, 200))
+            self.addItem(point)
+
             for i in xrange(1, len(self.path)):
-                painterPath.lineTo(self.path[i].x, self.path[i].y)
+                x, y = self.path[i].x, self.path[i].y
+
+                painterPath.lineTo(x, y)
+
+                point = QGraphicsEllipseItem(x, y, 20, 20)
+                point.setBrush(QColor(200, 200, 200))
+                self.addItem(point)
+
 
             # We set the path as the path to be shown on screen
             # self.graphicalPath.setPath(painterPath)
@@ -97,13 +112,18 @@ class AutoScene(QGraphicsScene):
             posAnim.setKeyValueAt(0, QPointF(self.car.x, self.car.y))
             rotAnim.setKeyValueAt(0, self.car.readAngle())
 
-            nKeys = len(self.path) - 1
+            t = 0.
             angles = deque()
             angles.append(self.graphicCar.rotation())
 
             for i in xrange(1, len(self.path)):
                 pt = self.path[i]
                 lastPt = self.path[i-1]
+
+                # Time's evolution
+                distance = math.sqrt( (pt.x - lastPt.x)**2 + (pt.y - lastPt.y)**2 )
+                t += distance/pixelsPerSecond
+                print t
 
                 # Current angle calculus and format according to the trigonometric sens
                 angle = math.pi - math.atan2(lastPt.y - pt.y, lastPt.x - pt.x)
@@ -116,8 +136,14 @@ class AutoScene(QGraphicsScene):
                 if len(angles) > 10:
                     angles.popleft()
 
-                posAnim.setKeyValueAt(float(i)/nKeys, QPointF(pt.x, pt.y))
-                rotAnim.setKeyValueAt(float(i)/nKeys, meanAngle)
+                posAnim.setKeyValueAt(t/totalDuration, QPointF(pt.x, pt.y))
+                rotAnim.setKeyValueAt(t/totalDuration, meanAngle)
+
+            posAnim.setEndValue(QPointF(self.path[-1].x, self.path[-1].y))
+            rotAnim.setEndValue(angles[-1])
+
+            posAnim.setEasingCurve(QEasingCurve.InOutQuad)
+            rotAnim.setEasingCurve(QEasingCurve.InOutQuad)
 
             self.animation.addAnimation(rotAnim)
             self.animation.addAnimation(posAnim)
@@ -169,19 +195,20 @@ class AutoScene(QGraphicsScene):
             elif event.key() == Qt.Key_Down or event.key() == Qt.Key_S:
                 speed = -20
             elif event.key() == Qt.Key_Right or event.key() == Qt.Key_D:
-                deltaAngle = -math.pi/10
+                deltaAngle = -math.pi/32
             elif event.key() == Qt.Key_Left or event.key() == Qt.Key_Q:
-                deltaAngle = math.pi/10
+                deltaAngle = math.pi/32
 
             if speed != 0 or deltaAngle != 0:
+                self.car.setAngle(self.car.angle + deltaAngle)
+
                 # Adding some noise to the displacement
                 nSpeed = speed + random.gauss(0.0, self.car.displacement_noise)
                 if speed != 0:
                     # Simulating car's deviation
                     deltaAngle += random.gauss(0.0, math.radians(self.car.rotation_noise))
                     self.car.move(nSpeed)
-                    
-                self.car.setAngle(self.car.angle + deltaAngle)
+
 
                 if self.heatmap.isVisible():
                     # Noise on the car's current angle
@@ -288,7 +315,11 @@ class AutoView(QGraphicsView):
         s.addItem(s.graphicCar)
 
         # Heatmap
-        s.particleFilter = probability.ParticleFilter(car=s.car, map=s.map)
+        if s.particleFilter is None:
+            s.particleFilter = probability.ParticleFilter(car=s.car, map=s.map)
+        else:
+            s.particleFilter.reset()
+            s.particleFilter.setMap(s.map)
         s.heatmap = widgets.GraphicalParticleFilter(s.particleFilter)
         s.heatmap.setVisible(False)
         s.addItem(s.heatmap)

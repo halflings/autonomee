@@ -7,7 +7,7 @@
 
 from PySide.QtCore import *
 
-from math import cos, sin, pi
+from math import cos, sin, pi, copysign
 
 
 class Car(QObject):
@@ -28,11 +28,14 @@ class Car(QObject):
     # Distance at which the car is 'in danger' (obstacle too close)
     danger_distance = 120
 
-    def __init__(self, map=None, x=0, y=0, width=def_width, length=def_length):
+    def __init__(self, map=None, carSocket=None, x=0, y=0, width=def_width, length=def_length):
         super(Car, self).__init__()
 
         # The map where the car is located
         self.map = map
+
+        # TCP socket connecting the model to the (real) car
+        self.socket = carSocket
 
         self.x = x
         self.y = y
@@ -68,6 +71,9 @@ class Car(QObject):
     def addView(self, view):
         self.views.add(view)
 
+    def setSocket(self, carSocket):
+        self.socket = carSocket
+
     def removeView(self, view):
         if view in self.views:
             self.views.remove(view)
@@ -75,6 +81,14 @@ class Car(QObject):
     def move(self, speed):
         self.x += speed * cos(self.angle)
         self.y += speed * -sin(self.angle)
+
+        # TODO: Temporary...
+        if self.socket.connected:
+            print "sending"
+            if speed > 0:
+                self.socket.send("1")
+            else:
+                self.socket.send("-1")
 
         self.update()
 

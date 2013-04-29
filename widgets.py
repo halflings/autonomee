@@ -89,8 +89,8 @@ class ObstacleWarning(InfoBox):
             self.setCaption("No obstacle ahead")
             self.setColor(QColor(255, 255, 255))
         else:
-            self.setCaption("Obstacle at : {}".format(self.car.distance))
-            hue = 1./3 - min(1./3, self.car.distance/Car.danger_distance)
+            self.setCaption("Obstacle at : {0:.2f}".format(self.car.distance))
+            hue = min(1., (float(self.car.distance)/Car.danger_distance)) * 0.33
             self.setColor( QColor.fromHsvF(hue, 0.5, 0.8, 0.5) )
 
 
@@ -454,19 +454,28 @@ class GraphicalParticleFilter(QGraphicsObject):
             bX += particle.x
             bY += particle.y
 
+        bX /= numParticles
+        bY /= numParticles
+
+        bMeanDist = 0
+
+        for particle in self.particleFilter.particles:
             # Importance of the particle ranges from 0.0 to 1.0
             importance = particle.p / maxProba
-            color = QColor.fromHsvF(importance * (0.30), 0.5, 0.8, 0.5)
+            color = QColor.fromHsvF(importance * (0.30), 0.5, 0.8, 0.3)
             painter.setPen( color )
-            painter.setBrush( color )
-            radius = 5 + importance*10
-            painter.drawEllipse(particle.x, particle.y, radius, radius)
+            painter.setBrush( color.lighter(0.2) )
+            radius = 3 + importance*8
+            painter.drawEllipse(QPointF(particle.x, particle.y), radius, radius)
+            bMeanDist += math.sqrt((particle.x - bX)**2 + (particle.y -bY)**2)
+            # painter.drawLine(particle.x, particle.y, bX, bY)
 
-
-        color = QColor.fromHsvF(0.5, 0.5, 0.8, 0.8)
-        painter.setPen( color )
+        bMeanDist /= numParticles
+        relevance = max(0., 1. - bMeanDist / self.particleFilter.car.length)
+        color = QColor.fromHsvF(0.5*relevance, 0.5, 0.8, 0.8)
+        painter.setPen( color.darker(10) )
         painter.setBrush( color )
-        painter.drawEllipse(bX / numParticles, bY/numParticles, 50, 50)
+        painter.drawEllipse(QPointF(bX, bY), 15, 15)
 
     def boundingRect(self):
         return QRectF(0, 0, self.particleFilter.width, self.particleFilter.height )

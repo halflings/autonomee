@@ -11,7 +11,7 @@ from PySide.QtUiTools import *
 from manual import ManualView
 from auto import AutoView
 from svg import SvgTree
-from client import CarSocket
+from carsocket import CarSocket
 from probability import ParticleFilter
 import engine
 
@@ -66,7 +66,7 @@ class MainWindow(QMainWindow):
         automaticAction = modeMenu.addAction("A&utomatic")
         automaticAction.setShortcut("Ctrl+A")
         automaticAction.triggered.connect(self.automaticMode)
-
+        
         self.menuBar().addMenu(modeMenu)
 
         # Stacked widget (containing the auto. and manual view)
@@ -110,6 +110,7 @@ class MainWindow(QMainWindow):
         self.automaticView.scene().heatmap.update()
 
     def connectCar(self):
+        """ Connecting the app to the car """
         ip = self.config.ipEdit.toPlainText()
         port = int(self.config.portEdit.toPlainText())
 
@@ -118,6 +119,7 @@ class MainWindow(QMainWindow):
         self.carSocket.connect(ip, port)
 
     def acceptConfig(self):
+        """ Validating the parameters from the configuration dialog """
         try:
             c = self.config
             self.car.width = int(c.widthValue.toPlainText())
@@ -143,6 +145,7 @@ class MainWindow(QMainWindow):
             # TODO : Do this in the status bar, not in the console
 
     def resetConfig(self):
+        """ Reseting the parameters from the configuration dialog """
         c = self.config
         c.widthValue.setPlainText(str(engine.Car.def_width))
         c.lengthValue.setPlainText(str(engine.Car.def_length))
