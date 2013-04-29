@@ -4,8 +4,7 @@ import time
 import re
 
 from Queue import Queue
-from PySFML import sf
-import pygame
+# from PySFML import sf
 
 class CarSocket(object):
 
