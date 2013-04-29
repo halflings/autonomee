@@ -2,7 +2,7 @@
 
 A Python front-end for robot localization (and other uses) using SVG for maps' representation and Qt for the UI.
 
-You can also check the robot's arduino sketch, __AutoRobot.ino__. 
+You can also check the robot's arduino sketch, __arduino.ino__. 
 
 ## Features
 
@@ -34,7 +34,7 @@ Here's a video showing the particle filter in action :
 
 http://www.youtube.com/watch?v=Mcl2Vz46rro
 
-### 25 March-2013
+### 25 March 2013
 
 This now also includes a server/client made to be used in a Raspberry Pi connected to the Arduino controlling the car. Check how that work out in a 'joystick controlled' mode :
 
