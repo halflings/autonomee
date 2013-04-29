@@ -179,8 +179,8 @@ class AutoScene(QGraphicsScene):
                 if speed != 0:
                     # Simulating car's deviation
                     deltaAngle += random.gauss(0.0, math.radians(self.car.rotation_noise))
-
-                self.car.move(nSpeed)
+                    self.car.move(nSpeed)
+                    
                 self.car.setAngle(self.car.angle + deltaAngle)
 
                 if self.heatmap.isVisible():

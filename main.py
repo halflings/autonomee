@@ -4,7 +4,6 @@
     main.py - application entry point and the main window (opening files, menus, ...).
 """
 
-from PySide import QtCore, QtGui
 from PySide.QtCore import *
 from PySide.QtGui import *
 from PySide.QtUiTools import *
@@ -84,8 +83,8 @@ class MainWindow(QMainWindow):
 
         # Configuration dialog
         loader = QUiLoader()
-        file = QtCore.QFile("config.ui")
-        file.open(QtCore.QFile.ReadOnly)
+        file = QFile("config.ui")
+        file.open(QFile.ReadOnly)
         self.config = loader.load(file)
         file.close()
 
