@@ -174,14 +174,17 @@ class AutoScene(QGraphicsScene):
                 deltaAngle = math.pi/10
 
             if speed != 0 or deltaAngle != 0:
-                # Adding some noise
+                # Adding some noise to the displacement
                 nSpeed = speed + random.gauss(0.0, self.car.displacement_noise)
-                nDeltaAngle = deltaAngle + random.gauss(0.0, math.radians(self.car.rotation_noise))
+                if speed != 0:
+                    # Simulating car's deviation
+                    deltaAngle += random.gauss(0.0, math.radians(self.car.rotation_noise))
 
                 self.car.move(nSpeed)
-                self.car.setAngle(self.car.angle + nDeltaAngle)
+                self.car.setAngle(self.car.angle + deltaAngle)
 
                 if self.heatmap.isVisible():
+                    # Noise on the car's current angle
                     noisyCarAngle = self.car.angle + random.gauss(0.0, math.radians(self.car.rotation_noise)) 
                     self.particleFilter.setAngle(noisyCarAngle)
                     self.particleFilter.move(speed)
