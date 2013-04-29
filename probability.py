@@ -16,17 +16,21 @@ def Gaussian(mu, sigma, x):
 
 
 class ParticleFilter(object):
+    simple, markov = 0, 1
 
     """A particle filter that calculates localization probability
     based on a series of (noisy) measurements and displacements"""
 
-    def __init__(self, car, map=None, initAngle=0, n=100):
+    def __init__(self, car, map=None, initAngle=0, n=100, mode=simple):
         self.car = car
         self.N = n
         self.initAngle = initAngle
         self.particles = list()
+        self.mode = mode
 
         self.setMap(map)
+
+    # TODO : Change this 'initAngle' ... this should be the real angle of the car
 
     def setMap(self, map):
         """Sets a map for the particle filter (and executes random population)"""
@@ -36,9 +40,13 @@ class ParticleFilter(object):
         self.map = map
         self.populate(self.N, self.initAngle)
 
+    def reset(self):
+        del self.particles
+        self.particles = list()
+        self.populate(self.N, self.initAngle)
+
     def populate(self, N, objectAngle):
         """Adds N random particles to the particle filter. (Useful at initialization)"""
-
 
         for i in xrange(N):
             x = random.randint(0, self.width - 1)
@@ -66,26 +74,31 @@ class ParticleFilter(object):
             if measuredDistance is None:
                 measuredDistance = self.width + self.height
 
-            particle.p *= Gaussian(particleDist, self.car.sensor_noise, measuredDistance)
+            newProba = Gaussian(particleDist, self.car.sensor_noise, measuredDistance)
 
-    def move(self, distance, angle=0.):
+            if self.mode == ParticleFilter.simple:
+                particle.p = newProba
+            elif self.mode == ParticleFilter.markov:
+                particle.p *= newProba
+
+    def setAngle(self, angle):
+        """
+        Turns all the particles to a particular angle
+        """
+        for particle in self.particles:
+            angularNoise = random.gauss(0.0, math.radians(self.car.rotation_noise))
+            particle.angle = angle + angularNoise
+
+    def move(self, distance):
         """Updates the probabilities to match a displacement.
         Updates the particles' coordinates (taking into account 'noise')
         """
 
         for particle in self.particles:
-
-            if angle != 0:
-                # We update the particle's orientation
-                angularNoise = random.gauss(0.0, math.radians(self.car.rotation_noise))
-                deltaAngle = angle + angularNoise
-                particle.turnAngle(deltaAngle)
-
-            if distance != 0:
-                # ...  and it's position
-                distanceNoise = random.gauss(0.0, self.car.displacement_noise)
-                deltaDistance = distance + distanceNoise
-                particle.move(deltaDistance)
+            # ...  and it's position
+            distanceNoise = random.gauss(0.0, self.car.displacement_noise)
+            deltaDistance = distance + distanceNoise
+            particle.move(deltaDistance)
 
             # If the particle goes out of the universe, we put it on the border
             particle.x = min(max(0, particle.x), self.width - 1)

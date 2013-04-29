@@ -12,6 +12,8 @@ from PySide.QtUiTools import *
 from manual import ManualView
 from auto import AutoView
 from svg import SvgTree
+from client import CarSocket
+from probability import ParticleFilter
 import engine
 
 class MainWindow(QMainWindow):
@@ -25,6 +27,9 @@ class MainWindow(QMainWindow):
 
         # The car's model, shared between the different views
         self.car = engine.Car()
+
+        # Socket (to connect with the car/Rpi)
+        self.carSocket = CarSocket(self.car)
 
         # Setting the views
         self.automaticView = AutoView(self.car)
@@ -88,6 +93,7 @@ class MainWindow(QMainWindow):
         self.config.buttonBox.accepted.connect(self.acceptConfig)
         self.config.buttonBox.rejected.connect(self.config.reject)
         self.config.buttonBox.button(QDialogButtonBox.RestoreDefaults).clicked.connect(self.resetConfig)
+        self.config.resetParticles.clicked.connect(self.resetParticles)
 
     def manualMode(self):
         self.stackedWidget.setCurrentWidget(self.manualView)
@@ -97,14 +103,20 @@ class MainWindow(QMainWindow):
         self.stackedWidget.setCurrentWidget(self.automaticView)
         self.setWindowTitle("Carosif - Automatic mode - Map : {}".format(self.currentPath))
 
+    def openConfigPanel(self):
+        self.config.show()
+
+    def resetParticles(self):
+        self.automaticView.scene().particleFilter.reset()
+        self.automaticView.scene().heatmap.update()
+
     def connectCar(self):
         ip = self.config.ipEdit.toPlainText()
         port = int(self.config.portEdit.toPlainText())
 
         print "Connecting robot to {}:{}".format(ip, port)
 
-    def openConfigPanel(self):
-        self.config.show()
+        self.carSocket.connect(ip, port)
 
     def acceptConfig(self):
         try:
@@ -116,13 +128,17 @@ class MainWindow(QMainWindow):
             self.car.displacement_noise = float(c.displacementValue.text())
             self.car.rotation_noise = float(c.rotationValue.text())
 
+            if c.simpleProba.isChecked():
+                self.automaticView.scene().particleFilter.mode = ParticleFilter.simple
+            elif c.markovProba.isChecked():
+                self.automaticView.scene().particleFilter.mode = ParticleFilter.markov
+
             self.car.update()
 
             self.car.updateMap()
 
             self.config.accept()
 
-            
         except ValueError:
             print "Parsing error"
             # TODO : Do this in the status bar, not in the console

@@ -14,7 +14,7 @@ import probability
 
 from collections import deque
 import math
-
+import random
 
 class AutoScene(QGraphicsScene):
 
@@ -151,7 +151,14 @@ class AutoScene(QGraphicsScene):
 
     def keyPressEvent(self, event):
 
-        if not self.car.moving:
+        if event.key() == Qt.Key_H:
+            # Hiding/showing the particle filter
+            self.heatmap.setVisible(not self.heatmap.isVisible())
+        elif event.key() == Qt.Key_R:
+            # Reseting the particle filter
+            self.particleFilter.reset()
+            self.heatmap.update()
+        elif not self.car.moving:
             # Moving the car
 
             speed = 0
@@ -167,12 +174,18 @@ class AutoScene(QGraphicsScene):
                 deltaAngle = math.pi/10
 
             if speed != 0 or deltaAngle != 0:
-                self.car.move(speed)
-                self.car.setAngle(self.car.angle + deltaAngle)
+                # Adding some noise
+                nSpeed = speed + random.gauss(0.0, self.car.displacement_noise)
+                nDeltaAngle = deltaAngle + random.gauss(0.0, math.radians(self.car.rotation_noise))
+
+                self.car.move(nSpeed)
+                self.car.setAngle(self.car.angle + nDeltaAngle)
 
                 if self.heatmap.isVisible():
-                    self.particleFilter.move(speed, deltaAngle)
-                    self.particleFilter.sense(self.car.distance, self.car.angle)
+                    noisyCarAngle = self.car.angle + random.gauss(0.0, math.radians(self.car.rotation_noise)) 
+                    self.particleFilter.setAngle(noisyCarAngle)
+                    self.particleFilter.move(speed)
+                    self.particleFilter.sense(self.car.distance, noisyCarAngle)
                     self.particleFilter.resample()
                     self.heatmap.update()
 
@@ -180,11 +193,6 @@ class AutoScene(QGraphicsScene):
                 # x = min(max(0, self.car.x), self.map.width - 1)
                 # y = min(max(0, self.car.y), self.map.height - 1)
                 # self.car.setPosition(QPointF(x, y))
-
-        # Heatmap
-        if event.key() == Qt.Key_H:
-            self.heatmap.setVisible(not self.heatmap.isVisible())
-
 
 class AutoView(QGraphicsView):
     Native, OpenGL, Image = range(3)

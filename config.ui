@@ -2,16 +2,28 @@
 <ui version="4.0">
  <class>Dialog</class>
  <widget class="QDialog" name="Dialog">
+  <property name="windowModality">
+   <enum>Qt::ApplicationModal</enum>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>747</width>
-    <height>528</height>
+    <height>578</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Configuration window</string>
+  </property>
+  <property name="locale">
+   <locale language="English" country="UnitedStates"/>
+  </property>
+  <property name="sizeGripEnabled">
+   <bool>false</bool>
+  </property>
+  <property name="modal">
+   <bool>true</bool>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -130,31 +142,6 @@
         </item>
        </layout>
       </item>
-      <item row="6" column="1">
-       <widget class="QLabel" name="rotationValue">
-        <property name="text">
-         <string>5</string>
-        </property>
-        <property name="textFormat">
-         <enum>Qt::AutoText</enum>
-        </property>
-        <property name="scaledContents">
-         <bool>false</bool>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-        <property name="wordWrap">
-         <bool>false</bool>
-        </property>
-        <property name="textInteractionFlags">
-         <set>Qt::NoTextInteraction</set>
-        </property>
-        <property name="buddy">
-         <cstring></cstring>
-        </property>
-       </widget>
-      </item>
       <item row="2" column="1" rowspan="2">
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
@@ -192,6 +179,13 @@
         </property>
        </widget>
       </item>
+      <item row="7" column="0">
+       <widget class="QLabel" name="sensorTitle">
+        <property name="text">
+         <string>Sensor noise</string>
+        </property>
+       </widget>
+      </item>
       <item row="2" column="0">
        <widget class="QLabel" name="displacementTitle">
         <property name="text">
@@ -199,10 +193,85 @@
         </property>
        </widget>
       </item>
-      <item row="7" column="0">
-       <widget class="QLabel" name="sensorTitle">
+      <item row="6" column="1">
+       <widget class="QLabel" name="rotationValue">
         <property name="text">
-         <string>Sensor noise</string>
+         <string>5</string>
+        </property>
+        <property name="textFormat">
+         <enum>Qt::AutoText</enum>
+        </property>
+        <property name="scaledContents">
+         <bool>false</bool>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <property name="wordWrap">
+         <bool>false</bool>
+        </property>
+        <property name="textInteractionFlags">
+         <set>Qt::NoTextInteraction</set>
+        </property>
+        <property name="buddy">
+         <cstring></cstring>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="probabilityGroupbox">
+     <property name="title">
+      <string>Particle filter mode (has no effect so far ...)</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+     </property>
+     <property name="flat">
+      <bool>false</bool>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <property name="leftMargin">
+       <number>5</number>
+      </property>
+      <property name="topMargin">
+       <number>12</number>
+      </property>
+      <property name="rightMargin">
+       <number>5</number>
+      </property>
+      <property name="bottomMargin">
+       <number>8</number>
+      </property>
+      <item>
+       <widget class="QRadioButton" name="simpleProba">
+        <property name="text">
+         <string>Simple</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="markovProba">
+        <property name="text">
+         <string>Markov chain</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="resetParticles">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Reset particles</string>
         </property>
        </widget>
       </item>
@@ -347,8 +416,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>257</x>
-     <y>613</y>
+     <x>266</x>
+     <y>568</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -363,8 +432,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>325</x>
-     <y>613</y>
+     <x>334</x>
+     <y>568</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
@@ -379,8 +448,8 @@
    <slot>setNum(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>302</x>
-     <y>155</y>
+     <x>518</x>
+     <y>154</y>
     </hint>
     <hint type="destinationlabel">
      <x>317</x>
@@ -395,12 +464,12 @@
    <slot>setNum(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>459</x>
-     <y>213</y>
+     <x>674</x>
+     <y>275</y>
     </hint>
     <hint type="destinationlabel">
-     <x>469</x>
-     <y>244</y>
+     <x>684</x>
+     <y>307</y>
     </hint>
    </hints>
   </connection>
@@ -411,12 +480,12 @@
    <slot>setNum(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>575</x>
-     <y>287</y>
+     <x>733</x>
+     <y>213</y>
     </hint>
     <hint type="destinationlabel">
-     <x>578</x>
-     <y>313</y>
+     <x>734</x>
+     <y>245</y>
     </hint>
    </hints>
   </connection>

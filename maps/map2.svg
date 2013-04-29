@@ -13,7 +13,7 @@
    height="768px"
    id="svg3113"
    version="1.1"
-   inkscape:version="0.48.3.1 r9886"
+   inkscape:version="0.48.4 r9939"
    sodipodi:docname="map2.svg">
   <defs
      id="defs3115" />
@@ -31,7 +31,7 @@
      inkscape:document-units="px"
      showgrid="false"
      inkscape:window-width="1600"
-     inkscape:window-height="848"
+     inkscape:window-height="844"
      inkscape:window-x="0"
      inkscape:window-y="24"
      inkscape:window-maximized="1" />
@@ -51,26 +51,13 @@
      id="layer1"
      inkscape:label="Layer 1"
      inkscape:groupmode="layer">
-    <text
-       xml:space="preserve"
-       style="font-size:25.80001068px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
-       x="372.23267"
-       y="33.202904"
-       id="Titre"
-       sodipodi:linespacing="125%"
-       inkscape:label="Titre"
-       transform="scale(0.96095707,1.0406292)"><tspan
-         sodipodi:role="line"
-         id="tspan3076"
-         x="372.23267"
-         y="33.202904">Carosif visualization map</tspan></text>
     <rect
-       style="fill:#00caff;fill-opacity:1;stroke:#000000;stroke-opacity:0.76150625999999999;stroke-width:0.5;stroke-miterlimit:4;stroke-dasharray:none"
+       style="fill:#00caff;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-miterlimit:4;stroke-opacity:0.76150626;stroke-dasharray:none"
        id="rect3053"
        width="254"
        height="102"
-       x="350"
-       y="434" />
+       x="559.30359"
+       y="431.17157" />
     <rect
        style="fill:#ffd42a;fill-opacity:1;stroke:#000000;stroke-width:0.50000000000000000;stroke-miterlimit:4;stroke-opacity:0.76150625999999999;stroke-dasharray:none"
        id="rect3011"
@@ -90,8 +77,8 @@
        id="rect3053-7"
        width="254"
        height="102"
-       x="428.78595"
-       y="233.33894" />
+       x="509.39612"
+       y="328.09125" />
     <rect
        style="fill:#00caff;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-miterlimit:4;stroke-opacity:0.76150626;stroke-dasharray:none"
        id="rect3053-0"
@@ -104,8 +91,8 @@
        id="rect3053-2"
        width="254"
        height="102"
-       x="38.462997"
-       y="278.59378" />
+       x="31.39193"
+       y="328.09125" />
     <rect
        style="fill:#00caff;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-miterlimit:4;stroke-opacity:0.76150626;stroke-dasharray:none"
        id="rect3053-5"
@@ -118,36 +105,36 @@
        id="rect3053-7-3"
        width="254"
        height="102"
-       x="-163.76956"
-       y="373.3461" />
+       x="-87.402023"
+       y="504.86795" />
     <rect
        style="fill:#00caff;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-miterlimit:4;stroke-opacity:0.76150626;stroke-dasharray:none"
        id="rect3053-7-3-4"
        width="254"
        height="102"
-       x="215.23972"
-       y="354.9613" />
+       x="256.25192"
+       y="328.09125" />
     <rect
        style="fill:#00caff;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-miterlimit:4;stroke-opacity:0.76150626;stroke-dasharray:none"
        id="rect3053-7-3-9"
        width="254"
        height="102"
-       x="506.56772"
-       y="436.98572" />
+       x="471.21237"
+       y="535.98065" />
     <rect
        style="fill:#00caff;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-miterlimit:4;stroke-opacity:0.76150626;stroke-dasharray:none"
        id="rect3053-7-3-6"
        width="254"
        height="102"
-       x="657.88855"
-       y="219.19681" />
+       x="626.77588"
+       y="237.58159" />
     <rect
        style="fill:#00caff;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-miterlimit:4;stroke-opacity:0.76150626;stroke-dasharray:none"
        id="rect3053-7-3-3"
        width="254"
        height="102"
-       x="351.00418"
-       y="83.432297" />
+       x="372.21738"
+       y="70.704376" />
     <rect
        style="fill:#00caff;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-miterlimit:4;stroke-opacity:0.76150626;stroke-dasharray:none"
        id="rect3053-7-3-66"
@@ -160,8 +147,8 @@
        id="rect3053-7-3-2"
        width="254"
        height="102"
-       x="581.521"
-       y="36.763245" />
+       x="623.94739"
+       y="1.407904" />
     <rect
        style="fill:#00caff;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-miterlimit:4;stroke-opacity:0.76150626;stroke-dasharray:none"
        id="rect3053-7-3-5"
@@ -174,8 +161,8 @@
        id="rect3053-7-3-92"
        width="254"
        height="102"
-       x="103.51682"
-       y="574.16443" />
+       x="161.49959"
+       y="527.49536" />
     <path
        sodipodi:type="arc"
        style="fill:#e3dedb;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-miterlimit:4;stroke-opacity:0.76150626;stroke-dasharray:none"

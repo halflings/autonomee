@@ -6,7 +6,7 @@ Meant to run on a RaspberryPi.
 
 import SocketServer
 import socket
-import serial
+#import serial
 import re
 import threading
 from Queue import Queue
@@ -35,7 +35,7 @@ class PiHandler(SocketServer.BaseRequestHandler, object):
     def setup(self):
         super(PiHandler, self).setup()
         self.connected = True
-        self.arduino = serial.Serial(USB_PATH, 9600)
+        #self.arduino = serial.Serial(USB_PATH, 9600)
         self.queries = Queue()
         self.receiveThread = threading.Thread(target = self.receptionRoutine)
         self.receiveThread.daemon = True
@@ -55,7 +55,8 @@ class PiHandler(SocketServer.BaseRequestHandler, object):
         # NOTE : this should be on the server, but that causes bugs
 
     def handle(self):
-        print "New connection with : {}\n".format(self.request.address)
+        #print "New connection with : {}\n".format(self.request.address)
+        print "New connection"
         loopNumber = 0
         while self.connected:
             loopNumber += 1
@@ -64,7 +65,7 @@ class PiHandler(SocketServer.BaseRequestHandler, object):
 
             #We write the value we receive to the Arduino
             query = self.queries.get()
-            self.arduino.write(query)
+            #self.arduino.write(query)
 
             #If the remote client is requesting angular distances
             if int(query) == 3:
