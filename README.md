@@ -1,5 +1,8 @@
 # Carosif (temporary name)
 
+![Screenshot of the app's UI](http://raw.github.com/halflings/robot-SVGMap/master/img/screenshot.png)
+
+
 A Python front-end for robot localization (and other uses) using SVG for maps' representation and Qt for the UI.
 
 You can also check the robot's arduino sketch, __arduino.ino__. 
