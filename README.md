@@ -1,6 +1,6 @@
 # Carosif (temporary name)
 
-![Screenshot of the app's UI](halflings.github.com/robot-SVGMap/img/screenshot.png)
+![Screenshot of the app's UI](img/screenshot.png)
 
 
 A Python front-end for robot localization (and other uses) using SVG for maps' representation and Qt for the UI.
