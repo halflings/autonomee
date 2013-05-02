@@ -6,23 +6,6 @@ from math import sqrt, atan2
 import scipy
 import scipy.signal
 
-
-# def simplifyPath(path):
-#     sPath = [path[0]]
-#     lastPoint = path[1]
-#     lineCoef = atan2( path[1].y - path[0].y, path[1].x - path[0].x)
-
-#     for i in xrange(2, len(path)):
-#         coef = atan2(path[i].y - path[i - 1].y, path[i].x - path[i - 1].x)
-#         if coef != lineCoef:
-#             # New line
-#             sPath.append(lastPoint)
-#             lineCoef = coef
-#         lastPoint = path[i]
-
-#     sPath.append(lastPoint)
-#     return sPath
-
 class Cell(object):
 
     def __init__(self, x, y, reachable=True):
@@ -162,13 +145,12 @@ class DiscreteMap:
                 curCell = min(ol, key=lambda cell: cell.f)
 
                 if curCell == goal:
-                    path = curCell.path()
-                    
-                    # We simplify this path to transform it into waypoints
-                    # path = simplifyPath(path)
+                    # We get the path to the current cell, minus the first cell
+                    path = curCell.path()[1:]
 
-                    # We clear the grid (from all weights, parents, ...)
+                    # Before returning the result, we clear the grid (from all weights, parents, ...)
                     self.clear()
+
                     return path
 
                 ol.remove(curCell)

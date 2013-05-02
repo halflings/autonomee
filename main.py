@@ -66,7 +66,7 @@ class MainWindow(QMainWindow):
         automaticAction = modeMenu.addAction("A&utomatic")
         automaticAction.setShortcut("Ctrl+A")
         automaticAction.triggered.connect(self.automaticMode)
-        
+
         self.menuBar().addMenu(modeMenu)
 
         # Stacked widget (containing the auto. and manual view)

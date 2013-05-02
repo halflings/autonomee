@@ -13,8 +13,30 @@ import widgets
 import probability
 
 from collections import deque
-import math
+from math import atan2, pi, radians, sqrt
 import random
+
+
+def simplifyPath(path):
+    if len(path) > 2:
+        sPath = [path[0]]
+        lastPoint = path[1]
+        lineCoef = atan2( path[1].y - path[0].y, path[1].x - path[0].x)
+
+        for i in xrange(2, len(path)):
+            coef = atan2(path[i].y - path[i - 1].y, path[i].x - path[i - 1].x)
+            if coef != lineCoef:
+                # New line
+                sPath.append(lastPoint)
+                lineCoef = coef
+            lastPoint = path[i]
+
+        sPath.append(lastPoint)
+        return sPath
+    else:
+        # Can't simplify a path of 2 nodes or less
+        return path
+
 
 class AutoScene(QGraphicsScene):
 
@@ -44,61 +66,44 @@ class AutoScene(QGraphicsScene):
         self.particleFilter = None
         # ( initialized when pressing 'H' )
 
+        # List of the (graphical) waypoints
+        self.waypoints = list()
+
     def pathfinding(self, x, y):
+        # If the car is currently on a path, we end it
+        self.pathFinished()
+
         # We generate a path from the car to where we clicked and show it on the UI
         # We get the path from our 'map' object
         self.path = self.map.search((self.car.x, self.car.y), (x, y))
 
+        # And a simple version of the path (to be sent to the car)
+        self.sPath = simplifyPath(self.path)
+
         if len(self.path) > 0:
             # We build a polyline graphic item
             painterPath = QPainterPath()
-            self.waypointsGraphics = QGraphicsItemGroup()
-            self.addItem(self.waypointsGraphics) 
+            self.waypoints = list()
 
             painterPath.moveTo(self.path[0].x, self.path[0].y)
 
-            point = QGraphicsEllipseItem(self.path[0].x, self.path[0].y, 20, 20)
-            point.setBrush(QColor(200, 200, 200))
-            self.addItem(point)
+            waypoint = widgets.Waypoint(self.path[0].x, self.path[0].y)
+            self.addItem(waypoint)
+            self.waypoints.append(waypoint)
 
-            for i in xrange(1, len(self.path)):
-                x, y = self.path[i].x, self.path[i].y
+            # We draw a line (and waypoints) of the simplified path
+            for i in xrange(1, len(self.sPath)):
+                x, y = self.sPath[i].x, self.sPath[i].y
 
                 painterPath.lineTo(x, y)
 
-                point = QGraphicsEllipseItem(x, y, 20, 20)
-                point.setBrush(QColor(200, 200, 200))
-                self.addItem(point)
+                waypoint = widgets.Waypoint(x, y)
+                self.addItem(waypoint)
+                self.waypoints.append(waypoint)
 
 
-            # We set the path as the path to be shown on screen
-            # self.graphicalPath.setPath(painterPath)
-
-             # If a path is already shown on screen, we just update it with the new path
-            if self.graphicalPath is not None:
-                self.graphicalPath.setPath(painterPath)
-            # Else, we create a new graphical path
-            else:
-                self.graphicalPath = QGraphicsPathItem(painterPath)
-                self.graphicalPath.setZValue(-1)
-
-                pen = QPen()
-                pen.setColor(QColor(180, 200, 240))
-                pen.setWidth(3)
-                # pen.setCapStyle(Qt.RoundCap)
-                pen.setMiterLimit(10)
-                pen.setJoinStyle(Qt.RoundJoin)
-                space = 4
-                pen.setDashPattern([8, space, 1, space])
-                self.graphicalPath.setPen(pen)
-                self.graphicalPath.setOpacity(0.8)
-
-                self.addItem(self.graphicalPath)
-
-            # Calculating the animation speed
-            totalLength = painterPath.length()
-            pixelsPerSecond = 200.0
-            totalDuration = 1000. * (totalLength / pixelsPerSecond)
+            # We update the path shown on screen
+            self.graphicalPath.setPath(painterPath)
 
             # Animating the car on the path
             self.animation = QParallelAnimationGroup()
@@ -106,44 +111,56 @@ class AutoScene(QGraphicsScene):
             posAnim = QPropertyAnimation(self.car, "positionProperty")
             rotAnim = QPropertyAnimation(self.car, "angleProperty")
 
+            # Calculating the animation's duration
+            totalLength = painterPath.length()
+            pixelsPerMS = 200. / 1000.
+            totalDuration = totalLength / pixelsPerMS
+
             posAnim.setDuration(totalDuration)
             rotAnim.setDuration(totalDuration)
 
             posAnim.setKeyValueAt(0, QPointF(self.car.x, self.car.y))
-            rotAnim.setKeyValueAt(0, self.car.readAngle())
+            rotAnim.setKeyValueAt(0, self.car.angle)
+
+            angles = deque()
+            angles.append(self.car.angle)
+            curAngle = self.car.angle
 
             t = 0.
-            angles = deque()
-            angles.append(self.graphicCar.rotation())
 
-            for i in xrange(1, len(self.path)):
+            for i in xrange(1, len(self.path) - 1):
+                #This loop describes going from path[i-1] to path[i]
+
                 pt = self.path[i]
                 lastPt = self.path[i-1]
 
-                # Time's evolution
-                distance = math.sqrt( (pt.x - lastPt.x)**2 + (pt.y - lastPt.y)**2 )
-                t += distance/pixelsPerSecond
-                print t
+                distance = sqrt( (pt.x - lastPt.x)**2 + (pt.y - lastPt.y)**2 )
 
-                # Current angle calculus and format according to the trigonometric sens
-                angle = math.pi - math.atan2(lastPt.y - pt.y, lastPt.x - pt.x)
+                # Time's evolution (distance / speed)
+                t += distance/pixelsPerMS
 
-                # We add the 'current angle' to the angles queue and calculate the mean
-                angles.append(angle)
-                meanAngle = sum(angles) / len(angles)
+                posAnim.setKeyValueAt(t/totalDuration, QPointF(pt.x, pt.y))
 
-                # If we already have too many angles, we drop the oldest ones
+                # Calculation of the 'new' angle
+                newAngle = pi - atan2(lastPt.y - pt.y, lastPt.x - pt.x)
+                
+                if abs(2*pi + newAngle - curAngle) < abs(newAngle - curAngle):
+                    curAngle = 2*pi + newAngle
+                else: 
+                    curAngle = newAngle
+
+                angles.append( curAngle ) 
+                rotAnim.setKeyValueAt(t/totalDuration, sum(angles)/len(angles))
+
                 if len(angles) > 10:
                     angles.popleft()
 
-                posAnim.setKeyValueAt(t/totalDuration, QPointF(pt.x, pt.y))
-                rotAnim.setKeyValueAt(t/totalDuration, meanAngle)
 
             posAnim.setEndValue(QPointF(self.path[-1].x, self.path[-1].y))
             rotAnim.setEndValue(angles[-1])
 
-            posAnim.setEasingCurve(QEasingCurve.InOutQuad)
-            rotAnim.setEasingCurve(QEasingCurve.InOutQuad)
+            # posAnim.setEasingCurve(QEasingCurve.InOutQuad)
+            # rotAnim.setEasingCurve(QEasingCurve.InOutQuad)
 
             self.animation.addAnimation(rotAnim)
             self.animation.addAnimation(posAnim)
@@ -159,6 +176,9 @@ class AutoScene(QGraphicsScene):
         self.path = []
         self.graphicalPath.setPath(QPainterPath())
 
+        for point in self.waypoints:
+            self.removeItem(point)
+
     def mousePressEvent(self, event):
         x, y = event.scenePos().x(), event.scenePos().y()
 
@@ -171,7 +191,7 @@ class AutoScene(QGraphicsScene):
 
         if not self.car.moving:
             # We calculate the angle (in radians) and convert it to the trigonometric referential
-            angle = math.pi - math.atan2(self.car.y - y, self.car.x - x)
+            angle = pi - atan2(self.car.y - y, self.car.x - x)
 
             self.car.setAngle(angle)
 
@@ -195,9 +215,9 @@ class AutoScene(QGraphicsScene):
             elif event.key() == Qt.Key_Down or event.key() == Qt.Key_S:
                 speed = -20
             elif event.key() == Qt.Key_Right or event.key() == Qt.Key_D:
-                deltaAngle = -math.pi/32
+                deltaAngle = -pi/32
             elif event.key() == Qt.Key_Left or event.key() == Qt.Key_Q:
-                deltaAngle = math.pi/32
+                deltaAngle = pi/32
 
             if speed != 0 or deltaAngle != 0:
                 self.car.setAngle(self.car.angle + deltaAngle)
@@ -206,13 +226,13 @@ class AutoScene(QGraphicsScene):
                 nSpeed = speed + random.gauss(0.0, self.car.displacement_noise)
                 if speed != 0:
                     # Simulating car's deviation
-                    deltaAngle += random.gauss(0.0, math.radians(self.car.rotation_noise))
+                    deltaAngle += random.gauss(0.0, radians(self.car.rotation_noise))
                     self.car.move(nSpeed)
 
 
                 if self.heatmap.isVisible():
                     # Noise on the car's current angle
-                    noisyCarAngle = self.car.angle + random.gauss(0.0, math.radians(self.car.rotation_noise)) 
+                    noisyCarAngle = self.car.angle + random.gauss(0.0, radians(self.car.rotation_noise)) 
                     self.particleFilter.setAngle(noisyCarAngle)
                     self.particleFilter.move(speed)
                     self.particleFilter.sense(self.car.distance, noisyCarAngle)
@@ -308,6 +328,23 @@ class AutoView(QGraphicsView):
         self.textShadow.setColor(QColor(20, 20, 40))
         self.textShadow.setOffset(1, 1)
         self.titleItem.setGraphicsEffect(self.textShadow)
+
+        # We initialize the path's visualization
+        s.graphicalPath = QGraphicsPathItem()
+
+        pen = QPen()
+        pen.setColor(QColor(180, 200, 240))
+        pen.setWidth(3)
+        pen.setMiterLimit(10)
+        pen.setJoinStyle(Qt.RoundJoin)
+        space = 4
+        pen.setDashPattern([8, space, 1, space])
+
+        s.graphicalPath.setPen(pen)
+        s.graphicalPath.setOpacity(0.8)
+        s.graphicalPath.setZValue(-1)
+
+        s.addItem(s.graphicalPath)
 
         # Car visualization
         s.car.map = s.map

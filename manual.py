@@ -89,6 +89,11 @@ class ManualScene(QGraphicsScene):
         self.obstacleWarning = widgets.ObstacleWarning(self.car)
         self.addItem(self.obstacleWarning)
 
+        # List of pressed keys (to press multiple keys at the same time)
+        self.keylist = list()
+
+        self.firstrelease = True
+
     def mousePressEvent(self, event):
         x, y = event.scenePos().x(), event.scenePos().y()
 
@@ -97,3 +102,20 @@ class ManualScene(QGraphicsScene):
     def mouseMoveEvent(self, event):
         x, y = event.scenePos().x(), event.scenePos().y()
         super(ManualScene, self).mouseMoveEvent(event)
+
+    def keyPressEvent(self, event):
+        self.firstrelease = True
+        astr = "pressed: " + str(event.key())
+        self.keylist.append(astr)
+
+    def keyReleaseEvent(self, event):
+        if self.firstrelease == True: 
+            self.processmultikeys(self.keylist)
+
+        self.firstrelease = False
+
+        if len(self.keylist) > 0:
+            del self.keylist[-1]
+
+    def processmultikeys(self,keyspressed):
+        print keyspressed

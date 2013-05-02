@@ -7,7 +7,7 @@
 
 from PySide.QtCore import *
 
-from math import cos, sin, pi, copysign
+from math import cos, sin, pi, degrees
 
 
 class Car(QObject):
@@ -26,7 +26,7 @@ class Car(QObject):
     def_rotation = 2.
 
     # Distance at which the car is 'in danger' (obstacle too close)
-    danger_distance = 120
+    danger_distance = 300
 
     def __init__(self, map=None, carSocket=None, x=0, y=0, width=def_width, length=def_length):
         super(Car, self).__init__()
@@ -84,26 +84,27 @@ class Car(QObject):
 
         # TODO: Temporary...
         if self.socket.connected:
-            print "sending"
-            if speed > 0:
-                self.socket.send("1")
-            else:
-                self.socket.send("-1")
+            # SET ANGLE : '01' + '#' + angle on 6 digits + '#' + distance on 6 digits
+            self.socket.send( "01#{0:06d}#{1:06d}".format(int(degrees(self.angle)), int(speed)) )
 
         self.update()
 
     def setMoving(self, movingStatus):
         self.moving = movingStatus
+        self.update()
 
+    @Slot(float)
+    def setSpeed(self, speed):
+        self.speed = speed
         self.update()
 
     # Angle (in radians, from 0 to 2*pi)
     def readAngle(self):
         return self.angle
 
+    @Slot(float)
     def setAngle(self, angle):
         self.angle = angle % (2*pi)
-
         self.update()
 
     angleProperty = Property(float, readAngle, setAngle)
@@ -112,6 +113,7 @@ class Car(QObject):
     def readPosition(self):
         return QPointF(self.x, self.y)
 
+    @Slot(QPointF)
     def setPosition(self, position):
         self.x, self.y = position.x(), position.y()
 
@@ -120,7 +122,8 @@ class Car(QObject):
     # Temperature (in celcius)
     def readTemperature(self):
         return self.temperature
-
+    
+    @Slot(float)
     def setTemperature(self, temperature):
         self.temperature = temperature
 
@@ -136,8 +139,7 @@ class Car(QObject):
 
         # TODO : Remove this, for testing  only
         self.temperature =  (self.temperature + 1) % 100
-        self.speed = (self.speed + 1) % 180
-
+        # self.speed = (self.speed + 1) % 180
 
         for view in self.views:
             view.update()

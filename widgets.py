@@ -9,6 +9,28 @@ from PySide.QtGui import *
 import math
 from engine import Car
 
+class Waypoint(QGraphicsEllipseItem):
+
+    """
+    A point symbolizing a 'waypoint' for the car
+    """
+
+    def_radius = 10
+
+    def __init__(self, x, y, radius=def_radius):
+        super(Waypoint, self).__init__(x - radius, y - radius, 2*radius, 2*radius)
+
+        self.setBrush(QColor(250, 250, 250))
+        self.setPen(QColor(250, 250, 250))
+
+        self.setOpacity(0.8)
+        self.setZValue(-1)
+
+        self.shadow = QGraphicsDropShadowEffect()
+        self.shadow.setBlurRadius(10)
+        self.shadow.setColor(QColor(0, 0, 0))
+        self.shadow.setOffset(0, 0)
+        self.setGraphicsEffect(self.shadow)
 
 class InfoBox(QGraphicsObject):
 
@@ -76,10 +98,12 @@ class InfoBox(QGraphicsObject):
 
 class ObstacleWarning(InfoBox):
     def __init__(self, car):
+
         self.car = car
         car.addView(self)
 
         super(ObstacleWarning, self).__init__(fontsize=25)
+        self.setBackgroundOpacity(0.8)
 
         self.update()
 
@@ -90,7 +114,7 @@ class ObstacleWarning(InfoBox):
             self.setColor(QColor(255, 255, 255))
         else:
             self.setCaption("Obstacle at : {0:.2f}".format(self.car.distance))
-            hue = min(1., (float(self.car.distance)/Car.danger_distance)) * 0.33
+            hue = max(0., min(1., (float(self.car.distance - self.car.width / 2)/Car.danger_distance))) * 0.33
             self.setColor( QColor.fromHsvF(hue, 0.5, 0.8, 0.5) )
 
 
