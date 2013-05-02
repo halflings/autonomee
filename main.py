@@ -96,11 +96,11 @@ class MainWindow(QMainWindow):
 
     def manualMode(self):
         self.stackedWidget.setCurrentWidget(self.manualView)
-        self.setWindowTitle("Carosif - Manual mode")
+        self.setWindowTitle("Autonomee - Manual mode")
 
     def automaticMode(self):
         self.stackedWidget.setCurrentWidget(self.automaticView)
-        self.setWindowTitle("Carosif - Automatic mode - Map : {}".format(self.currentPath))
+        self.setWindowTitle("Autonomee - Automatic mode - Map : {}".format(self.currentPath))
 
     def openConfigPanel(self):
         self.config.show()
@@ -173,7 +173,7 @@ class MainWindow(QMainWindow):
 
             if not path.startswith(':/'):
                 self.currentPath = path
-                self.setWindowTitle("Carosif - Automatic mode - Map : {}".format(self.currentPath))
+                self.setWindowTitle("Autonomee - Automatic mode - Map : {}".format(self.currentPath))
             self.backgroundAction.setEnabled(True)
 
             self.resize(self.automaticView.sizeHint() + QSize(80, 80 + self.menuBar().height()))

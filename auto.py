@@ -316,7 +316,7 @@ class AutoView(QGraphicsView):
         # self.backgroundItem.setGraphicsEffect( self.shadow )
 
         # Title text
-        self.titleItem = QGraphicsTextItem("INSAbot visualization UI")
+        self.titleItem = QGraphicsTextItem("Autonomee visualization UI")
         self.titleItem.setFont(QFont("Ubuntu-L.ttf", 35, QFont.Light))
         # 'Dirty' centering of the text
         self.titleItem.setPos(width/2 - self.titleItem.boundingRect().width()/2, 5)
