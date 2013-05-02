@@ -1,4 +1,4 @@
-# Carosif (temporary name)
+# Autonomee
 
 ![Screenshot of the app's UI](img/screenshot.png)
 
@@ -14,6 +14,7 @@ You can also check the robot's arduino sketch, __arduino.ino__.
 * Nearest obstacle detection (to simulate the sensor's measurements)
 * Basic probability model : particle filter. (hopefully we'll also implement one based on Kalman's filter)
 * Visualization of the robot's movements and the particles used to localize it.
+* A client/server to push commands to the car and control it (through serial ports)
 
 ## Dependencies
 
@@ -28,6 +29,10 @@ You can also check the robot's arduino sketch, __arduino.ino__.
 This is a work in progress and the code base can change very radically. Don't except (for now) something working out of the box  !
 
 ## Updates :
+
+### 2 May 2013
+
+The project's name has changed from 'Carosif' to 'Autonomee'.
 
 ### 28 April 2013
 
