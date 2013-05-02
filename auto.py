@@ -179,6 +179,8 @@ class AutoScene(QGraphicsScene):
         for point in self.waypoints:
             self.removeItem(point)
 
+        self.waypoints = list()
+
     def mousePressEvent(self, event):
         x, y = event.scenePos().x(), event.scenePos().y()
 
