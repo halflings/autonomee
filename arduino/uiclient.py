@@ -182,9 +182,8 @@ class Ui_Dialog(object):
         print "In disconnectSocket"
 
         self.connected = False
-	if self.socketThread:
-        	self.socketThread.join()
-
+        if self.socketThread:
+                self.socketThread.join()
         QtCore.QCoreApplication.instance().quit()
 
     def serverProcessing(self):
@@ -194,41 +193,36 @@ class Ui_Dialog(object):
 
             axisX = self.joystick.get_axis(1)
             axisY = self.joystick.get_axis(0)
-	    backButton = self.joystick.get_button(11)
 
-            if axisX != 0 and not self.running:
+            if (axisX != 0 or axisY != 0):
                 self.running = True
+                self.socket.sendall('01')
+                # # Not true, but just for testing (real right/left to send is different)
+                # self.socket.sendall("01#{0:06d}#{1:06d}".format(axisX*100, axisY*100))
 
-                if axisX > 0:
-                    self.socket.sendall('-1')
-                else:
-                    self.socket.sendall('1')
+            if axisX == 0 and axisY == 0 and self.running:
+                self.sendall('00')
 
-            if axisY != 0 and not self.turning:
-                self.turning = True
+            # if axisX != 0 and not self.running:
+            #     self.running = True
 
-                if axisY > 0:
-                    self.socket.sendall('2')
-                else:
-                    self.socket.sendall('-2')
+            #     if axisX > 0:
+            #         self.socket.sendall('-1')
+            #     else:
+            #         self.socket.sendall('1')
 
-	    if backButton != 0:
-		    self.socket.sendall('3')
+            # if axisY != 0 and not self.turning:
+            #     self.turning = True
 
-	            numMeasurements = int(self.socket.recv(1024))
-		    self.sensorData = dict()
-	            for i in range(numMeasurements):
-		    	data = re.search("A([-]?\d+)\r\nD(\d+)\r\n", self.socket.recv(1024))
-			if data:
-				self.sensorData[int(data.group(1))] = int(data.group(2))
-		    for angle in self.sensorData:
-		    	print "{} at angle {}".format(self.sensorData[angle], angle)
-                    	self.logger.send(self.sensorData[angle])
+            #     if axisY > 0:
+            #         self.socket.sendall('2')
+            #     else:
+            #         self.socket.sendall('-2')
 
-            if (axisX == 0 and self.running) or (axisY == 0 and self.turning):
-                self.socket.sendall('0')
-                self.turning = False
-                self.running = False
+            # if (axisX == 0 and self.running) or (axisY == 0 and self.turning):
+            #     self.socket.sendall('0')
+            #     self.turning = False
+            #     self.running = False
 
             pygame.event.pump()
 

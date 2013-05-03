@@ -4,9 +4,50 @@
     geometry.py - geometry models (shapes, collision, ...)
 """
 
-import math
+from math import sqrt, pi, tan, cos, sin, atan2
 import numpy as np
 
+def PerpendicularDistance(point, line):
+    # line is passed as a tuple of two points
+    pass
+
+
+
+def DouglasPeucker(points, epsilon):
+    # Finding the point with the maximum distance
+    dmax = 0
+    index = 0
+    for i in xrange(1, len(points)):
+        d = PerpendicularDistance(points[i], (points[0], points[-1]))
+        if d > dmax:
+            index = i
+            dmax = d
+
+# function DouglasPeucker(PointList[], epsilon)
+#     // Find the point with the maximum distance
+#     dmax = 0
+#     index = 0
+#     for i = 2 to (length(PointList) - 1) {
+#         d = PerpendicularDistance(PointList[i], Line(PointList[1], PointList[end])) 
+#         if ( d > dmax ) {
+#             index = i
+#             dmax = d
+#         }
+#     }
+#     // If max distance is greater than epsilon, recursively simplify
+#     if ( dmax >= epsilon ) {
+#         // Recursive call
+#         recResults1[] = DouglasPeucker(PointList[1...index], epsilon)
+#         recResults2[] = DouglasPeucker(PointList[index...end], epsilon)
+ 
+#         // Build the result list
+#         ResultList[] = {recResults1[1...end-1] recResults2[1...end]}
+#     } else {
+#         ResultList[] = {PointList[1], PointList[end]}
+#     }
+#     // Return the result
+#     return ResultList[]
+# end
 
 class Point:
 
@@ -15,7 +56,7 @@ class Point:
         self.y = int(y)
 
     def distance(self, point):
-        return math.sqrt((point.x - self.x)**2 + (point.y - self.y)**2)
+        return sqrt((point.x - self.x)**2 + (point.y - self.y)**2)
 
     def translated(self, vector):
         # We're expecting numpy vectors here : [x, y]
@@ -137,7 +178,7 @@ class Ray(object):
         self.vector = self.vector()
 
     def vector(self):
-        return np.array([math.cos(self.angle), -math.sin(self.angle)])
+        return np.array([cos(self.angle), -sin(self.angle)])
 
     def intersection(self, shape):
         if isinstance(shape, Segment):
@@ -147,8 +188,7 @@ class Ray(object):
         elif isinstance(shape, Polyline):
             return self.polylineCollision(shape)
         elif isinstance(shape, Ellipse):
-            return [] 
-            # return self.ellipseCollision(shape)
+            return self.ellipseCollision(shape)
         else:
             return []
 
@@ -182,17 +222,17 @@ class Ray(object):
     def ellipseCollision(self, ellipse):
         # by Ianic
 
-        if self.angle > math.pi:
-            angle = -self.angle
+        if self.angle > pi:
+            angle = 2*pi - self.angle
         else:
-            angle = -2*math.pi + self.angle 
+            angle = - self.angle 
 
         a, b, h, k = ellipse.rx, ellipse.ry, ellipse.center.x, ellipse.center.y
-        c = math.tan(angle)
+        c = tan(angle)
         d = -c*self.origin.x + self.origin.y
 
         alpha = c**2 / b**2 + 1. / a**2
-        beta = float ((float(2*c*(d-k)) / b**2) - ( float(2*h)/(a**2) ) )
+        beta = (2*c*(d-k) / b**2) - ( 2*h/(a**2) )
         gamma = h**2/a**2 + (d-k)**2 / b**2 - 1
 
         delta = beta**2 - 4*alpha*gamma
@@ -200,11 +240,71 @@ class Ray(object):
         if delta < 0:
             return []
         else:
-            x1 = float(-beta - math.sqrt(delta)) / (2*alpha)
-            x2 = float(-beta + math.sqrt(delta)) / (2*alpha)
-
+            x1 = (-beta - sqrt(delta)) / (2*alpha)
             y1 = c*x1 + d
+
+            x2 = (-beta + sqrt(delta)) / (2*alpha)
             y2 = c*x2 + d
+
+            collisions = list()
+            for point in [Point(x1, y1), Point(x2, y2)]:
+
+                # Determining 
+                if -pi/2 < angle < pi/2:
+                    if point.x > self.origin.x:
+                        collisions.append(point)
+                else:
+                    if point.x < self.origin.x:
+                        collisions.append(point)
+
+            return collisions
+
+    def ellipseCollisionAlt(self, ellipse):
+        # Not working !
+        """ Alternate implementation by Ahmed.
+
+        We use consider the cartesian formulas of both the ellipse and the line as equal (collision)
+        Line : y = a*x + b
+        Ellipse : ((x - cx)² / rx²)  + ((y - cy)² / ry²)  = 1
+
+        We end up with this formula :
+
+        (E) <-> (ry² + (a*rx)²) x² + (rx²*(2*a*b -2*a*cy) - 2*ry²*cx) x + ( (ry*cx)² + rx²*(b² - 2*b*cy + cy²) - (rx*ry)² ) = 0
+
+        Let's consider alpha = (ry² + (a*rx)²) ; beta = (rx²*(2*a*b -2*a*cy) - 2*ry²*cx)
+        and omega = (ry*cx)² + rx²*(b² - 2*b*cy + cy²) - (rx*ry)**2
+
+        We have : (E) <-> alpha * x² + beta * x + omega = 0
+
+        So the solutions are (with delta = beta**2 - 4*alpha*omega) if delta >= 0:
+        1) x = (- beta - sqrt(delta)) / (2*alpha)
+        2) x = (-beta + sqrt(delta)) / (2*alpha)
+        """
+
+        cx, cy, rx, ry = ellipse.center.x, ellipse.center.y, ellipse.rx, ellipse.ry
+
+        if self.angle > pi:
+            angle = - 2*pi + self.angle
+        else:
+            angle = - self.angle 
+
+        a = tan(angle)
+        b = self.origin.y - self.origin.x * tan(angle)
+
+        alpha = ry**2 + (a*rx)**2
+        beta = rx**2 * (2*a*b - 2*a*cy) - 2 * ry**2 * cx
+        omega = rx**2 * (b**2 - 2*b*cy + cy**2) - (rx*ry)**2
+
+        delta = beta**2 - 4 * alpha * omega
+
+        if delta < 0:
+            return []
+        else:
+            x1 = float(-beta - sqrt(delta)) / (2*alpha)
+            x2 = float(-beta + sqrt(delta)) / (2*alpha)
+
+            y1 = a*x1 + b
+            y2 = a*x2 + b
 
             return [Point(x1, y1), Point(x2, y2)]
 
@@ -245,13 +345,11 @@ class Segment(Ray):
 
     def __init__(self, x1, y1, x2, y2):
         # Calculating heading angle
-        angle = math.pi - math.atan2(y1 - y2, x1 - x2)
-        if angle > math.pi:
-            angle = angle - 2*math.pi
+        angle = pi - atan2(y1 - y2, x1 - x2)
 
         super(Segment, self).__init__(x1, y1, angle)
         # Calculating distance
-        self.length = math.sqrt((x1-x2)**2 + (y1-y2)**2)
+        self.length = sqrt((x1-x2)**2 + (y1-y2)**2)
 
     def __str__(self):
         return "Segment [ {}, {} ]".format(self.origin, self.origin.translated(self.vector*self.length))

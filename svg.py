@@ -82,6 +82,7 @@ class SvgTree:
 
         #Bounding rectangle ( TODO : mm -> xp, etc.)
         self.rect = Rectangle(-1, -1, self.width+1, self.height+1)
+        self.shapes.append(self.rect)
 
 
         ######################################################################
@@ -174,7 +175,8 @@ class SvgTree:
         id = 0
 
         while not obstacle and id<len(self.shapes):
-            obstacle = point.containedIn(self.shapes[id])
+            if self.shapes[id] != self.rect:
+                obstacle = point.containedIn(self.shapes[id])
             id += 1
 
         return obstacle
@@ -189,14 +191,11 @@ class SvgTree:
 
             if len(intersections) > 0:
                 closestIntersect = min(intersect.distance(ray.origin) for intersect in intersections)
+
                 if dist is None:
                     dist = closestIntersect
                 else:
                     dist = min(dist, closestIntersect)
-
-        if dist is None:
-            # If there's no intersection with any shape, we test for intersections with the map's borders
-            dist = min(intersect.distance(ray.origin) for intersect in ray.intersection(self.rect))
 
         return dist
 

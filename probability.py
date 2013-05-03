@@ -52,7 +52,6 @@ class ParticleFilter(object):
         for i in xrange(N):
             x = random.randint(0, self.width - 1)
             y = random.randint(0, self.height - 1)
-
             # TODO : uncomment this (and fix it)
             while self.map.isObstacle(x, y):
                 x = random.randint(0, self.width - 1)
