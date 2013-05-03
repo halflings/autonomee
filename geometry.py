@@ -7,7 +7,7 @@
 from math import sqrt, pi, tan, cos, sin, atan2
 import numpy as np
 
-def simplifyPath(path, minDist = 100):
+def simplifyPath(path, angleEpsilon = 0.3, minDist = 80):
     if len(path) > 2:
         sPath = [path[0]]
         lastPoint = path[1]
@@ -17,7 +17,7 @@ def simplifyPath(path, minDist = 100):
             coef = atan2(path[i].y - path[i - 1].y, path[i].x - path[i - 1].x)
             distFromLast = sqrt( (sPath[-1].x - path[i].x)**2 + (sPath[-1].y - path[i].y)**2 )
 
-            if coef != lineCoef and distFromLast > minDist:
+            if abs(coef - lineCoef) > angleEpsilon and distFromLast > minDist:
                 # New line
                 sPath.append(lastPoint)
                 lineCoef = coef

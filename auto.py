@@ -350,6 +350,9 @@ class AutoView(QGraphicsView):
         s.heatmap.setVisible(False)
         s.addItem(s.heatmap)
 
+        # Waypoints
+        s.waypoints = list()
+
         self.x = 0
         self.y = 0
 
