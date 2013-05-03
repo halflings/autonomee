@@ -104,18 +104,13 @@ class ManualScene(QGraphicsScene):
         super(ManualScene, self).mouseMoveEvent(event)
 
     def keyPressEvent(self, event):
-        self.firstrelease = True
-        astr = "pressed: " + str(event.key())
-        self.keylist.append(astr)
 
-    def keyReleaseEvent(self, event):
-        if self.firstrelease == True: 
-            self.processmultikeys(self.keylist)
-
-        self.firstrelease = False
-
-        if len(self.keylist) > 0:
-            del self.keylist[-1]
+        if event.key() == Qt.Key_L:
+            servoAngle = min(80, self.car.servoAngle + 10)
+            self.car.setServoAngle(servoAngle)
+        if event.key() == Qt.Key_J:
+            servoAngle = max(-80, self.car.servoAngle - 10)
+            self.car.setServoAngle(servoAngle)
 
     def processmultikeys(self,keyspressed):
         print keyspressed

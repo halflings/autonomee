@@ -50,17 +50,21 @@ class AutoScene(QGraphicsScene):
         self.waypoints = list()
 
     def pathfinding(self, x, y):
-        # If the car is currently on a path, we end it
-        self.pathFinished()
 
-        # We generate a path from the car to where we clicked and show it on the UI
-        # We get the path from our 'map' object
-        self.path = self.map.search((self.car.x, self.car.y), (x, y))
+        if not self.map.isReachable(x,y) or not self.map.isReachable(self.car.x, self.car.y):
+            # If the goal is unreachable or the car is in an unreachable position
+            self.graphicCar.setCaption("Goal unreachable !")
+        else:
+            # We generate a path from the car to where we clicked and show it on the UI
+            # We get the path from our 'map' object
+            self.path = self.map.search((self.car.x, self.car.y), (x, y))
 
-        # And a simple version of the path (to be sent to the car)
-        self.sPath = simplifyPath(self.path)
+            # And a simple version of the path (to be sent to the car)
+            self.sPath = simplifyPath(self.path)
 
-        if len(self.path) > 0:
+            # If the car is currently on a path, we end it
+            self.pathFinished()
+
             # We build a polyline graphic item
             painterPath = QPainterPath()
             totalPath = QPainterPath()
@@ -159,8 +163,8 @@ class AutoScene(QGraphicsScene):
 
     def pathFinished(self):
     # Called when the car has arrived to the path's end
+        print "finished"
         self.car.setMoving(False)
-        self.path = []
         self.graphicalPath.setPath(QPainterPath())
 
         for point in self.waypoints:

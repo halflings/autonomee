@@ -58,11 +58,8 @@ class Cell(object):
 
     def __str__(self):
         """ String representation,  for debugging only """
-        strRep = "Cell [{}, {}]".format(self.x, self.y)
-        if not self.reachable:
-            strRep += " (wall)"
 
-        return strRep
+        return "Cell [{}, {}] | Reachable : {}".format(self.x, self.y, self.reachable)
 
 
 class DiscreteMap:
@@ -81,7 +78,10 @@ class DiscreteMap:
 
         self.svgMap = svgMap
 
+        # The initial grid (only taking into account the shapes, not their perimeter)
         self.initgrid = [[Cell(x, y) for x in xrange(self.width)] for y in xrange(self.height)]
+
+        # The grid that'll take into account the shapes' 'perimeter' (to avoid collisions with the car)
         self.grid = [[Cell(x, y) for x in xrange(self.width)] for y in xrange(self.height)]
 
         for y in xrange(self.height):

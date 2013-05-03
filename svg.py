@@ -181,6 +181,15 @@ class SvgTree:
 
         return obstacle
 
+    def isReachable(self, x, y):
+        """ True if (x, y) is reachable (not an obstacle and not too close to one)
+        Uses the discrete map. (Don't call before the discrete map is initialized)"""
+        if not 0 <= x < self.width or not 0 <= y < self.height:
+            return False
+        else:
+            div = self.discreteMap.division
+            ax, ay = int(x/div), int(y/div)
+            return self.discreteMap.grid[ay][ax].reachable
 
     def rayDistance(self, x, y, headingAngle):
         ray = Ray(x, y, headingAngle)

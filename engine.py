@@ -63,6 +63,9 @@ class Car(QObject):
         #     3*pi/2
         self.angle = 0
 
+        # Angle auquel se trouve le servomoteur (controllant le capteur)
+        self.servoAngle = 0
+
         # Temperature is in Celcius degrees (float)
         self.temperature = 25.
 
@@ -131,6 +134,11 @@ class Car(QObject):
 
     def updateMap(self):
         self.map.setRadius(max(self.width, self.length))
+
+    def setServoAngle(self, servoAngle):
+        self.servoAngle = servoAngle
+        if self.socket.connected:
+            self.socket.setServo(self.servoAngle)
 
     def update(self):
         # Calculating the distance to the closest object
