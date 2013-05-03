@@ -7,47 +7,87 @@
 from math import sqrt, pi, tan, cos, sin, atan2
 import numpy as np
 
-def PerpendicularDistance(point, line):
-    # line is passed as a tuple of two points
-    pass
+def simplifyPath(path, minDist = 100):
+    if len(path) > 2:
+        sPath = [path[0]]
+        lastPoint = path[1]
+        lineCoef = atan2( path[1].y - path[0].y, path[1].x - path[0].x)
+
+        for i in xrange(2, len(path)):
+            coef = atan2(path[i].y - path[i - 1].y, path[i].x - path[i - 1].x)
+            distFromLast = sqrt( (sPath[-1].x - path[i].x)**2 + (sPath[-1].y - path[i].y)**2 )
+
+            if coef != lineCoef and distFromLast > minDist:
+                # New line
+                sPath.append(lastPoint)
+                lineCoef = coef
+
+            lastPoint = path[i]
+
+        sPath.append(lastPoint)
+
+        return sPath
+    else:
+        # Can't simplify a path of 2 nodes or less
+        return path
+
+def lineMagnitude(p1, p2):
+    return sqrt((p2.x - p1.x)**2 + (p2.y - p1.y)**2)
+
+#Calc minimum distance from a point and a line segment (i.e. consecutive vertices in a polyline).
+def DistancePointLine(p, l1, l2):
+    #http://local.wasp.uwa.edu.au/~pbourke/geometry/pointline/source.vba
+    LineMag = lineMagnitude(l1, l2)
+ 
+    if LineMag < 0.00000001:
+        DistancePointLine = 9999
+        return DistancePointLine
+ 
+    u1 = (((p.x - l1.x) * (l2.x - l1.x)) + ((p.y - l1.y) * (l2.y - l1.y)))
+    u = u1 / (LineMag * LineMag)
+ 
+    if (u < 0.00001) or (u > 1):
+        #// closest point does not fall within the line segment, take the shorter distance
+        #// to an endpoint
+        ix = lineMagnitude(p, l1)
+        iy = lineMagnitude(p, l2)
+        if ix > iy:
+            DistancePointLine = iy
+        else:
+            DistancePointLine = ix
+    else:
+        # Intersecting point is on the line, use the formula
+        ix = l1.x + u * (l2.x - l1.x)
+        iy = l1.y + u * (l2.y - l1.y)
+        DistancePointLine = lineMagnitude(p, Point(ix, iy))
+ 
+    return DistancePointLine
 
 
-
-def DouglasPeucker(points, epsilon):
-    # Finding the point with the maximum distance
+def getRamerDouglas(points, epsilon):
+    # Find the point with the maximum distance
     dmax = 0
     index = 0
-    for i in xrange(1, len(points)):
-        d = PerpendicularDistance(points[i], (points[0], points[-1]))
+    for i in range(1, len(points) - 2):
+        d = DistancePointLine(points[i], points[0], points[len(points) - 1])
         if d > dmax:
             index = i
             dmax = d
 
-# function DouglasPeucker(PointList[], epsilon)
-#     // Find the point with the maximum distance
-#     dmax = 0
-#     index = 0
-#     for i = 2 to (length(PointList) - 1) {
-#         d = PerpendicularDistance(PointList[i], Line(PointList[1], PointList[end])) 
-#         if ( d > dmax ) {
-#             index = i
-#             dmax = d
-#         }
-#     }
-#     // If max distance is greater than epsilon, recursively simplify
-#     if ( dmax >= epsilon ) {
-#         // Recursive call
-#         recResults1[] = DouglasPeucker(PointList[1...index], epsilon)
-#         recResults2[] = DouglasPeucker(PointList[index...end], epsilon)
+    # If max distance is greater than epsilon, recursively simplify
+    if dmax >= epsilon:
+        # Recursive call
+        recResults1 = getRamerDouglas(points[0:index], epsilon)
+        recResults2 = getRamerDouglas(points[index:(len(points)-1)], epsilon)
  
-#         // Build the result list
-#         ResultList[] = {recResults1[1...end-1] recResults2[1...end]}
-#     } else {
-#         ResultList[] = {PointList[1], PointList[end]}
-#     }
-#     // Return the result
-#     return ResultList[]
-# end
+        # Build the result list
+        ResultList = recResults1[0:(len(recResults1)-2)] + recResults2
+    else:
+        ResultList = points
+    
+    # Return the result
+    return ResultList
+
 
 class Point:
 

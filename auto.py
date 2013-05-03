@@ -16,27 +16,7 @@ from collections import deque
 from math import atan2, pi, radians, sqrt
 import random
 
-
-def simplifyPath(path):
-    if len(path) > 2:
-        sPath = [path[0]]
-        lastPoint = path[1]
-        lineCoef = atan2( path[1].y - path[0].y, path[1].x - path[0].x)
-
-        for i in xrange(2, len(path)):
-            coef = atan2(path[i].y - path[i - 1].y, path[i].x - path[i - 1].x)
-            if coef != lineCoef:
-                # New line
-                sPath.append(lastPoint)
-                lineCoef = coef
-            lastPoint = path[i]
-
-        sPath.append(lastPoint)
-        return sPath
-    else:
-        # Can't simplify a path of 2 nodes or less
-        return path
-
+from geometry import simplifyPath, getRamerDouglas
 
 class AutoScene(QGraphicsScene):
 
@@ -83,9 +63,12 @@ class AutoScene(QGraphicsScene):
         if len(self.path) > 0:
             # We build a polyline graphic item
             painterPath = QPainterPath()
+            totalPath = QPainterPath()
+
             self.waypoints = list()
 
-            painterPath.moveTo(self.path[0].x, self.path[0].y)
+            painterPath.moveTo(self.sPath[0].x, self.sPath[0].y)
+            totalPath.moveTo(self.path[0].x, self.path[0].y)
 
             waypoint = widgets.Waypoint(self.path[0].x, self.path[0].y)
             self.addItem(waypoint)
@@ -101,6 +84,10 @@ class AutoScene(QGraphicsScene):
                 self.addItem(waypoint)
                 self.waypoints.append(waypoint)
 
+            # We draw a path (mainly just for the total distance) of the original path
+            for i in xrange(1, len(self.path)):
+                x, y = self.path[i].x, self.path[i].y
+                totalPath.lineTo(x, y)
 
             # We update the path shown on screen
             self.graphicalPath.setPath(painterPath)
@@ -112,7 +99,7 @@ class AutoScene(QGraphicsScene):
             rotAnim = QPropertyAnimation(self.car, "angleProperty")
 
             # Calculating the animation's duration
-            totalLength = painterPath.length()
+            totalLength = totalPath.length()
             pixelsPerMS = 200. / 1000.
             totalDuration = totalLength / pixelsPerMS
 
