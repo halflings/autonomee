@@ -12,6 +12,8 @@ from math import cos, sin, pi, degrees
 
 class Car(QObject):
 
+    updateSignal = Signal(int)
+
     max_temperature = 120.
 
     # TODO : Should be in mm
@@ -36,6 +38,9 @@ class Car(QObject):
 
         # TCP socket connecting the model to the (real) car
         self.socket = carSocket
+
+        # A mediator that'll be used by the socket
+        self.updateSignal.connect(self.update)
 
         self.x = x
         self.y = y
@@ -86,19 +91,19 @@ class Car(QObject):
         self.y += speed * -sin(self.angle)
 
         # TODO: Temporary...
-        if self.socket.connected:
-            # SET ANGLE : '01' + '#' + angle on 6 digits + '#' + distance on 6 digits
-            self.socket.send( "01#{0:06d}#{1:06d}".format(int(degrees(self.angle)), int(speed)) )
+        # if self.socket.connected:
+        #     # SET ANGLE : '01' + '#' + angle on 6 digits + '#' + distance on 6 digits
+        #     self.socket.send( "01#{0:06d}#{1:06d}".format(int(degrees(self.angle)), int(speed)) )
 
-        self.update()
+        self.notify()
 
     def setMoving(self, movingStatus):
         self.moving = movingStatus
-        self.update()
+        self.notify()
 
     def setSpeed(self, speed):
         self.speed = speed
-        self.update()
+        self.notify()
 
     # Angle (in radians, from 0 to 2*pi)
     def readAngle(self):
@@ -106,7 +111,7 @@ class Car(QObject):
 
     def setAngle(self, angle):
         self.angle = angle % (2*pi)
-        self.update()
+        self.notify()
 
     angleProperty = Property(float, readAngle, setAngle)
 
@@ -136,14 +141,13 @@ class Car(QObject):
         if self.socket.connected:
             self.socket.setServo(self.servoAngle)
 
-    def update(self):
+    def notify(self, signal=1):
+        self.updateSignal.emit(signal)
+
+    def update(self, signal=1):
         # Calculating the distance to the closest object
         if self.map is not None and not self.moving:
             self.distance = self.map.rayDistance(self.x, self.y, self.angle)
-
-        # TODO : Remove this, for testing  only
-        self.temperature =  (self.temperature + 80) % 100
-        self.speed = (self.speed + 80) % 180
 
         for view in self.views:
             view.update()

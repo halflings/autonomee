@@ -6,7 +6,7 @@ import re
 import sfml as sf
 from PySide.QtCore import *
 
-from math import copysign
+from math import copysign, radians
 
 from Queue import Queue
 # from PySFML import sf
@@ -18,7 +18,6 @@ def formatCommand(operation, firstOperand = 0, secondOperand = 0):
         raise Exception("Operation can't fit on two digits.")
     else:
         return "{0:02d}#{1:06d}#{2:06d}".format(operation, firstOperand, secondOperand)
-
 
 class CarSocket(QObject):
     speed = Signal(float)
@@ -34,31 +33,28 @@ class CarSocket(QObject):
 
         self.socket = None
 
-        self.mainThread = threading.Thread(target=self.mainRoutine)
-        self.mainThread.daemon = True
-
-        self.receivingThread = threading.Thread(target=self.receivingRoutine)
-        self.receivingThread.daemon = True
-
-        self.joystickThread = threading.Thread(target=self.joystickRoutine)
-        self.joystickThread.daemon = True
-
         self.toSend = Queue()
         self.received = Queue()
         self.connected = False
 
-        # Initialize Joystick
+        # Initializing the Joystick
         sf.Joystick.update()
-
         self.running = False
         self.turning = False
 
-        # # Connecting the signals
-        # self.angle.connect(self.car.setAngle)
-        # self.speed.connect(self.car.setSpeed)
-        # self.temperature.connect(self.car.setTemperature)
-        # self.speed.connect(self.car.setSpeed)
 
+        # Initializing the multiple threads (but not starting them)
+        self.receivingThread = threading.Thread(target=self.receivingRoutine)
+        self.receivingThread.daemon = True
+
+        self.sendingThread = threading.Thread(target=self.sendingRoutine)
+        self.sendingThread.daemon = True
+
+        self.joystickThread = threading.Thread(target=self.joystickRoutine)
+        self.joystickThread.daemon = True
+
+        self.processingThread = threading.Thread(target=self.processingRoutine)
+        self.processingThread.daemon = True
 
     def connect(self, ip, port):
         print "In connect socket"
@@ -72,8 +68,10 @@ class CarSocket(QObject):
             self.connected = True
 
             # Launching the socket's threads
-            self.mainThread.start()
             self.receivingThread.start()
+            self.sendingThread.start()
+
+            self.processingThread.start()
 
             # Launching the joystick's thread
             self.joystickThread.start()
@@ -88,8 +86,17 @@ class CarSocket(QObject):
         else:
             self.toSend.put(query)
 
+    def sendingRoutine(self):
+        print "[Socket] SENDING ROUTINE"
+
+        while self.connected:
+            query = self.toSend.get()
+            self.socket.sendall(query)
+            print "Sent : {}".format(query)
+
     def receivingRoutine(self):
-        print "[Socket] Receiving"
+        print "[Socket] RECEIVING ROUTINE"
+
         while self.connected:
             received = self.socket.recv(1024)
             
@@ -101,6 +108,8 @@ class CarSocket(QObject):
 
     def joystickRoutine(self):
         """ Reads commands from the joystick and puts them in the sending queue """
+
+        print "[Socket] JOYSTICK ROUTINE"
 
         lastDir, x, y, lastRight, lastLeft = 0, 0, 0, 0, 0
 
@@ -114,26 +123,26 @@ class CarSocket(QObject):
                 y = sf.Joystick.get_axis_position(0, sf.Joystick.Y)
 
                 # Old style move
-                if (self.running or self.running) and x == 0 and y == 0:
+                if (self.running or self.turning) and x == 0 and y == 0:
                     self.running = False
                     self.turning = False
-                    self.toSend.put(formatCommand(STOP))
+                    self.send(formatCommand(STOP))
 
                 elif not self.running and y != 0:
                     self.running = True
                     
                     if y < 0:
-                        self.toSend.put(formatCommand(RUN_FORWARD))
+                        self.send(formatCommand(RUN_FORWARD))
                     else:
-                        self.toSend.put(formatCommand(RUN_BACKWARD))
+                        self.send(formatCommand(RUN_BACKWARD))
 
                 elif not self.turning and x != 0:
                     self.turning = True
                     
                     if x > 0:
-                        self.toSend.put(formatCommand(TURN_RIGHT))
+                        self.send(formatCommand(TURN_RIGHT))
                     else:
-                        self.toSend.put(formatCommand(TURN_LEFT))
+                        self.send(formatCommand(TURN_LEFT))
 
 
                 # New style move (percent on right/left wheel)
@@ -151,49 +160,40 @@ class CarSocket(QObject):
                 #     speedLeft = max(0, min(250, int(coef * percentLeft)))
 
                 # if speedRight != lastRight or speedLeft != lastLeft or direction != lastDir:
-                #     self.toSend.put(formatCommand(direction, speedRight, speedLeft))
+                #     self.send(formatCommand(direction, speedRight, speedLeft))
 
                 #     lastDir, lastRight, lastLeft = direction, speedRight, speedLeft
 
                 time.sleep(0.005)
 
-    def mainRoutine(self):
-        print "[Socket] MAIN ROUTINE"
+    def processingRoutine(self):
+        print "[Socket] PROCESSING ROUTINE"
         while self.connected:
 
-            # Sending what must be sent...
-            query = self.toSend.get()
-            self.socket.sendall(query)
-            print "Sent : {}".format(query)
-
             # Processing what has been received
-            while not self.received.empty():
-                received = self.received.get()
+            received = self.received.get()
 
-                floatPattern = "(-?\d+(?:[.]\d+)?)"
+            floatPattern = "(-?\d+(?:[.]\d+)?)"
 
-                # Extracting the speed from the received
-                avgSpeedSearch = re.search("avgSpeed : {}".format(floatPattern), received)
-                if avgSpeedSearch:
-                    print "Got speed : {}".format(speedSearch.group(1))
-                    self.car.setSpeed( 10*float(avgSpeedSearch.group(1)) )
+            # Extracting the speed from the received
+            avgSpeedSearch = re.search("avgSpeed : {}".format(floatPattern), received)
+            if avgSpeedSearch:
+                print "Got speed : {}".format(speedSearch.group(1))
+                self.car.setSpeed( 10*float(avgSpeedSearch.group(1)) )
 
-                # Extracting the angle
-                angleSearch = re.search("Angle : (-?\d+(?:[.]\d+)?)", received)
-                if angleSearch:
-                    print "Got angle : {}".format(angleSearch.group(1))
-                    self.car.seAngle( float(angleSearch.group(1)) )
+            # Extracting the angle
+            angleSearch = re.search("Angle : (-?\d+(?:[.]\d+)?)", received)
+            if angleSearch:
+                print "Got angle : {}".format(angleSearch.group(1))
+                angle = radians(float(angleSearch.group(1))) 
+                self.car.setAngle(angle)
 
-                # Extracting the closest distance
-                distanceSearch = re.search("Distance : (-?\d+(?:[.]\d+)?)", received)
-                if distanceSearch:
-                    print "Got distance : {}".format(distanceSearch.group(1))
-                    self.car.distance = float(distanceSearch.group(1))
-
-                # print "Processing : {}".format(received)
-
-            # A little sleep wouldn't do any harm and avoid 100% cpu :-)
-            time.sleep(0.005)
+            # Extracting the closest distance
+            distanceSearch = re.search("Distance : (-?\d+(?:[.]\d+)?)", received)
+            if distanceSearch:
+                print "Got distance : {}".format(distanceSearch.group(1))
+                self.car.distance = float(distanceSearch.group(1))
+                self.car.notify()
 
         self.socket.sendall("DISCONNECT")
         self.socket.close()
@@ -201,4 +201,4 @@ class CarSocket(QObject):
     def setServo(self, angle):
         # Making sure : -80 <= angle <= 80
         angle = max(-80, min(80, angle))
-        self.toSend.put(formatCommand(TURN_SERVO, angle))
+        self.send(formatCommand(TURN_SERVO, angle))
