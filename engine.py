@@ -96,7 +96,6 @@ class Car(QObject):
         self.moving = movingStatus
         self.update()
 
-    @Slot(float)
     def setSpeed(self, speed):
         self.speed = speed
         self.update()
@@ -105,7 +104,6 @@ class Car(QObject):
     def readAngle(self):
         return self.angle
 
-    @Slot(float)
     def setAngle(self, angle):
         self.angle = angle % (2*pi)
         self.update()
@@ -116,7 +114,6 @@ class Car(QObject):
     def readPosition(self):
         return QPointF(self.x, self.y)
 
-    @Slot(QPointF)
     def setPosition(self, position):
         self.x, self.y = position.x(), position.y()
 
@@ -126,7 +123,6 @@ class Car(QObject):
     def readTemperature(self):
         return self.temperature
     
-    @Slot(float)
     def setTemperature(self, temperature):
         self.temperature = temperature
 
@@ -147,7 +143,7 @@ class Car(QObject):
 
         # TODO : Remove this, for testing  only
         self.temperature =  (self.temperature + 1) % 100
-        # self.speed = (self.speed + 1) % 180
+        self.speed = (self.speed + 80) % 180
 
         for view in self.views:
             view.update()

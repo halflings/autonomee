@@ -385,6 +385,9 @@ class CarSpeedMeter(QGraphicsObject):
     anglePerCmS = 1.22
     maxSpeed = 220
 
+    # Speed of the arrow (when animated) in ms / (cm/s)
+    MsPerAngle = 20
+
     """ A compass showing the car's current orientation """
 
     def __init__(self, car):
@@ -392,6 +395,8 @@ class CarSpeedMeter(QGraphicsObject):
 
         self.car = car
         self.car.addView(self)
+
+        self.lastSpeed = self.car.speed
 
         # Speed meter's background
         self.background = QGraphicsPixmapItem(QPixmap(CarSpeedMeter.background), self)
@@ -425,11 +430,29 @@ class CarSpeedMeter(QGraphicsObject):
     def paint(self, painter=None, style=None, widget=None):
         pass
 
+    def setArrowRotation(self, rotation):
+        self.arrow.setRotation(rotation)
+    def getArrowRotation(self):
+        return self.arrow.rotation()
+
+    arrowRotation = Property(float, getArrowRotation, setArrowRotation)
+
     def update(self):
         super(CarSpeedMeter, self).update()
 
         # Rotating the SPEED ARROW around its center
-        self.arrow.setRotation(CarSpeedMeter.zeroAngle + self.car.speed * CarSpeedMeter.anglePerCmS)
+        self.anim = QPropertyAnimation(self, "arrowRotation")
+
+        curAngle = self.arrow.rotation()
+        angleToReach = CarSpeedMeter.zeroAngle + self.car.speed * CarSpeedMeter.anglePerCmS
+
+        duration = abs(angleToReach - curAngle) * CarSpeedMeter.MsPerAngle
+        self.anim.setDuration(duration)
+
+        self.anim.setStartValue(curAngle)
+        self.anim.setEndValue(angleToReach)
+
+        self.anim.start(QAbstractAnimation.DeleteWhenStopped)
 
         # Updating the info box
         self.infobox.setCaption("{} cm/s".format(self.car.speed))

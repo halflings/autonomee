@@ -170,10 +170,26 @@ class CarSocket(QObject):
             while not self.received.empty():
                 received = self.received.get()
 
+                floatPattern = "(-?\d+(?:[.]\d+)?)"
+
                 # Extracting the speed from the received
-                avgSpeedSearch = re.search("avgSpeed : (-?\d+(?:[.]\d+)?)", received)
+                avgSpeedSearch = re.search("avgSpeed : {}".format(floatPattern), received)
                 if avgSpeedSearch:
-                    self.car.setSpeed( 10*int(avgSpeedSearch.group(1)) )
+                    print "Got speed : {}".format(speedSearch.group(1))
+                    self.car.setSpeed( 10*float(avgSpeedSearch.group(1)) )
+
+                # Extracting the angle
+                angleSearch = re.search("Angle : (-?\d+(?:[.]\d+)?)", received)
+                if angleSearch:
+                    print "Got angle : {}".format(angleSearch.group(1))
+                    self.car.seAngle( float(angleSearch.group(1)) )
+
+                # Extracting the closest distance
+                distanceSearch = re.search("Distance : (-?\d+(?:[.]\d+)?)", received)
+                if distanceSearch:
+                    print "Got distance : {}".format(distanceSearch.group(1))
+                    self.car.distance = float(distanceSearch.group(1))
+
                 # print "Processing : {}".format(received)
 
             # A little sleep wouldn't do any harm and avoid 100% cpu :-)
