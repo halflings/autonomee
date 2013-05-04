@@ -322,11 +322,15 @@ class CarThermometer(QGraphicsObject):
     background_empty = QImage("img/dashboard/thermometer-empty.png")
     background_full = QImage("img/dashboard/thermometer-full.png")
 
+    MsPerDegree = 50
+
     def __init__(self, car):
         super(CarThermometer, self).__init__()
 
         self.car = car
         self.car.addView(self)
+
+        self.lastTemp = self.car.temperature
 
         # Initializing image
 
@@ -355,12 +359,11 @@ class CarThermometer(QGraphicsObject):
     def paint(self, painter=None, style=None, widget=None):
         pass
 
-    def update(self):
-        super(CarThermometer, self).update()
+    def setThermometer(self, temperature):
+        y = max(0,  CarThermometer.background_full.height()*(1 - temperature / Car.max_temperature) - 130)
+        y = min(y, CarThermometer.background_full.height())
 
         # Updating the 'full' thermometer's height
-        y = max(0,  CarThermometer.background_full.height()*(1 - self.car.temperature / Car.max_temperature) - 130)
-        y = min(y, CarThermometer.background_full.height())
         newImage = CarThermometer.background_full.copy(
             0, y, CarThermometer.background_full.width(), CarThermometer.background_full.height())
 
@@ -368,8 +371,30 @@ class CarThermometer(QGraphicsObject):
         self.full.setPos(0, y)
 
         # Updating the info box
-        self.infobox.setCaption("{}°".format(self.car.temperature))
+        self.infobox.setCaption("{0:.2f}°".format(temperature))
         self.infobox.setPos(self.empty.boundingRect().width() + 10, y)
+
+        self.lastTemp = temperature
+
+    def readThermometer(self):
+        return self.car.temperature
+
+    thermometer = Property(float, readThermometer, setThermometer)
+
+    def update(self):
+        super(CarThermometer, self).update()
+
+        # Animation to make the shown temperature progress
+        self.anim = QPropertyAnimation(self, "thermometer")
+
+        duration = abs(self.lastTemp - self.car.temperature) * CarThermometer.MsPerDegree
+        self.anim.setDuration(duration)
+
+        self.anim.setStartValue(self.lastTemp)
+        self.anim.setEndValue(self.car.temperature)
+
+        self.anim.setEasingCurve(QEasingCurve.InOutQuad)
+        self.anim.start(QAbstractAnimation.DeleteWhenStopped)
 
     def boundingRect(self):
         return self.empty.boundingRect().united(self.infobox.boundingRect())
@@ -452,10 +477,11 @@ class CarSpeedMeter(QGraphicsObject):
         self.anim.setStartValue(curAngle)
         self.anim.setEndValue(angleToReach)
 
+        self.anim.setEasingCurve(QEasingCurve.InOutQuad)
         self.anim.start(QAbstractAnimation.DeleteWhenStopped)
 
         # Updating the info box
-        self.infobox.setCaption("{} cm/s".format(self.car.speed))
+        self.infobox.setCaption("{0:03d} cm/s".format(int(self.car.speed)))
         x = (self.boundingRect().width() - self.infobox.boundingRect().width()) / 2
         y = 330
         self.infobox.setPos(x, y)

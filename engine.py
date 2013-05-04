@@ -142,7 +142,7 @@ class Car(QObject):
             self.distance = self.map.rayDistance(self.x, self.y, self.angle)
 
         # TODO : Remove this, for testing  only
-        self.temperature =  (self.temperature + 1) % 100
+        self.temperature =  (self.temperature + 80) % 100
         self.speed = (self.speed + 80) % 180
 
         for view in self.views:

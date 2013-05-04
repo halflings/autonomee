@@ -51,9 +51,10 @@ class AutoScene(QGraphicsScene):
 
     def pathfinding(self, x, y):
 
-        if not self.map.isReachable(x,y) or not self.map.isReachable(self.car.x, self.car.y):
-            # If the goal is unreachable or the car is in an unreachable position
-            self.graphicCar.setCaption("Goal unreachable !")
+        if not self.map.isReachable(x,y):
+            self.graphicCar.setCaption("The chosen goal is unreachable.")
+        elif not self.map.isReachable(self.car.x, self.car.y):
+            self.graphicCar.setCaption("Can't move the car from its current position.")
         else:
             # We generate a path from the car to where we clicked and show it on the UI
             # We get the path from our 'map' object
@@ -150,8 +151,8 @@ class AutoScene(QGraphicsScene):
             posAnim.setEndValue(QPointF(self.path[-1].x, self.path[-1].y))
             rotAnim.setEndValue(angles[-1])
 
-            # posAnim.setEasingCurve(QEasingCurve.InOutQuad)
-            # rotAnim.setEasingCurve(QEasingCurve.InOutQuad)
+            posAnim.setEasingCurve(QEasingCurve.InOutQuad)
+            rotAnim.setEasingCurve(QEasingCurve.InOutQuad)
 
             self.animation.addAnimation(rotAnim)
             self.animation.addAnimation(posAnim)
@@ -163,7 +164,6 @@ class AutoScene(QGraphicsScene):
 
     def pathFinished(self):
     # Called when the car has arrived to the path's end
-        print "finished"
         self.car.setMoving(False)
         self.graphicalPath.setPath(QPainterPath())
 
