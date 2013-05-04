@@ -280,16 +280,15 @@ class AutoView(QGraphicsView):
             drawBackground = True
 
         s.clear()
-        self.resetTransform
-
+        
         # Graphic visualization of the SVG map
         self.svgItem = QtSvg.QGraphicsSvgItem(svg_map.path)
         self.svgItem.setFlags(QGraphicsItem.ItemClipsToShape)
         self.svgItem.setZValue(0)
         s.addItem(self.svgItem)
 
-        # The svg item's dimensions:
-        width, height = self.svgItem.boundingRect().width(), self.svgItem.boundingRect().height()
+        # The svg item's height:
+        width = self.svgItem.boundingRect().width()
 
         # Background (blueprint image)
         self.backgroundItem = QGraphicsRectItem(self.svgItem.boundingRect())

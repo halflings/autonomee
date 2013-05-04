@@ -70,6 +70,7 @@ class SvgTree:
             self.title = SvgTree.default_title
 
         #Parsing the SVG's parameters (width, height, ...)
+        self.width, self.height = 0, 0
         for attribute in ['width', 'height']:
             param = tree.xpath("//n:svg",
                                namespaces={'n': NS['svg']})[0]
@@ -171,15 +172,15 @@ class SvgTree:
         True if there's an obstacle in (x, y), false otherwise
         """
         point = Point(x, y)
-        obstacle = False
+        isObst = False
         id = 0
 
-        while not obstacle and id<len(self.shapes):
+        while not isObst and id<len(self.shapes):
             if self.shapes[id] != self.rect:
-                obstacle = point.containedIn(self.shapes[id])
+                isObst = point.containedIn(self.shapes[id])
             id += 1
 
-        return obstacle
+        return isObst
 
     def isReachable(self, x, y):
         """ True if (x, y) is reachable (not an obstacle and not too close to one)

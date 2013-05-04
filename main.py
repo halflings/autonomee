@@ -94,6 +94,16 @@ class MainWindow(QMainWindow):
         self.config.buttonBox.button(QDialogButtonBox.RestoreDefaults).clicked.connect(self.resetConfig)
         self.config.resetParticles.clicked.connect(self.resetParticles)
 
+        # Log dialog
+        file = QFile("log.ui")
+        file.open(QFile.ReadOnly)
+        self.log = loader.load(file)
+        file.close()
+
+        self.log.saveButton.clicked.connect(self.saveLog)
+        #self.carSocket.logger.connect(self.addToLog)
+
+
     def manualMode(self):
         self.stackedWidget.setCurrentWidget(self.manualView)
         self.setWindowTitle("Autonomee - Manual mode")
@@ -101,6 +111,14 @@ class MainWindow(QMainWindow):
     def automaticMode(self):
         self.stackedWidget.setCurrentWidget(self.automaticView)
         self.setWindowTitle("Autonomee - Automatic mode - Map : {}".format(self.currentPath))
+
+    def saveLog(self):
+        logFile = open("log.html", 'w+')
+        logFile.write(self.log.logEdit.toHtml())
+        logFile.close()
+
+    def addToLog(self, text, mode):
+        self.log.logEdit.append(text)
 
     def openConfigPanel(self):
         self.config.show()

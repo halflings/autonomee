@@ -39,7 +39,7 @@ class Car(QObject):
         # TCP socket connecting the model to the (real) car
         self.socket = carSocket
 
-        # A mediator that'll be used by the socket
+        # A signal used to update the model (and its views), thread-safe
         self.updateSignal.connect(self.update)
 
         self.x = x
@@ -121,6 +121,7 @@ class Car(QObject):
 
     def setPosition(self, position):
         self.x, self.y = position.x(), position.y()
+        self.notify()
 
     positionProperty = Property(QPointF, readPosition, setPosition)
 

@@ -138,11 +138,11 @@ class ParticleFilter(object):
         self.normalize()
 
     def __repr__(self):
-        repr = ""
+        result = ""
         for particle in self.particles:
-            repr += particle.__repr__() + '\n'
-        repr.normalize()
-        return repr
+            result += particle.__repr__() + '\n'
+        result.normalize()
+        return result
 
 
 class Particle(object):

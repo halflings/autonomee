@@ -20,10 +20,8 @@ def formatCommand(operation, firstOperand = 0, secondOperand = 0):
         return "{0:02d}#{1:06d}#{2:06d}".format(operation, firstOperand, secondOperand)
 
 class CarSocket(QObject):
-    speed = Signal(float)
-    angle = Signal(float)
-    temperature = Signal(float)
-    position = Signal(QPointF)
+
+    logger = Signal(str, str)
 
     def __init__(self, car):
         super(CarSocket, self).__init__()
@@ -56,8 +54,11 @@ class CarSocket(QObject):
         self.processingThread = threading.Thread(target=self.processingRoutine)
         self.processingThread.daemon = True
 
+    def log(self, text, mode='DEBUG'):
+        self.logger.emit(text, mode)
+
     def connect(self, ip, port):
-        print "In connect socket"
+        self.log("Connecting the socket")
 
         # Create a socket (SOCK_STREAM means a TCP socket)
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -77,8 +78,8 @@ class CarSocket(QObject):
             self.joystickThread.start()
 
         except Exception, e:
-            print "Error when creating and connecting socket"
-            print "Exception : {}".format(e)
+            self.log("Error when creating and connecting socket", mode='ERROR')
+            self.log("Exception : {}".format(e), mode='ERROR')
 
     def send(self, query):
         if not self.connected:
@@ -87,7 +88,7 @@ class CarSocket(QObject):
             self.toSend.put(query)
 
     def sendingRoutine(self):
-        print "[Socket] SENDING ROUTINE"
+        self.log("[Socket] SENDING ROUTINE")
 
         while self.connected:
             query = self.toSend.get()
@@ -95,7 +96,7 @@ class CarSocket(QObject):
             print "Sent : {}".format(query)
 
     def receivingRoutine(self):
-        print "[Socket] RECEIVING ROUTINE"
+        self.log("[Socket] RECEIVING ROUTINE")
 
         while self.connected:
             received = self.socket.recv(1024)
@@ -109,7 +110,7 @@ class CarSocket(QObject):
     def joystickRoutine(self):
         """ Reads commands from the joystick and puts them in the sending queue """
 
-        print "[Socket] JOYSTICK ROUTINE"
+        self.log("[Socket] JOYSTICK ROUTINE")
 
         lastDir, x, y, lastRight, lastLeft = 0, 0, 0, 0, 0
 
@@ -167,32 +168,42 @@ class CarSocket(QObject):
                 time.sleep(0.005)
 
     def processingRoutine(self):
-        print "[Socket] PROCESSING ROUTINE"
+        self.log("[Socket] PROCESSING ROUTINE")
         while self.connected:
 
             # Processing what has been received
             received = self.received.get()
 
-            floatPattern = "(-?\d+(?:[.]\d+)?)"
+            floatPattern = "-?\d+(?:[.]\d+)?"
 
             # Extracting the speed from the received
-            avgSpeedSearch = re.search("avgSpeed : {}".format(floatPattern), received)
-            if avgSpeedSearch:
-                print "Got speed : {}".format(speedSearch.group(1))
-                self.car.setSpeed( 10*float(avgSpeedSearch.group(1)) )
+            speedSearch = re.search("Speed : ({})".format(floatPattern), received)
+            if speedSearch:
+                self.log("Got speed : {}".format(speedSearch.group(1)))
+                self.car.setSpeed( 10*float(speedSearch.group(1)) )
 
             # Extracting the angle
-            angleSearch = re.search("Angle : (-?\d+(?:[.]\d+)?)", received)
+            angleSearch = re.search("Angle : ({})".format(floatPattern), received)
             if angleSearch:
-                print "Got angle : {}".format(angleSearch.group(1))
+                self.log("Got angle : {}".format(angleSearch.group(1)))
                 angle = radians(float(angleSearch.group(1))) 
                 self.car.setAngle(angle)
 
             # Extracting the closest distance
-            distanceSearch = re.search("Distance : (-?\d+(?:[.]\d+)?)", received)
+            distanceSearch = re.search("Distance : ({})".format(floatPattern), received)
             if distanceSearch:
-                print "Got distance : {}".format(distanceSearch.group(1))
+                self.log("Got distance : {}".format(distanceSearch.group(1)))
                 self.car.distance = float(distanceSearch.group(1))
+                self.car.notify()
+
+            # Extracting the car's position
+            positionSearch = re.search("Position : [(](\d+), (\d+)[)]", received)
+            if positionSearch:
+                x, y = int(positionSearch.group(1)), int(positionSearch.group(2))
+                self.log("Got position : ({}, {})".format(x, y))
+                
+                xOff, yOff = self.car.map.width/2, self.car.map.height/2
+                self.car.x, self.car.y = x + xOff, y + yOff
                 self.car.notify()
 
         self.socket.sendall("DISCONNECT")

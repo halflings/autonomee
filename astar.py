@@ -30,7 +30,7 @@ class Cell(object):
         return sqrt((self.x - cell.x)**2 + (self.y - cell.y)**2)
 
     def heuristicDistance(self, cell):
-        return self.manhattanDistance(cell)
+        return self.diagonalDistance(cell)
 
     def manhattanDistance(self, cell):
         return abs(self.x - cell.x) + abs(self.y - cell.y)
