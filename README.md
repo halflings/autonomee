@@ -20,9 +20,9 @@ You can also check the robot's arduino sketch, __arduino.ino__.
 
 * Python 2.7
 * Qt and PySide (Qt's python binding)
-* numpy
+* Numpy
 * PySerial
-* scipy
+* Scipy
 
 ## Important
 
