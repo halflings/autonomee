@@ -99,13 +99,17 @@ class CarSocket(QObject):
         self.log("[Socket] RECEIVING ROUTINE")
 
         while self.connected:
-            received = self.socket.recv(1024)
-            
-            if len(received) == 0:
+	    try:
+            	received = self.socket.recv(1024)
+            	if len(received) == 0:
+                    self.connected = False
+            	else:
+                    self.received.put(received)
+                    self.log("Received : {}".format(received))
+
+            except socket.error, e:
+                self.log("Couldn't receive from server. Disconnecting.")
                 self.connected = False
-            else:
-                self.received.put(received)
-                print "Received : {}".format(received)
 
     def joystickRoutine(self):
         """ Reads commands from the joystick and puts them in the sending queue """

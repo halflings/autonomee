@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """
 server.py - communicates with the Arduino (throught serial communication) and
 sends data back to a remote clients.
@@ -6,12 +8,17 @@ Meant to run on a RaspberryPi.
 
 import SocketServer
 import socket
-#import serial
+import serial
 import re
+import time
 import threading
+import sys
 from Queue import Queue
 from time import sleep
 
+NOARDUINO = 'noarduino' in sys.argv
+if NOARDUINO:
+    print "NoArduino mode activated"
 
 USB_PATH = '/dev/ttyACM0'
 DEFAULT_IP = '10.0.0.42'
@@ -35,11 +42,15 @@ class PiHandler(SocketServer.BaseRequestHandler, object):
     def setup(self):
         super(PiHandler, self).setup()
         self.connected = True
-        #self.arduino = serial.Serial(USB_PATH, 9600)
+	if NOARDUINO:
+            self.arduino = None
+        else:
+            self.arduino = serial.Serial(USB_PATH, 9600)
+        
         self.queries = Queue()
         self.receiveThread = threading.Thread(target = self.receptionRoutine)
         self.receiveThread.daemon = True
-        self.receiveThread.start()
+	self.receiveThread.start()
 
     def send(self, data):
         self.request.sendall(data)
@@ -48,16 +59,35 @@ class PiHandler(SocketServer.BaseRequestHandler, object):
     def receptionRoutine(self):
         while self.connected:
             data = self.request.recv(1024)
-            print "Received '{}'".format(data)
-            self.queries.put(data)
+            print "Client sent '{}'".format(data)
+            if len(data) > 0:
+                self.queries.put(data)
+            else:
+                self.connected = False
 
-        # Serial connection with the Arduno, at 9600 bauds
-        # NOTE : this should be on the server, but that causes bugs
+    def serialReadRoutine(self):
+        while self.connected:
+	    while self.arduino.inWaiting() > 0:
+		try:
+                    line = self.arduino.readline()
+		    #print "Car wrote : '{}'".format(line)
+		    # We send what the car wrote back to the client
+		    self.send(line)
+                except:
+                    print "Couldn't write on the arduino. Disconnecting"
+                    self.connected = False
+
+        time.sleep(0.005)
 
     def handle(self):
-        #print "New connection with : {}\n".format(self.request.address)
         print "New connection"
         loopNumber = 0
+
+	if self.arduino is not None:
+	    serialReadThread = threading.Thread(target=self.serialReadRoutine)
+	    serialReadThread.daemon = True
+	    serialReadThread.start()
+
         while self.connected:
             loopNumber += 1
             print "Connected loop #{}".format(loopNumber)
@@ -65,48 +95,18 @@ class PiHandler(SocketServer.BaseRequestHandler, object):
 
             #We write the value we receive to the Arduino
             query = self.queries.get()
-            #self.arduino.write(query)
+            
+            if self.arduino is not None:
+                self.arduino.write(query)
+            
+            if query == 'DISCONNECT' or len(query) == 0:
+                self.connected = False 
+   
+	print "Disconnecting"
 
-            #If the remote client is requesting angular distances
-            if int(query) == 3:
-                #We read the angular distances sent by the Arduino
-                sensorData = dict()
-                while self.arduino.inWaiting() > 0:
-                    angle = int(self.arduino.readline())
-                    distance = int(self.arduino.readline())
-                    sensorData[angle] = distance
-                    print "Read sensor data : dist {} at angle {}".format(distance, angle)
-                    sleep(0.03)
-
-            #We send the number of measurements to the client
-            self.send(str(len(sensorData)))
-            #... then we send the measurements one after another
-            for angle in sensorData:
-                self.send("A{}\r\nD{}\r\n".format(angle, sensorData[angle]))
-
-        self.arduino.write('0')
-        self.arduino.close()
-
-            # print "In connected iteration"
-            # self.data = self.request.recv(1024)
-            # print "Received : [{}]".format(self.data)
-            # self.arduino.write(self.data)
-            # if self.data == '3':
-            #   sensorData = []
-            #   while self.arduino.inWaiting() > 0:
-            #       angle = int(self.arduino.readline())
-            #       distance = int(self.arduino.readline())
-            #       sensorData[angle] = distance
-            #       print "Sensor at angle {} : {}".format(angle, distance)
-
-            #   # We first send the number of measurements
-   #              self.request.send(str(len(sensorData)))
-            #   # We send one by one the sensor measurements
-   #              for angle in sensorData:
-   #                  self.send("A{}\r\nD{}\r\n".format(angle, sensorData[angle]))
-
-   #              print '-'*15
-
+	if self.arduino is not None:
+            self.arduino.write('0')
+            self.arduino.close()
 
 class PiServer(SocketServer.TCPServer):
     """

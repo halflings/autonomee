@@ -19,9 +19,6 @@ class ManualView(QGraphicsView):
         scene = ManualScene(car=car, parent=self)
         self.setScene(scene)
 
-        self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
-        self.setDragMode(QGraphicsView.ScrollHandDrag)
-
         # Disabling scrollbars
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
