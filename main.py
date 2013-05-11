@@ -13,7 +13,11 @@ from auto import AutoView
 from svg import SvgTree
 from carsocket import CarSocket
 from probability import ParticleFilter
+from widgets import NotificationTooltip
+
 import engine
+import datetime
+import time
 
 class MainWindow(QMainWindow):
     AUTO_MODE = 0
@@ -87,10 +91,6 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.stackedWidget)
         self.setMinimumSize(800, 600)
 
-        # Configuration button
-        self.configButton = QPushButton("Configuration panel", parent=self.automaticView)
-        self.configButton.clicked.connect(self.openConfigPanel)
-
         # Configuration dialog
         loader = QUiLoader()
         file = QFile("config.ui")
@@ -112,6 +112,17 @@ class MainWindow(QMainWindow):
 
         self.log.saveButton.clicked.connect(self.saveLog)
         #self.carSocket.logger.connect(self.addToLog)
+        self.initLog()
+
+        # Configuration button
+        self.configButton = QPushButton("Configuration panel", parent=self.automaticView)
+        self.configButton.clicked.connect(self.openConfigPanel)
+
+        # Configuration button
+        self.logButton = QPushButton("Car's log", parent=self.automaticView)
+        self.logButton.clicked.connect(self.log.show)
+        # self.logButton.setVisible(False)
+
 
     def manualMode(self):
         self.stackedWidget.setCurrentWidget(self.manualView)
@@ -133,12 +144,22 @@ class MainWindow(QMainWindow):
         self.car.updateMap()
 
     def saveLog(self):
-        logFile = open("log.html", 'w+')
-        logFile.write(self.log.logEdit.toHtml())
-        logFile.close()
+        with open("log.html", 'w+') as logFile:
+            logFile.write(self.log.logEdit.toHtml())
+            logFile.close()
 
-    def addToLog(self, text, mode):
-        self.log.logEdit.append(text)
+    def initLog(self):
+        curDate = datetime.date.today().strftime("%A %d. %B %Y")
+        curTime = time.strftime('%H:%M:%S', time.localtime())
+        self.addToLog("<h3>Date : {} | Time: {}</h3>".format(curDate, curTime))
+        self.addToLog("LOL", mode='NORMAL')
+
+    def addToLog(self, text, mode='NORMAL'):
+        if mode == 'RAW':
+            toAdd = text
+        else:
+            toAdd = "<p>{}</p> \n <hr> \n".format(text)
+        self.log.logEdit.append(toAdd)
 
     def openConfigPanel(self):
         # Updating dialog with the configuration 
@@ -157,9 +178,9 @@ class MainWindow(QMainWindow):
         self.automaticView.scene().particleFilter.reset()
         self.automaticView.scene().heatmap.update()
 
-    def notify(self, text):
+    def notify(self, text, type):
         """ Creates a notification tooltip in the 'automatic' view """
-        self.automaticView.scene().notify(text)
+        self.automaticView.scene().notify(text, type)
 
     def connectCar(self):
         """ Connecting the app to the car """
@@ -171,10 +192,10 @@ class MainWindow(QMainWindow):
         connected = self.carSocket.connect(ip, port)
 
         if connected:
-            self.notify("Succesfully connected to the car !")
+            self.notify("Succesfully connected to the car !", type=NotificationTooltip.information)
             self.config.reject()
         else:
-            self.notify("Couldn't connect to the car.")
+            self.notify("Couldn't connect to the car.", type=NotificationTooltip.error)
 
     def acceptConfig(self):
         """ Validating the parameters from the configuration dialog """
@@ -198,11 +219,13 @@ class MainWindow(QMainWindow):
 
             self.config.accept()
 
-            self.notify("The application's configuration was updated")
+            self.notify("The application's configuration was updated", type=NotificationTooltip.information)
 
 
         except ValueError:
-            print "Parsing error"
+            self.notify("Couldn't parse the given values !", type=NotificationTooltip.error)
+
+            self.config.reject()
             # TODO : Do this in the status bar, not in the console
 
     def resetConfig(self):
@@ -215,12 +238,21 @@ class MainWindow(QMainWindow):
         c.rotationSlider.setValue(int(engine.Car.def_rotation))
         c.displacementSlider.setValue(int(engine.Car.def_displacement))
 
-        self.notify("All parameters were reset to their default value")
+        self.notify("All parameters were reset to their default value", type=NotificationTooltip.information)
 
 
     def resizeEvent(self, event):
+        h = 40
+        cW, lW = 200, 150
+
         x, y = self.size().width(), self.size().height()
-        self.configButton.setGeometry(QRect(x-230, y-80, 200, 40))
+        
+        y -= h + 35
+        x -= cW + 15
+        self.configButton.setGeometry(QRect(x, y, cW, h))
+        
+        x -= lW + 15
+        self.logButton.setGeometry(QRect(x, y, lW, h))
 
     def openFile(self, path=None):
         if not path:

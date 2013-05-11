@@ -77,7 +77,7 @@ class SvgTree:
                 setattr(self, attribute, int(regexp.group(1)))
                 self.unit = regexp.group(2)
             else:
-                raise "No {} ! Can't parse SVG.".format(attribute)
+                raise Exception("No {} ! Can't parse SVG.".format(attribute))
 
         # Parsing the map's scale
         self.pixel_per_mm = None

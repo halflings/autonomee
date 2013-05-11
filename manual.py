@@ -58,7 +58,7 @@ class ManualScene(QGraphicsScene):
         self.setSceneRect(self.rectItem.boundingRect())
 
         # Text
-        self.titleItem = QGraphicsTextItem("Manual mode")
+        self.titleItem = QGraphicsTextItem("Dashboard")
         self.titleItem.setFont(QFont("Ubuntu-L.ttf", 35, QFont.Light))
         # 'Dirty' centering of the text
         self.titleItem.setPos(100 + (self.w - self.titleItem.boundingRect().width())/2, 10)

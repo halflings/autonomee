@@ -70,9 +70,9 @@ class InfoBox(QGraphicsObject):
 
         # Shadow effect on the background
         self.shadow = QGraphicsDropShadowEffect()
-        self.shadow.setBlurRadius(1)
-        self.shadow.setColor(QColor(0, 0, 0))
-        self.shadow.setOffset(1, 1)
+        self.shadow.setBlurRadius(30)
+        self.shadow.setColor(QColor(60, 60, 90))
+        self.shadow.setOffset(0, 0)
         self.background.setGraphicsEffect(self.shadow)
 
         # Caching
@@ -89,6 +89,7 @@ class InfoBox(QGraphicsObject):
 
     def setColor(self, color):
         self.background.setBrush(color)
+        self.background.setPen(color)
 
     def setBackgroundOpacity(self, opacity):
         self.background.setOpacity(opacity)
@@ -120,20 +121,36 @@ class ObstacleWarning(InfoBox):
 
 class NotificationTooltip(InfoBox):
 
+    # Visual parameters
     padding = 5
-
     def_fontsize = 13
+    dy = 30
 
+    # Animation parameters
     def_fade = 600
     def_duration = 2000
 
-    dy = 30
+    # Types
+    normal, error, information, ok = range(4) 
 
-    def __init__(self, text, duration=def_duration):
+    def __init__(self, text, duration=def_duration, type=normal):
         super(NotificationTooltip, self).__init__(text, fontsize=self.def_fontsize, capitalize=False)
-        self.setColor(QColor(10, 10, 10))
-        self.setBackgroundOpacity(0.7)
+        
+        # Setting the correct color
+        if type==self.normal:
+            color = QColor(10, 10, 10)
+        elif type==self.error:
+            color = QColor(200, 40, 40)
+        elif type==self.information:
+            color = QColor(40, 70, 210)
+        elif type == self.ok:
+            color = QColor(40, 210, 70)
+        else:
+            raise Exception("Unknown notification type")
+        
+        self.setColor(color)
 
+        self.setBackgroundOpacity(0.9)
         self.update()
 
         self.duration = duration

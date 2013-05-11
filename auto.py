@@ -58,8 +58,8 @@ class AutoScene(QGraphicsScene):
         if len(self.notifications) == 0:
             self.Ynotif = 20
 
-    def notify(self, notifText):
-        tooltip = widgets.NotificationTooltip(text=notifText)
+    def notify(self, notifText, type=widgets.NotificationTooltip.normal):
+        tooltip = widgets.NotificationTooltip(text=notifText, type=type)
         tooltip.animation.finished.connect(self.clearNotification)
 
         x = self.width - tooltip.boundingRect().width() - 20
@@ -73,9 +73,9 @@ class AutoScene(QGraphicsScene):
     def pathfinding(self, x, y):
 
         if not self.map.isReachable(x,y):
-            self.notify("The chosen goal is unreachable.")
+            self.notify("The chosen goal is unreachable.", type=widgets.NotificationTooltip.error)
         elif not self.map.isReachable(self.car.x, self.car.y):
-            self.notify("Can't move the car from its current position.")
+            self.notify("Can't move the car from its current position.", type=widgets.NotificationTooltip.error)
         else:
             # We generate a path from the car to where we clicked and show it on the UI
             # We get the path from our 'map' object
@@ -264,17 +264,18 @@ class AutoScene(QGraphicsScene):
     def setMapScale(self):
         ok = False
         while not ok:
-            curValue = self.map.pixel_per_mm if self.map.pixel_per_mm is not None else 0. 
-            pixel_per_mm, ok = QInputDialog.getDouble(self.views()[0], "Missing map's scale", "Enter the map's scale (pixels per mm):",
+            # We ask for the scale in 'mm per px' as it's easier to imagine, but convert it to px per mm
+            curValue = 1. / self.map.pixel_per_mm if self.map.pixel_per_mm is not None else 1. 
+            mm_per_px, ok = QInputDialog.getDouble(self.views()[0], "Map's scale", "Enter the map's scale (mm per px):",
                                                       value=curValue)
 
-        self.map.setScale(pixel_per_mm)
+        self.map.setScale(1. / mm_per_px)
 
     def setMapNorthAngle(self):
         ok = False
         while not ok:
             curValue = self.map.north_angle if self.map.north_angle is not None else 0. 
-            north_angle, ok = QInputDialog.getDouble(self.views()[0], "Missing map's north angle",
+            north_angle, ok = QInputDialog.getDouble(self.views()[0], "Map's north angle",
                 "Enter the angle corresponding to the map's top :", value=curValue)
         self.map.setNorthAngle(north_angle)
 
