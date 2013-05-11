@@ -35,7 +35,7 @@ def parseTransform(element):
 
 class SvgTree:
 
-    default_title = "Undefined title"
+    default_title = "Title undefined"
     points_pattern = "(?:([-]?\d+\.?\d*),([-]?\d+\.?\d*))"
 
     @staticmethod
@@ -48,7 +48,7 @@ class SvgTree:
             points.append(Point(x, y))
         return points
 
-    def __init__(self, path, radius=5):
+    def __init__(self, path, radius):
         #Shapes' list
         self.shapes = []
 
@@ -59,27 +59,37 @@ class SvgTree:
         parser = etree.XMLParser(ns_clean=True, remove_comments=True,
                                  remove_blank_text=True)
         #Generating a parsing tree
-        tree = etree.parse(self.svg_file, parser)
+        self.tree = tree = etree.parse(self.svg_file, parser)
 
-        #Parsing the title
-        titleParse = tree.xpath("//n:text[@id='Titre']/n:tspan/text()",
-                                namespaces={'n': NS['svg']})
-        if titleParse:
-            self.title = titleParse[0]
-        else:
-            self.title = SvgTree.default_title
+        ######################################################################
+        ### Parsing ATTRIBUTES                                              ##
+        ### Height, width, unit, ...                                        ##
+        ######################################################################
 
-        #Parsing the SVG's parameters (width, height, ...)
-        self.width, self.height = 0, 0
+        svgNode = tree.xpath("//n:svg", namespaces={'n': NS['svg']})[0]
+
+        #Parsing the width, height, and their unit (should be 'px')
+        self.width = self.height = self.unit = None
         for attribute in ['width', 'height']:
-            param = tree.xpath("//n:svg",
-                               namespaces={'n': NS['svg']})[0]
-            regexp = re.match("([\d]+)(.+)", param.attrib[attribute])
+            
+            regexp = re.match("([\d]+)(.+)", svgNode.attrib[attribute])
             if regexp:
                 setattr(self, attribute, int(regexp.group(1)))
-                setattr(self, attribute+'_unit', regexp.group(2))
+                self.unit = regexp.group(2)
             else:
                 raise "No {} ! Can't parse SVG.".format(attribute)
+
+        # Parsing the map's scale
+        self.pixel_per_mm = None
+        if 'pixel_per_mm' in svgNode.attrib:
+            self.pixel_per_mm = float(svgNode.attrib['pixel_per_mm'])
+
+        # Parsing the 'real' angle of the map's north 
+        # (What a compass would show if oriented toward the map's top)
+        self.north_angle = None
+        if 'north_angle' in svgNode.attrib:
+            self.north_angle = float(svgNode.attrib['north_angle'])
+
 
         #Bounding rectangle ( TODO : mm -> xp, etc.)
         self.rect = Rectangle(-1, -1, self.width+1, self.height+1)
@@ -161,11 +171,28 @@ class SvgTree:
                 polyline = Polyline(points)
                 self.shapes.append(polyline)
 
-        self.discreteMap = DiscreteMap(self, radius=radius)
-
+        if self.pixel_per_mm is not None:
+            self.discreteMap = DiscreteMap(self, radius=int(radius*self.pixel_per_mm))
+        else:
+            self.discreteMap = DiscreteMap(self)
 
     def setRadius(self, radius):
-        self.discreteMap.setRadius(radius)
+        self.discreteMap.setRadius(int(radius*self.pixel_per_mm))
+
+    def setScale(self, pixel_per_mm):
+        self.pixel_per_mm = pixel_per_mm
+
+        svgNode = self.tree.xpath("//n:svg", namespaces={'n': NS['svg']})[0]
+        svgNode.set('pixel_per_mm', str(pixel_per_mm))
+
+    def setNorthAngle(self, north_angle):
+        self.north_angle = north_angle
+
+        svgNode = self.tree.xpath("//n:svg", namespaces={'n': NS['svg']})[0]
+        svgNode.set('north_angle', str(north_angle))
+
+    def save(self):
+        self.tree.write(self.path, pretty_print=True)
 
     def isObstacle(self, x, y):
         """
@@ -193,6 +220,7 @@ class SvgTree:
             return self.discreteMap.grid[ay][ax].reachable
 
     def rayDistance(self, x, y, headingAngle):
+        """ Returns distance to the closest obstacle in **mm** """
         ray = Ray(x, y, headingAngle)
         dist = None
 
@@ -207,7 +235,10 @@ class SvgTree:
                 else:
                     dist = min(dist, closestIntersect)
 
-        return dist
+        if dist is not None:
+            return dist/self.pixel_per_mm
+        else:
+            return None
 
     def search(self, begin, goal):
         div = self.discreteMap.division

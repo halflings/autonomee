@@ -96,7 +96,7 @@ class ParticleFilter(object):
 
         for particle in self.particles:
             # ...  and it's position
-            distanceNoise = random.gauss(0.0, self.car.displacement_noise)
+            distanceNoise = random.gauss(0.0, (self.car.displacement_noise/100.)*distance)
             deltaDistance = distance + distanceNoise
             particle.move(deltaDistance)
 

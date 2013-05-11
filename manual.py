@@ -55,6 +55,8 @@ class ManualScene(QGraphicsScene):
         self.rectItem.setZValue(0)
         self.addItem(self.rectItem)
 
+        self.setSceneRect(self.rectItem.boundingRect())
+
         # Text
         self.titleItem = QGraphicsTextItem("Manual mode")
         self.titleItem.setFont(QFont("Ubuntu-L.ttf", 35, QFont.Light))
@@ -65,7 +67,7 @@ class ManualScene(QGraphicsScene):
 
         # Compass
         self.compass = widgets.CarCompass(self.car)
-        self.compass.setPos(50, self.h - self.compass.boundingRect().height())
+        self.compass.setPos(50, self.h - self.compass.boundingRect().height() - 50)
         self.addItem(self.compass)
 
         # Speed meter

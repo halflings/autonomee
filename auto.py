@@ -16,13 +16,14 @@ from collections import deque
 from math import atan2, pi, radians, sqrt
 import random
 
-from geometry import simplifyPath, getRamerDouglas
+from geometry import simplifyPath
+
 
 class AutoScene(QGraphicsScene):
 
     def __init__(self, car, parent=None):
         super(AutoScene, self).__init__(parent)
-        # self.setDragMode(QGraphicsScene.ScrollHandDrag)
+        
 
         self.x = 0
         self.y = 0
@@ -49,16 +50,39 @@ class AutoScene(QGraphicsScene):
         # List of the (graphical) waypoints
         self.waypoints = list()
 
+        self.Ynotif = 20
+        self.notifications = list()
+
+    def clearNotification(self):
+        self.notifications.pop(-1)
+        if len(self.notifications) == 0:
+            self.Ynotif = 20
+
+    def notify(self, notifText):
+        tooltip = widgets.NotificationTooltip(text=notifText)
+        tooltip.animation.finished.connect(self.clearNotification)
+
+        x = self.width - tooltip.boundingRect().width() - 20
+        tooltip.setPos(x, self.Ynotif)
+
+        self.Ynotif += tooltip.boundingRect().height() + 20
+
+        self.notifications.append(tooltip)
+        self.addItem(tooltip) 
+
     def pathfinding(self, x, y):
 
         if not self.map.isReachable(x,y):
-            self.graphicCar.setCaption("The chosen goal is unreachable.")
+            self.notify("The chosen goal is unreachable.")
         elif not self.map.isReachable(self.car.x, self.car.y):
-            self.graphicCar.setCaption("Can't move the car from its current position.")
+            self.notify("Can't move the car from its current position.")
         else:
             # We generate a path from the car to where we clicked and show it on the UI
             # We get the path from our 'map' object
             self.path = self.map.search((self.car.x, self.car.y), (x, y))
+
+            if len(self.path) == 0:
+                return
 
             # And a simple version of the path (to be sent to the car)
             self.sPath = simplifyPath(self.path)
@@ -216,7 +240,7 @@ class AutoScene(QGraphicsScene):
                 self.car.setAngle(self.car.angle + deltaAngle)
 
                 # Adding some noise to the displacement
-                nSpeed = speed + random.gauss(0.0, self.car.displacement_noise)
+                nSpeed = speed + random.gauss(0.0, (self.car.displacement_noise/100.)*speed)
                 if speed != 0:
                     # Simulating car's deviation
                     deltaAngle += random.gauss(0.0, radians(self.car.rotation_noise))
@@ -236,6 +260,23 @@ class AutoScene(QGraphicsScene):
                 # x = min(max(0, self.car.x), self.map.width - 1)
                 # y = min(max(0, self.car.y), self.map.height - 1)
                 # self.car.setPosition(QPointF(x, y))
+
+    def setMapScale(self):
+        ok = False
+        while not ok:
+            curValue = self.map.pixel_per_mm if self.map.pixel_per_mm is not None else 0. 
+            pixel_per_mm, ok = QInputDialog.getDouble(self.views()[0], "Missing map's scale", "Enter the map's scale (pixels per mm):",
+                                                      value=curValue)
+
+        self.map.setScale(pixel_per_mm)
+
+    def setMapNorthAngle(self):
+        ok = False
+        while not ok:
+            curValue = self.map.north_angle if self.map.north_angle is not None else 0. 
+            north_angle, ok = QInputDialog.getDouble(self.views()[0], "Missing map's north angle",
+                "Enter the angle corresponding to the map's top :", value=curValue)
+        self.map.setNorthAngle(north_angle)
 
 class AutoView(QGraphicsView):
     Native, OpenGL, Image = range(3)
@@ -264,9 +305,6 @@ class AutoView(QGraphicsView):
     def openMap(self, svg_map):
         s = self.scene()
 
-        # Reset the zoom factor
-        self.factor = 1
-        # Recreate a map tree by parsing the SVG
         s.map = svg_map
         s.path = None
         s.graphicalPath = None
@@ -288,7 +326,8 @@ class AutoView(QGraphicsView):
         s.addItem(self.svgItem)
 
         # The svg item's height:
-        width = self.svgItem.boundingRect().width()
+        s.width = self.svgItem.boundingRect().width()
+        s.height = self.svgItem.boundingRect().height()
 
         # Background (blueprint image)
         self.backgroundItem = QGraphicsRectItem(self.svgItem.boundingRect())
@@ -311,7 +350,7 @@ class AutoView(QGraphicsView):
         self.titleItem = QGraphicsTextItem("Autonomee visualization UI")
         self.titleItem.setFont(QFont("Ubuntu-L.ttf", 35, QFont.Light))
         # 'Dirty' centering of the text
-        self.titleItem.setPos(width/2 - self.titleItem.boundingRect().width()/2, 5)
+        self.titleItem.setPos(s.width/2 - self.titleItem.boundingRect().width()/2, 5)
         self.titleItem.setDefaultTextColor(QColor(210, 220, 250))
         s.addItem(self.titleItem)
         # Drop shadow on the text
@@ -360,6 +399,13 @@ class AutoView(QGraphicsView):
         self.y = 0
 
         self.updateScene()
+
+        # If the map doesn't contain information about the map's scale or north angle
+        if s.map.pixel_per_mm is None:
+            s.setMapScale()
+
+        if s.map.north_angle is None:
+            s.setMapNorthAngle()
 
     def updateScene(self):
         self.scene().setSceneRect(self.svgItem.boundingRect().adjusted(self.x-10, self.y-10, self.x+10, self.y+10))

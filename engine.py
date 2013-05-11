@@ -23,8 +23,8 @@ class Car(QObject):
     # A noise factor, determined empirically
     def_sensor = 100.
 
-    # Noise in cm and degrees
-    def_displacement = 5.
+    # Noise in % (0-100) and degrees
+    def_displacement = 10.
     def_rotation = 2.
 
     # Distance at which the car is 'in danger' (obstacle too close)
@@ -85,6 +85,12 @@ class Car(QObject):
     def removeView(self, view):
         if view in self.views:
             self.views.remove(view)
+
+    def pxWidth(self):
+        return self.width * self.map.pixel_per_mm
+
+    def pxLength(self):
+        return self.length * self.map.pixel_per_mm
 
     def move(self, speed):
         self.x += speed * cos(self.angle)

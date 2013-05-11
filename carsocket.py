@@ -29,7 +29,8 @@ class CarSocket(QObject):
         self.car = car
         self.car.setSocket(self)
 
-        self.socket = None
+        # Create a socket (SOCK_STREAM means a TCP socket)
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         self.toSend = Queue()
         self.received = Queue()
@@ -56,17 +57,20 @@ class CarSocket(QObject):
 
     def log(self, text, mode='DEBUG'):
         self.logger.emit(text, mode)
+        print "[CarSocket] {}".format(text)
 
     def connect(self, ip, port):
         self.log("Connecting the socket")
 
-        # Create a socket (SOCK_STREAM means a TCP socket)
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
         try:
             # Connect to server and send data
+            self.socket.settimeout(0.100)
             self.socket.connect((ip, port))
+            self.socket.settimeout(None)
+
             self.connected = True
+
+            print "socket.connect : OK"
 
             # Launching the socket's threads
             self.receivingThread.start()
@@ -77,9 +81,15 @@ class CarSocket(QObject):
             # Launching the joystick's thread
             self.joystickThread.start()
 
+            return True
+
         except Exception, e:
+
+            print "In exception catching"
             self.log("Error when creating and connecting socket", mode='ERROR')
             self.log("Exception : {}".format(e), mode='ERROR')
+
+            return False
 
     def send(self, query):
         if not self.connected:
@@ -88,7 +98,7 @@ class CarSocket(QObject):
             self.toSend.put(query)
 
     def sendingRoutine(self):
-        self.log("[Socket] SENDING ROUTINE")
+        self.log("SENDING ROUTINE")
 
         while self.connected:
             query = self.toSend.get()
@@ -96,25 +106,25 @@ class CarSocket(QObject):
             print "Sent : {}".format(query)
 
     def receivingRoutine(self):
-        self.log("[Socket] RECEIVING ROUTINE")
+        self.log("RECEIVING ROUTINE")
 
         while self.connected:
-	    try:
-            	received = self.socket.recv(1024)
-            	if len(received) == 0:
+            try:
+                received = self.socket.recv(1024)
+                if len(received) == 0:
                     self.connected = False
-            	else:
+                else:
                     self.received.put(received)
                     self.log("Received : {}".format(received))
 
             except socket.error, e:
-                self.log("Couldn't receive from server. Disconnecting.")
+                self.log("Couldn't receive from server [Exception : {}]. Disconnecting.".format(e))
                 self.connected = False
 
     def joystickRoutine(self):
         """ Reads commands from the joystick and puts them in the sending queue """
 
-        self.log("[Socket] JOYSTICK ROUTINE")
+        self.log("JOYSTICK ROUTINE")
 
         lastDir, x, y, lastRight, lastLeft = 0, 0, 0, 0, 0
 
@@ -127,27 +137,34 @@ class CarSocket(QObject):
                 x = sf.Joystick.get_axis_position(0, sf.Joystick.X)
                 y = sf.Joystick.get_axis_position(0, sf.Joystick.Y)
 
+
+                command = None
+
                 # Old style move
                 if (self.running or self.turning) and x == 0 and y == 0:
+                    command = STOP
+
                     self.running = False
                     self.turning = False
-                    self.send(formatCommand(STOP))
+                elif x != 0 or y != 0:
+                    print "Running : {} ; Turning : {} ; x : {} ; y: {}".format(self.running, self.turning, x, y)
+                    if abs(x) > abs(y) and not self.turning:
+                        self.turning = True
+                        self.running = False
+                        if x > 0:
+                            command = TURN_RIGHT
+                        else:
+                            command = TURN_LEFT
+                    elif abs(y) > abs(x) and not self.running:
+                        self.running = True
+                        self.turning = False
+                        if y < 0:
+                            command = RUN_FORWARD
+                        else:
+                            command = RUN_BACKWARD
 
-                elif not self.running and y != 0:
-                    self.running = True
-                    
-                    if y < 0:
-                        self.send(formatCommand(RUN_FORWARD))
-                    else:
-                        self.send(formatCommand(RUN_BACKWARD))
-
-                elif not self.turning and x != 0:
-                    self.turning = True
-                    
-                    if x > 0:
-                        self.send(formatCommand(TURN_RIGHT))
-                    else:
-                        self.send(formatCommand(TURN_LEFT))
+                if command is not None:
+                    self.send(formatCommand(command))
 
 
                 # New style move (percent on right/left wheel)
@@ -172,7 +189,7 @@ class CarSocket(QObject):
                 time.sleep(0.005)
 
     def processingRoutine(self):
-        self.log("[Socket] PROCESSING ROUTINE")
+        self.log("PROCESSING ROUTINE")
         while self.connected:
 
             # Processing what has been received

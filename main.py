@@ -38,10 +38,20 @@ class MainWindow(QMainWindow):
         fileMenu = QMenu("&File", self)
         openAction = fileMenu.addAction("&Open...")
         openAction.setShortcut("Ctrl+O")
+
+        saveAction = fileMenu.addAction("&Save...")
+        saveAction.setShortcut("Ctrl+S")
+        
+        setScale = fileMenu.addAction("Set map's scale")
+        setAngle = fileMenu.addAction("Set map's orientation")
+
         quitAction = fileMenu.addAction("E&xit")
         quitAction.setShortcut("Ctrl+Q")
 
         openAction.triggered.connect(self.openFile)
+        saveAction.triggered.connect(self.saveMap)
+        setScale.triggered.connect(self.setScale)
+        setAngle.triggered.connect(self.setAngle)
         quitAction.triggered.connect(qApp.quit)
 
         self.menuBar().addMenu(fileMenu)
@@ -103,7 +113,6 @@ class MainWindow(QMainWindow):
         self.log.saveButton.clicked.connect(self.saveLog)
         #self.carSocket.logger.connect(self.addToLog)
 
-
     def manualMode(self):
         self.stackedWidget.setCurrentWidget(self.manualView)
         self.setWindowTitle("Autonomee - Manual mode")
@@ -111,6 +120,17 @@ class MainWindow(QMainWindow):
     def automaticMode(self):
         self.stackedWidget.setCurrentWidget(self.automaticView)
         self.setWindowTitle("Autonomee - Automatic mode - Map : {}".format(self.currentPath))
+
+    def saveMap(self):
+        self.automaticView.scene().map.save()
+
+    def setAngle(self):
+        self.automaticView.scene().setMapNorthAngle()
+        self.car.updateMap()
+
+    def setScale(self):
+        self.automaticView.scene().setMapScale()
+        self.car.updateMap()
 
     def saveLog(self):
         logFile = open("log.html", 'w+')
@@ -121,11 +141,25 @@ class MainWindow(QMainWindow):
         self.log.logEdit.append(text)
 
     def openConfigPanel(self):
+        # Updating dialog with the configuration 
+        
+        c = self.config
+        c.widthValue.setPlainText(str(self.car.width))
+        c.lengthValue.setPlainText(str(self.car.length))
+
+        c.sensorSlider.setValue(int(self.car.sensor_noise))
+        c.rotationSlider.setValue(int(self.car.rotation_noise))
+        c.displacementSlider.setValue(int(self.car.displacement_noise))
+
         self.config.show()
 
     def resetParticles(self):
         self.automaticView.scene().particleFilter.reset()
         self.automaticView.scene().heatmap.update()
+
+    def notify(self, text):
+        """ Creates a notification tooltip in the 'automatic' view """
+        self.automaticView.scene().notify(text)
 
     def connectCar(self):
         """ Connecting the app to the car """
@@ -134,7 +168,13 @@ class MainWindow(QMainWindow):
 
         print "Connecting robot to {}:{}".format(ip, port)
 
-        self.carSocket.connect(ip, port)
+        connected = self.carSocket.connect(ip, port)
+
+        if connected:
+            self.notify("Succesfully connected to the car !")
+            self.config.reject()
+        else:
+            self.notify("Couldn't connect to the car.")
 
     def acceptConfig(self):
         """ Validating the parameters from the configuration dialog """
@@ -158,6 +198,9 @@ class MainWindow(QMainWindow):
 
             self.config.accept()
 
+            self.notify("The application's configuration was updated")
+
+
         except ValueError:
             print "Parsing error"
             # TODO : Do this in the status bar, not in the console
@@ -171,6 +214,9 @@ class MainWindow(QMainWindow):
         c.sensorSlider.setValue(int(engine.Car.def_sensor))
         c.rotationSlider.setValue(int(engine.Car.def_rotation))
         c.displacementSlider.setValue(int(engine.Car.def_displacement))
+
+        self.notify("All parameters were reset to their default value")
+
 
     def resizeEvent(self, event):
         x, y = self.size().width(), self.size().height()

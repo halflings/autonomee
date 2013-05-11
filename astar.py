@@ -1,7 +1,9 @@
+# -*- coding: utf8 -*-
+
 """
     astar.py - A* algorithm implementation
 """
-# On prend les mêmes et on recommence.
+
 from math import sqrt, atan2
 import scipy
 import scipy.signal
