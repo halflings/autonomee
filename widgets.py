@@ -21,16 +21,16 @@ class Waypoint(QGraphicsEllipseItem):
         super(Waypoint, self).__init__(x - radius, y - radius, 2*radius, 2*radius)
 
         self.setBrush(QColor(250, 250, 250))
-        self.setPen(QColor(250, 250, 250))
+        self.setPen(QColor(30, 30, 50))
 
-        self.setOpacity(0.8)
+        self.setOpacity(0.9)
         self.setZValue(-1)
 
         self.shadow = QGraphicsDropShadowEffect()
         self.shadow.setBlurRadius(10)
         self.shadow.setColor(QColor(0, 0, 0))
         self.shadow.setOffset(0, 0)
-        self.setGraphicsEffect(self.shadow)
+        #self.setGraphicsEffect(self.shadow)
 
 class InfoBox(QGraphicsObject):
 
@@ -52,7 +52,7 @@ class InfoBox(QGraphicsObject):
         self.text.setFont(self.font)
         self.text.setDefaultTextColor(QColor(255, 255, 255))
 
-        self.text.setPos(InfoBox.padding, InfoBox.padding)
+        self.text.setPos(self.padding, self.padding)
 
         self.textShadow = QGraphicsDropShadowEffect()
         self.textShadow.setBlurRadius(3)
@@ -61,8 +61,8 @@ class InfoBox(QGraphicsObject):
         self.text.setGraphicsEffect(self.textShadow)
 
         # Background
-        boxW = self.text.boundingRect().width() + 2*InfoBox.padding
-        boxH = self.text.boundingRect().height() + 2*InfoBox.padding
+        boxW = self.text.boundingRect().width() + 2*self.padding
+        boxH = self.text.boundingRect().height() + 2*self.padding
         self.background = QGraphicsRectItem(0, 0, boxW, boxH, parent=self)
         self.background.setOpacity(0.5)
         self.background.setBrush(QColor(255, 255, 255))
@@ -83,8 +83,8 @@ class InfoBox(QGraphicsObject):
 
     def setCaption(self, text):
         self.text.setPlainText(text)
-        w = self.text.boundingRect().width() + 2 * InfoBox.padding
-        h = self.text.boundingRect().height() + 2 * InfoBox.padding
+        w = self.text.boundingRect().width() + 2 * self.padding
+        h = self.text.boundingRect().height() + 2 * self.padding
         self.background.setRect(QRect(0, 0, w, h, parent=self))
 
     def setColor(self, color):
@@ -118,6 +118,86 @@ class ObstacleWarning(InfoBox):
             self.setColor( QColor.fromHsvF(hue, 0.5, 0.8, 0.5) )
 
 
+class NotificationTooltip(InfoBox):
+
+    padding = 5
+
+    def_fontsize = 13
+
+    def_fade = 600
+    def_duration = 2000
+
+    dy = 30
+
+    def __init__(self, text, duration=def_duration):
+        super(NotificationTooltip, self).__init__(text, fontsize=self.def_fontsize, capitalize=False)
+        self.setColor(QColor(10, 10, 10))
+        self.setBackgroundOpacity(0.7)
+
+        self.update()
+
+        self.duration = duration
+
+        self.animation = QParallelAnimationGroup()
+
+    def itemChange(self, change, value):
+
+        if change == QGraphicsItem.ItemSceneChange:
+            self.animate()
+
+        return super(NotificationTooltip, self).itemChange(change, value)
+
+    def animate(self):
+
+        # Opacity animation
+        self.opacityAnim = QPropertyAnimation(self, "opacity")
+
+        duration = self.def_fade * 2 + self.duration
+        self.opacityAnim.setDuration(duration)
+
+        t = 0.0
+        self.opacityAnim.setStartValue(0.0)
+        self.opacityAnim.setEndValue(0.0)
+
+        t += self.def_fade
+        self.opacityAnim.setKeyValueAt(t/duration, 1.0)
+
+        t += self.duration
+        self.opacityAnim.setKeyValueAt(t/duration, 1.0)
+
+        # Position animation
+        x, y = self.pos().x(), self.pos().y()
+
+        self.posAnim = QPropertyAnimation(self, "pos")
+
+        duration = self.def_fade * 2 + self.duration
+        self.posAnim.setDuration(duration)
+
+        t = 0.0
+        self.posAnim.setStartValue(QPointF(x, y - self.dy))
+        self.posAnim.setEndValue(QPointF(x, y - self.dy))
+
+        t += self.def_fade
+        self.posAnim.setKeyValueAt(t/duration, QPointF(x, y))
+
+        t += self.duration
+        self.posAnim.setKeyValueAt(t/duration, QPointF(x, y))
+
+
+        # Animation container for the two animations
+        self.animation.addAnimation(self.opacityAnim)
+        self.animation.addAnimation(self.posAnim)
+
+        self.animation.finished.connect(self.removeFromScene)
+        self.animation.start(QAbstractAnimation.DeleteWhenStopped)
+
+    def removeFromScene(self):
+        if self.scene():
+            self.scene().removeItem(self)
+        else:
+            print "HAS"
+
+
 class GraphicsCarItem(QGraphicsObject):
 
     """
@@ -142,8 +222,7 @@ class GraphicsCarItem(QGraphicsObject):
         self.car = car
         self.car.addView(self)
 
-        # TODO : add conversion (px <-> mm or cm)
-        self.w = self.car.length
+        self.w = self.car.pxLength()
 
         # Initializing image
         self.img = GraphicsCarItem.default_image.scaledToWidth(self.w)
@@ -204,8 +283,8 @@ class GraphicsCarItem(QGraphicsObject):
         if self.image.rotation() != self.car.angle:
             self.image.setRotation(-math.degrees(self.car.angle))
 
-        if self.w != self.car.length:
-            self.w = self.car.length
+        if self.w != self.car.pxLength():
+            self.w = self.car.pxLength()
             self.img = GraphicsCarItem.default_image.scaledToWidth(self.w)
             self.image.setPixmap( QPixmap(self.img) )
             self.image.setOffset(-self.img.width()/2, -self.img.height()/2)
@@ -217,8 +296,8 @@ class GraphicsCarItem(QGraphicsObject):
         if self.car.moving:
             self.setCaption("Car moving... ")
         elif self.car.distance:
-            self.setCaption("Closest object at : {}".format(int(self.car.distance)))
-            distance = self.car.distance
+            self.setCaption("Closest object at : {}mm".format(int(self.car.distance)))
+            distance = self.car.distance*self.car.map.pixel_per_mm
         else:
             self.setCaption("No object ahead")
 
