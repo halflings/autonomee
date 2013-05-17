@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+1# -*- coding: utf-8 -*-
 
 """
     engine.py - all what's related to the car's model (coordinates, heading angle, ...)
@@ -7,18 +7,17 @@
 
 from PySide.QtCore import *
 
-from math import cos, sin, pi, degrees
+from math import cos, sin, pi, radians, degrees
 
 
 class Car(QObject):
-
     updateSignal = Signal(int)
 
     max_temperature = 120.
 
     # TODO : Should be in mm
-    def_width = 100
-    def_length = 200
+    def_width = 50
+    def_length = 100
 
     # A noise factor, determined empirically
     def_sensor = 100.
@@ -93,8 +92,8 @@ class Car(QObject):
         return self.length * self.map.pixel_per_mm
 
     def move(self, speed):
-        self.x += speed * cos(self.angle)
-        self.y += speed * -sin(self.angle)
+        self.x += speed * -sin(self.angle - radians(self.map.north_angle))
+        self.y += speed * -cos(self.angle - radians(self.map.north_angle))
 
         # TODO: Temporary...
         # if self.socket.connected:

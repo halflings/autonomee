@@ -6,7 +6,7 @@
 from PySide.QtCore import *
 from PySide.QtGui import *
 
-import math
+from math import sin, cos, pi, degrees, radians, atan2
 from engine import Car
 
 class Waypoint(QGraphicsEllipseItem):
@@ -239,10 +239,10 @@ class GraphicsCarItem(QGraphicsObject):
         self.car = car
         self.car.addView(self)
 
-        self.w = self.car.pxLength()
+        self.l = self.car.pxLength()
 
         # Initializing image
-        self.img = GraphicsCarItem.default_image.scaledToWidth(self.w)
+        self.img = GraphicsCarItem.default_image.scaledToHeight(self.l)
 
         self.image = QGraphicsPixmapItem(QPixmap(self.img), self)
         self.image.setOffset(-self.img.width()/2, -self.img.height()/2)
@@ -298,11 +298,11 @@ class GraphicsCarItem(QGraphicsObject):
 
         # Rotating the car around its center
         if self.image.rotation() != self.car.angle:
-            self.image.setRotation(-math.degrees(self.car.angle))
+            self.image.setRotation( self.car.map.north_angle - 90 - degrees(self.car.angle) )
 
-        if self.w != self.car.pxLength():
-            self.w = self.car.pxLength()
-            self.img = GraphicsCarItem.default_image.scaledToWidth(self.w)
+        if self.l != self.car.pxLength():
+            self.l = self.car.pxLength()
+            self.img = GraphicsCarItem.default_image.scaledToHeight(self.l)
             self.image.setPixmap( QPixmap(self.img) )
             self.image.setOffset(-self.img.width()/2, -self.img.height()/2)
 
@@ -311,15 +311,16 @@ class GraphicsCarItem(QGraphicsObject):
         # Updating the caption
         distance = 0
         if self.car.moving:
-            self.setCaption("Car moving... ")
+            self.setCaption("[{0:.1f}°] Car moving... ".format(degrees(self.car.angle)))
         elif self.car.distance:
-            self.setCaption("Closest object at : {}mm".format(int(self.car.distance)))
+            self.setCaption("[{0:.1f}°] Closest object at: {1}mm".format(degrees(self.car.angle), int(self.car.distance)))
             distance = self.car.distance*self.car.map.pixel_per_mm
         else:
             self.setCaption("No object ahead")
 
         # Updating the "ray"
-        line = QLine(0, 0, distance*math.cos(self.car.angle), - distance*math.sin(self.car.angle))
+        rayAngle = self.car.angle + pi/2 - radians(self.car.map.north_angle)
+        line = QLine(0, 0, distance*cos(rayAngle), - distance*sin(rayAngle))
         self.ray.setLine(line)
 
     def boundingRect(self):
@@ -344,6 +345,32 @@ class GraphicsCarItem(QGraphicsObject):
 
     #   event.accept()
 
+class MapCompass(QGraphicsObject):
+
+    arrow_image = QImage('img/compass-mini.png')
+
+    def __init__(self, angle=0):
+        super(MapCompass, self).__init__()
+
+        self.img = MapCompass.arrow_image
+        self.arrow = QGraphicsPixmapItem(QPixmap(self.img))
+        self.arrow.setTransformationMode(Qt.SmoothTransformation)
+        self.arrow.setOffset(-self.img.width() / 2, -self.img.height() / 2)
+        
+        print self.img.width()
+        self.setAngle(angle)
+
+        self.update()
+
+    def setAngle(self, angle):
+        self.angle = angle
+        self.arrow.setRotation(-angle)
+
+    def paint(self, painter=None, style=None, widget=None):
+        pass
+
+    def boundingRect(self):
+        return self.arrow.boundingRect()
 
 class CarCompass(QGraphicsObject):
 
@@ -394,11 +421,11 @@ class CarCompass(QGraphicsObject):
 
         # Rotating the NEEDLE around its center
         if self.needle.rotation() != self.car.angle:
-            self.needle.setRotation(math.degrees(self.car.angle))
+            self.needle.setRotation(degrees(self.car.angle))
 
         # Updating the info box
-        orientation = int(math.degrees(self.car.angle) / 90)
-        self.infobox.setCaption("{0} | {1:.2f}°".format(CarCompass.orientations[orientation], math.degrees(self.car.angle)))
+        orientation = int(degrees(self.car.angle) / 90)
+        self.infobox.setCaption("{0} | {1:.2f}°".format(CarCompass.orientations[orientation], degrees(self.car.angle)))
         x = (self.boundingRect().width() - self.infobox.boundingRect().width()) / 2
         y = self.boundingRect().height() + 20
         self.infobox.setPos(x, y)
@@ -636,7 +663,7 @@ class GraphicalParticleFilter(QGraphicsObject):
             painter.setBrush( color.lighter(0.2) )
             radius = 3 + importance*8
             painter.drawEllipse(QPointF(particle.x, particle.y), radius, radius)
-            bMeanDist += math.sqrt((particle.x - bX)**2 + (particle.y -bY)**2)
+            bMeanDist += sqrt((particle.x - bX)**2 + (particle.y -bY)**2)
             # painter.drawLine(particle.x, particle.y, bX, bY)
 
         bMeanDist /= numParticles

@@ -111,7 +111,9 @@ class MainWindow(QMainWindow):
         file.close()
 
         self.log.saveButton.clicked.connect(self.saveLog)
-        #self.carSocket.logger.connect(self.addToLog)
+
+        # self.carSocket.logSignal.connect(self.addToLog)
+
         self.initLog()
 
         # Configuration button
@@ -152,7 +154,6 @@ class MainWindow(QMainWindow):
         curDate = datetime.date.today().strftime("%A %d. %B %Y")
         curTime = time.strftime('%H:%M:%S', time.localtime())
         self.addToLog("<h3>Date : {} | Time: {}</h3>".format(curDate, curTime))
-        self.addToLog("LOL", mode='NORMAL')
 
     def addToLog(self, text, mode='NORMAL'):
         if mode == 'RAW':

@@ -158,7 +158,7 @@ class AutoScene(QGraphicsScene):
                 posAnim.setKeyValueAt(t/totalDuration, QPointF(pt.x, pt.y))
 
                 # Calculation of the 'new' angle
-                newAngle = pi - atan2(lastPt.y - pt.y, lastPt.x - pt.x)
+                newAngle = pi/2 + radians(self.car.map.north_angle) - atan2(lastPt.y - pt.y, lastPt.x - pt.x)
                 
                 if abs(2*pi + newAngle - curAngle) < abs(newAngle - curAngle):
                     curAngle = 2*pi + newAngle
@@ -207,9 +207,8 @@ class AutoScene(QGraphicsScene):
         x, y = event.scenePos().x(), event.scenePos().y()
 
         if not self.car.moving:
-            # We calculate the angle (in radians) and convert it to the trigonometric referential
-            angle = pi - atan2(self.car.y - y, self.car.x - x)
-
+            # We calculate the angle (in radians)
+            angle = pi/2 + radians(self.car.map.north_angle) - atan2(self.car.y - y, self.car.x - x)
             self.car.setAngle(angle)
 
     def keyPressEvent(self, event):
@@ -360,6 +359,12 @@ class AutoView(QGraphicsView):
         self.textShadow.setColor(QColor(20, 20, 40))
         self.textShadow.setOffset(1, 1)
         self.titleItem.setGraphicsEffect(self.textShadow)
+
+        # Compass showing the map's orientation
+        # angle = s.map.north_angle if s.map.north_angle is not None else 0.
+        # s.graphicCompass = widgets.MapCompass(angle)
+        # s.graphicCompass.setPos(s.width - 80, 60)
+        # s.addItem(s.graphicCompass)
 
         # We initialize the path's visualization
         s.graphicalPath = QGraphicsPathItem()

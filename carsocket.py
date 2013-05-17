@@ -21,7 +21,7 @@ def formatCommand(operation, firstOperand = 0, secondOperand = 0):
 
 class CarSocket(QObject):
 
-    logger = Signal(str, str)
+    logSignal = Signal(str, str)
 
     def __init__(self, car):
         super(CarSocket, self).__init__()
@@ -56,7 +56,7 @@ class CarSocket(QObject):
         self.processingThread.daemon = True
 
     def log(self, text, mode='DEBUG'):
-        self.logger.emit(text, mode)
+        self.logSignal.emit(text, mode)
         print "[CarSocket] {}".format(text)
 
     def connect(self, ip, port):
@@ -147,7 +147,6 @@ class CarSocket(QObject):
                     self.running = False
                     self.turning = False
                 elif x != 0 or y != 0:
-                    print "Running : {} ; Turning : {} ; x : {} ; y: {}".format(self.running, self.turning, x, y)
                     if abs(x) > abs(y) and not self.turning:
                         self.turning = True
                         self.running = False

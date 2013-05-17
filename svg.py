@@ -5,6 +5,7 @@ svg.py - module to parse geometric elements from an svg file.
 from lxml import etree
 from geometry import Point, Rectangle, Ellipse, Polygone, Polyline, Ray
 from astar import DiscreteMap, Cell
+from math import radians, pi
 import re
 NS = {'svg': 'http://www.w3.org/2000/svg',
       'sodipodi': 'http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd'}
@@ -219,9 +220,9 @@ class SvgTree:
             ax, ay = int(x/div), int(y/div)
             return self.discreteMap.grid[ay][ax].reachable
 
-    def rayDistance(self, x, y, headingAngle):
+    def rayDistance(self, x, y, angle):
         """ Returns distance to the closest obstacle in **mm** """
-        ray = Ray(x, y, headingAngle)
+        ray = Ray(x, y, angle - radians(self.north_angle) + pi/2)
         dist = None
 
         for shape in self.shapes:
