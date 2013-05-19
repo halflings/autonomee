@@ -8,6 +8,7 @@ from PySide.QtGui import *
 
 from math import sin, cos, pi, degrees, radians, sqrt
 from engine import Car
+from probability import ParticleFilter
 
 class Waypoint(QGraphicsEllipseItem):
 
@@ -672,7 +673,7 @@ class GraphicalParticleFilter(QGraphicsObject):
         painter.drawEllipse(QPointF(bX, bY), 15, 15)
 
         # Drawing the checkmark (if the barycenter is relevant)
-        if self.particleFilter.relevance >= 0.8:
+        if self.particleFilter.relevance >= ParticleFilter.DecentRelevance:
             painter.drawImage(bX - 8, bY - 8, self.checkmark)
 
     def boundingRect(self):

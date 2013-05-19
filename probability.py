@@ -17,6 +17,7 @@ def Gaussian(mu, sigma, x):
 
 class ParticleFilter(object):
     simple, markov = 0, 1
+    DecentRelevance = 0.75
 
     """A particle filter that calculates localization probability
     based on a series of (noisy) measurements and displacements"""
@@ -167,7 +168,6 @@ class ParticleFilter(object):
 
         bMeanDist = sum(particle.distance(self.barycenter) for particle in self.particles) / len(self.particles)
         bMeanDist /= self.car.map.pixel_per_mm
-        print bMeanDist
         self.relevance = min(1., max(0., 1. - bMeanDist / self.car.length))
 
     def __repr__(self):

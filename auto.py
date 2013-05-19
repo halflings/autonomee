@@ -11,8 +11,7 @@ from PySide.QtCore import *
 
 from widgets import NotificationTooltip, GraphicsCarItem, Waypoint, GraphicalParticleFilter
 
-import probability
-
+from probability import ParticleFilter
 from collections import deque
 from math import atan2, pi, radians, sqrt
 import random
@@ -257,11 +256,11 @@ class AutoScene(QGraphicsScene):
                     self.heatmap.update()
 
                     relevance = self.particleFilter.relevance 
-                    if relevance >= 0.8 and not self.car.localized:
+                    if relevance >= ParticleFilter.DecentRelevance and not self.car.localized:
                         self.notify("Car localized with a {}% relevance rate".format(int(100*relevance)),
                                     type=NotificationTooltip.ok)
                         self.car.localized = True
-                    elif self.car.localized and relevance < 0.75:
+                    elif self.car.localized and relevance < ParticleFilter.DecentRelevance - 0.10:
                         self.notify("Lost car's localization !")
                         self.car.localized = False
 
@@ -400,7 +399,7 @@ class AutoView(QGraphicsView):
 
         # Heatmap
         if s.particleFilter is None:
-            s.particleFilter = probability.ParticleFilter(car=s.car, map=s.map)
+            s.particleFilter = ParticleFilter(car=s.car, map=s.map)
         else:
             s.particleFilter.reset()
             s.particleFilter.setMap(s.map)
