@@ -4,7 +4,7 @@
 
 import math
 import copy
-from math import cos, sin, exp, pi, sqrt
+from math import cos, sin, exp, pi, sqrt, radians
 import random
 import svg
 import engine
@@ -40,11 +40,16 @@ class ParticleFilter(object):
         self.height = map.height
         self.map = map
         self.populate(self.N, self.initAngle, probability=1./self.N)
+        self.check_relevance()
 
     def reset(self):
         del self.particles
+        self.relevance = 0
+        self.barycenter = None
         self.particles = list()
         self.populate(self.N, self.initAngle, probability=1./self.N)
+        self.check_relevance()
+
 
     def populate(self, N, objectAngle, probability):
         """Adds N random particles to the particle filter. (Useful at initialization)"""
@@ -56,14 +61,13 @@ class ParticleFilter(object):
                 x = random.randint(0, self.width - 1)
                 y = random.randint(0, self.height - 1)
 
-            self.particles.append(Particle(x, y, angle=objectAngle, probability=probability))  # / self.N  )
+            self.particles.append(Particle(x, y, angle=objectAngle, probability=probability, car=self.car))
 
-        self.check_relevance()
-
-    def sense(self, measuredDistance, angle):
+    def sense(self, measuredDist, angle):
         """Updates the probabilities to match a measurement.
         Uses a Gaussian on the difference between measured and calculated distance
         and takes into account the sensor's noise.
+        measuredDist is in mm.
         """
 
         for particle in self.particles:
@@ -72,10 +76,10 @@ class ParticleFilter(object):
             # Those two tests are here just out of caution. distances shouldn't be None
             if particleDist is None:
                 particleDist = self.width + self.height
-            if measuredDistance is None:
-                measuredDistance = self.width + self.height
+            if measuredDist is None:
+                measuredDist = self.width + self.height
 
-            newProba = Gaussian(particleDist, self.car.sensor_noise, measuredDistance)
+            newProba = Gaussian(particleDist, self.car.sensor_noise, measuredDist)
 
             if self.mode == ParticleFilter.simple:
                 particle.p = newProba
@@ -139,7 +143,8 @@ class ParticleFilter(object):
 
         self.particles = newParticles
 
-        self.check_relevance()
+	if len(self.particles) > 0:
+            self.check_relevance()
 
         # Adding some random particles
         n_new_particles = self.N - n_resampled
@@ -161,6 +166,8 @@ class ParticleFilter(object):
         self.barycenter = Particle(bX, bY)
 
         bMeanDist = sum(particle.distance(self.barycenter) for particle in self.particles) / len(self.particles)
+        bMeanDist /= self.car.map.pixel_per_mm
+        print bMeanDist
         self.relevance = min(1., max(0., 1. - bMeanDist / self.car.length))
 
     def __repr__(self):
@@ -173,20 +180,20 @@ class ParticleFilter(object):
 
 class Particle(object):
 
-    def __init__(self, x, y, angle=0., probability=1.):
+    def __init__(self, x, y, angle=0., probability=1., car=None):
 
         self.x, self.y = x, y
         self.angle = angle
         self.p = probability
+        self.car = car
 
     def turnAngle(self, deltaAngle):
 
         self.angle = (self.angle + deltaAngle + pi) % (2*pi) - pi
 
     def move(self, displacement):
-
-        dx = displacement * -sin(self.angle)
-        dy = displacement * -cos(self.angle)
+        dx = displacement * -sin(self.angle  - radians(self.car.map.north_angle))
+        dy = displacement * -cos(self.angle  - radians(self.car.map.north_angle))
 
         self.x, self.y = int(self.x + dx), int(self.y + dy)
 

@@ -180,7 +180,7 @@ class MainWindow(QMainWindow):
         self.automaticView.scene().particleFilter.reset()
         self.automaticView.scene().heatmap.update()
 
-    def notify(self, text, type):
+    def notify(self, text, type=NotificationTooltip.normal):
         """ Creates a notification tooltip in the 'automatic' view """
         self.automaticView.scene().notify(text, type)
 
@@ -222,7 +222,7 @@ class MainWindow(QMainWindow):
 
             self.config.accept()
 
-            self.notify("The application's configuration was updated", type=NotificationTooltip.information)
+            self.notify("The application's configuration was updated")
 
 
         except ValueError:

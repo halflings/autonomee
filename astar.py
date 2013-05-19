@@ -96,9 +96,12 @@ class DiscreteMap:
 
         self.setRadius(radius)
 
-    def setRadius(self, radius=0):
-        # Taking into account the car's width (radius)
+    def setRadius(self, radius):
+        """ Sets as unreachable the cells that have an obstacle in a certain radius """
         r = radius / self. division
+        # Avoiding nil radiuses
+        r = max(1, r)
+        
         # 1 : Unreachable ; 0 : Reachable
         car = scipy.array([[1 for i in xrange(r)] for j in xrange(r)])
         grid = scipy.array([[0 if self.initgrid[i][j].reachable else 1 for j in xrange(

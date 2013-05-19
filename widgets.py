@@ -242,10 +242,9 @@ class GraphicsCarItem(QGraphicsObject):
         self.l = self.car.pxLength()
 
         # Initializing image
-        self.img = GraphicsCarItem.default_image.scaledToHeight(self.l)
-
-        self.image = QGraphicsPixmapItem(QPixmap(self.img), self)
-        self.image.setOffset(-self.img.width()/2, -self.img.height()/2)
+        self.img = GraphicsCarItem.default_image
+        self.image = QGraphicsPixmapItem(QPixmap(GraphicsCarItem.default_image), self)
+        self.updateSize()
 
         # Shadow effect on the car's image
         if shadow:
@@ -281,6 +280,8 @@ class GraphicsCarItem(QGraphicsObject):
 
         # Caching
         self.setCacheMode(QGraphicsItem.ItemCoordinateCache)
+        # Antialiasing
+        self.image.setTransformationMode(Qt.SmoothTransformation)
 
         self.update()
 
@@ -293,6 +294,11 @@ class GraphicsCarItem(QGraphicsObject):
     def paint(self, painter=None, style=None, widget=None):
         pass
 
+    def updateSize(self):
+        self.image.setScale(self.l / self.img.height())
+        xOff, yOff = - self.image.boundingRect().width() / 2, - self.image.boundingRect().height() /2
+        self.image.setOffset(xOff, yOff)
+
     def update(self):
         super(GraphicsCarItem, self).update()
 
@@ -302,9 +308,7 @@ class GraphicsCarItem(QGraphicsObject):
 
         if self.l != self.car.pxLength():
             self.l = self.car.pxLength()
-            self.img = GraphicsCarItem.default_image.scaledToHeight(self.l)
-            self.image.setPixmap( QPixmap(self.img) )
-            self.image.setOffset(-self.img.width()/2, -self.img.height()/2)
+            self.updateSize()
 
         self.setPos(self.car.x, self.car.y)
 
@@ -357,7 +361,6 @@ class MapCompass(QGraphicsObject):
         self.arrow.setTransformationMode(Qt.SmoothTransformation)
         self.arrow.setOffset(-self.img.width() / 2, -self.img.height() / 2)
         
-        print self.img.width()
         self.setAngle(angle)
 
         self.update()
@@ -645,16 +648,17 @@ class GraphicalParticleFilter(QGraphicsObject):
 
         # Barycenter
         bX, bY = 0., 0.
-        numParticles = len(self.particleFilter.particles)
         maxProba = max(particle.p for particle in self.particleFilter.particles)
-
 
         bX, bY = self.particleFilter.barycenter.x, self.particleFilter.barycenter.y
 
         # Drawing the particles
         for particle in self.particleFilter.particles:
             # Importance of the particle ranges from 0.0 to 1.0
-            importance = particle.p / maxProba
+            if maxProba == 0.:
+                importance = 0.
+            else:
+                importance = particle.p / maxProba
             color = QColor.fromHsvF(importance * (0.30), 0.5, 0.8, 0.3)
             painter.setPen( color )
             painter.setBrush( color.lighter(0.2) )

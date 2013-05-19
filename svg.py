@@ -187,7 +187,7 @@ class SvgTree:
         svgNode.set('pixel_per_mm', str(pixel_per_mm))
 
     def setNorthAngle(self, north_angle):
-        self.north_angle = north_angle
+        self.north_angle = north_angle % 360.0
 
         svgNode = self.tree.xpath("//n:svg", namespaces={'n': NS['svg']})[0]
         svgNode.set('north_angle', str(north_angle))

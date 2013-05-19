@@ -89,10 +89,10 @@ class Car(QObject):
             self.views.remove(view)
 
     def pxWidth(self):
-        return self.width * self.map.pixel_per_mm
+        return max(1., self.width * self.map.pixel_per_mm)
 
     def pxLength(self):
-        return self.length * self.map.pixel_per_mm
+        return max(1., self.length * self.map.pixel_per_mm)
 
     def move(self, speed):
         self.x += speed * -sin(self.angle - radians(self.map.north_angle))
