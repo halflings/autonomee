@@ -60,6 +60,9 @@ class Car(QObject):
         # True when the car is moving :
         self.moving = False
 
+        # True when the car has been localized :
+        self.localized = False
+
         # Angles are in radians
         #      pi/2
         #   pi __|__ 0

@@ -50,14 +50,14 @@
       <property name="verticalSpacing">
        <number>10</number>
       </property>
-      <item row="7" column="0">
+      <item row="8" column="0">
        <widget class="QLabel" name="sensorTitle">
         <property name="text">
          <string>Sensor noise</string>
         </property>
        </widget>
       </item>
-      <item row="7" column="1">
+      <item row="8" column="1">
        <widget class="QSlider" name="sensorSlider">
         <property name="minimum">
          <number>50</number>
@@ -73,7 +73,7 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="0">
+      <item row="2" column="0">
        <widget class="QLabel" name="widthTitle">
         <property name="text">
          <string>Width (mm)</string>
@@ -87,39 +87,7 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="1">
-       <widget class="QPlainTextEdit" name="lengthValue">
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>33</height>
-         </size>
-        </property>
-        <property name="tabChangesFocus">
-         <bool>true</bool>
-        </property>
-        <property name="plainText">
-         <string>200</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QPlainTextEdit" name="widthValue">
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>33</height>
-         </size>
-        </property>
-        <property name="tabChangesFocus">
-         <bool>true</bool>
-        </property>
-        <property name="plainText">
-         <string>40</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="1">
+      <item row="6" column="1">
        <layout class="QVBoxLayout" name="rotationVLayout">
         <item>
          <widget class="QSlider" name="rotationSlider">
@@ -136,7 +104,7 @@
         </item>
        </layout>
       </item>
-      <item row="2" column="1" rowspan="2">
+      <item row="3" column="1" rowspan="2">
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
          <widget class="QSlider" name="displacementSlider">
@@ -166,21 +134,21 @@
         </item>
        </layout>
       </item>
-      <item row="5" column="0">
+      <item row="6" column="0">
        <widget class="QLabel" name="rotationTitle">
         <property name="text">
          <string>Rotation noise (degrees)</string>
         </property>
        </widget>
       </item>
-      <item row="2" column="0">
+      <item row="3" column="0">
        <widget class="QLabel" name="displacementTitle">
         <property name="text">
          <string>Displacement noise (%)</string>
         </property>
        </widget>
       </item>
-      <item row="8" column="1">
+      <item row="9" column="1">
        <widget class="QLabel" name="sensorValue">
         <property name="text">
          <string>100</string>
@@ -193,7 +161,7 @@
         </property>
        </widget>
       </item>
-      <item row="6" column="1">
+      <item row="7" column="1">
        <widget class="QLabel" name="rotationValue">
         <property name="text">
          <string>5</string>
@@ -218,13 +186,52 @@
         </property>
        </widget>
       </item>
+      <item row="0" column="1">
+       <widget class="QSpinBox" name="lengthValue">
+        <property name="minimum">
+         <number>1</number>
+        </property>
+        <property name="maximum">
+         <number>10000</number>
+        </property>
+        <property name="singleStep">
+         <number>10</number>
+        </property>
+        <property name="value">
+         <number>200</number>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QSpinBox" name="widthValue">
+        <property name="minimum">
+         <number>1</number>
+        </property>
+        <property name="maximum">
+         <number>10000</number>
+        </property>
+        <property name="singleStep">
+         <number>10</number>
+        </property>
+        <property name="value">
+         <number>110</number>
+        </property>
+       </widget>
+      </item>
      </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="Line" name="line_2">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
     </widget>
    </item>
    <item>
     <widget class="QGroupBox" name="probabilityGroupbox">
      <property name="title">
-      <string>Particle filter mode</string>
+      <string>Particle filter configuration</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -263,6 +270,34 @@
        </widget>
       </item>
       <item>
+       <widget class="Line" name="line">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="randomParticlesLabel">
+        <property name="text">
+         <string>New random particles (%)</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QSpinBox" name="randomnessValue">
+        <property name="maximum">
+         <number>100</number>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="Line" name="line_4">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="resetParticles">
         <property name="maximumSize">
          <size>
@@ -276,6 +311,13 @@
        </widget>
       </item>
      </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="Line" name="line_3">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
     </widget>
    </item>
    <item>
@@ -398,8 +440,6 @@
   </layout>
  </widget>
  <tabstops>
-  <tabstop>lengthValue</tabstop>
-  <tabstop>widthValue</tabstop>
   <tabstop>displacementSlider</tabstop>
   <tabstop>rotationSlider</tabstop>
   <tabstop>ipEdit</tabstop>

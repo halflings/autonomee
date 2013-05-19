@@ -21,17 +21,17 @@ class ParticleFilter(object):
     """A particle filter that calculates localization probability
     based on a series of (noisy) measurements and displacements"""
 
-    def __init__(self, car, map=None, initAngle=0, n=100, mode=simple):
+    def __init__(self, car, map=None, initAngle=0, n=100, mode=simple, randomness=0.0):
         self.car = car
         self.N = n
         self.initAngle = initAngle
         self.particles = list()
         self.mode = mode
+        self.randomness = randomness
+        self.barycenter = None
 
         if map is not None:
             self.setMap(map)
-
-    # TODO : Change this 'initAngle' ... this should be the real angle of the car
 
     def setMap(self, map):
         """Sets a map for the particle filter (and executes random population)"""
@@ -39,25 +39,26 @@ class ParticleFilter(object):
         self.width = map.width
         self.height = map.height
         self.map = map
-        self.populate(self.N, self.initAngle)
+        self.populate(self.N, self.initAngle, probability=1./self.N)
 
     def reset(self):
         del self.particles
         self.particles = list()
-        self.populate(self.N, self.initAngle)
+        self.populate(self.N, self.initAngle, probability=1./self.N)
 
-    def populate(self, N, objectAngle):
+    def populate(self, N, objectAngle, probability):
         """Adds N random particles to the particle filter. (Useful at initialization)"""
 
         for i in xrange(N):
             x = random.randint(0, self.width - 1)
             y = random.randint(0, self.height - 1)
-            # TODO : uncomment this (and fix it)
             while self.map.isObstacle(x, y):
                 x = random.randint(0, self.width - 1)
                 y = random.randint(0, self.height - 1)
 
-            self.particles.append(Particle(x, y, angle=objectAngle, probability=1./self.N))  # / self.N  )
+            self.particles.append(Particle(x, y, angle=objectAngle, probability=probability))  # / self.N  )
+
+        self.check_relevance()
 
     def sense(self, measuredDistance, angle):
         """Updates the probabilities to match a measurement.
@@ -121,10 +122,13 @@ class ParticleFilter(object):
 
         newParticles = list()
         maxProba = max(particle.p for particle in self.particles)
+        meanProba = sum(particle.p for particle in self.particles) / self.N
+
         index = random.randint(0, len(self.particles) - 1)
         B = 0.0
 
-        for i in xrange(len(self.particles)):
+        n_resampled = int(self.N*(1.0 - self.randomness))
+        for i in xrange(n_resampled):
             B += random.random() * 2 * maxProba
 
             while self.particles[index].p < B:
@@ -135,7 +139,29 @@ class ParticleFilter(object):
 
         self.particles = newParticles
 
+        self.check_relevance()
+
+        # Adding some random particles
+        n_new_particles = self.N - n_resampled
+        self.populate(n_new_particles, self.particles[-1].angle, probability=meanProba)
+
         self.normalize()
+
+    def check_relevance(self):
+        # Barycenter
+        bX, bY = 0., 0.
+        numParticles = len(self.particles)
+
+        for particle in self.particles:
+            bX += particle.x
+            bY += particle.y
+        bX /= numParticles
+        bY /= numParticles
+
+        self.barycenter = Particle(bX, bY)
+
+        bMeanDist = sum(particle.distance(self.barycenter) for particle in self.particles) / len(self.particles)
+        self.relevance = min(1., max(0., 1. - bMeanDist / self.car.length))
 
     def __repr__(self):
         result = ""
@@ -159,9 +185,13 @@ class Particle(object):
 
     def move(self, displacement):
 
-        dx = displacement * cos(self.angle)
-        dy = - displacement * sin(self.angle)
+        dx = displacement * -sin(self.angle)
+        dy = displacement * -cos(self.angle)
+
         self.x, self.y = int(self.x + dx), int(self.y + dy)
+
+    def distance(self, particle):
+        return sqrt( (self.x - particle.x)**2 + (self.y - particle.y)**2 )
 
     def __repr__(self):
         return '[x = {} y = {} angle = {} degree | proba = {}]'.format(self.x, self.y, int(math.degrees(self.angle)), self.p)

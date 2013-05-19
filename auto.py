@@ -9,7 +9,8 @@ from PySide import QtSvg
 from PySide.QtGui import *
 from PySide.QtCore import *
 
-import widgets
+from widgets import NotificationTooltip, GraphicsCarItem, Waypoint, GraphicalParticleFilter
+
 import probability
 
 from collections import deque
@@ -58,8 +59,8 @@ class AutoScene(QGraphicsScene):
         if len(self.notifications) == 0:
             self.Ynotif = 20
 
-    def notify(self, notifText, type=widgets.NotificationTooltip.normal):
-        tooltip = widgets.NotificationTooltip(text=notifText, type=type)
+    def notify(self, notifText, type=NotificationTooltip.normal):
+        tooltip = NotificationTooltip(text=notifText, type=type)
         tooltip.animation.finished.connect(self.clearNotification)
 
         x = self.width - tooltip.boundingRect().width() - 20
@@ -73,9 +74,9 @@ class AutoScene(QGraphicsScene):
     def pathfinding(self, x, y):
 
         if not self.map.isReachable(x,y):
-            self.notify("The chosen goal is unreachable.", type=widgets.NotificationTooltip.error)
+            self.notify("The chosen goal is unreachable.", type=NotificationTooltip.error)
         elif not self.map.isReachable(self.car.x, self.car.y):
-            self.notify("Can't move the car from its current position.", type=widgets.NotificationTooltip.error)
+            self.notify("Can't move the car from its current position.", type=NotificationTooltip.error)
         else:
             # We generate a path from the car to where we clicked and show it on the UI
             # We get the path from our 'map' object
@@ -99,7 +100,7 @@ class AutoScene(QGraphicsScene):
             painterPath.moveTo(self.sPath[0].x, self.sPath[0].y)
             totalPath.moveTo(self.path[0].x, self.path[0].y)
 
-            waypoint = widgets.Waypoint(self.path[0].x, self.path[0].y)
+            waypoint = Waypoint(self.path[0].x, self.path[0].y)
             self.addItem(waypoint)
             self.waypoints.append(waypoint)
 
@@ -109,7 +110,7 @@ class AutoScene(QGraphicsScene):
 
                 painterPath.lineTo(x, y)
 
-                waypoint = widgets.Waypoint(x, y)
+                waypoint = Waypoint(x, y)
                 self.addItem(waypoint)
                 self.waypoints.append(waypoint)
 
@@ -255,6 +256,15 @@ class AutoScene(QGraphicsScene):
                     self.particleFilter.resample()
                     self.heatmap.update()
 
+                    relevance = self.particleFilter.relevance 
+                    if relevance >= 0.8 and not self.car.localized:
+                        self.notify("Car localized with a {}% relevance rate".format(int(100*relevance)),
+                                    type=NotificationTooltip.ok)
+                        self.car.localized = True
+                    elif self.car.localized and relevance < 0.75:
+                        self.notify("Lost car's localization !")
+                        self.car.localized = False
+
                 # Putting back the car into the map if it got out
                 # x = min(max(0, self.car.x), self.map.width - 1)
                 # y = min(max(0, self.car.y), self.map.height - 1)
@@ -362,7 +372,7 @@ class AutoView(QGraphicsView):
 
         # Compass showing the map's orientation
         # angle = s.map.north_angle if s.map.north_angle is not None else 0.
-        # s.graphicCompass = widgets.MapCompass(angle)
+        # s.graphicCompass = MapCompass(angle)
         # s.graphicCompass.setPos(s.width - 80, 60)
         # s.addItem(s.graphicCompass)
 
@@ -385,7 +395,7 @@ class AutoView(QGraphicsView):
 
         # Car visualization
         s.car.map = s.map
-        s.graphicCar = widgets.GraphicsCarItem(s.car)
+        s.graphicCar = GraphicsCarItem(s.car)
         s.addItem(s.graphicCar)
 
         # Heatmap
@@ -394,7 +404,7 @@ class AutoView(QGraphicsView):
         else:
             s.particleFilter.reset()
             s.particleFilter.setMap(s.map)
-        s.heatmap = widgets.GraphicalParticleFilter(s.particleFilter)
+        s.heatmap = GraphicalParticleFilter(s.particleFilter)
         s.heatmap.setVisible(False)
         s.addItem(s.heatmap)
 

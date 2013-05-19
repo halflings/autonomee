@@ -6,7 +6,7 @@
 from PySide.QtCore import *
 from PySide.QtGui import *
 
-from math import sin, cos, pi, degrees, radians, atan2
+from math import sin, cos, pi, degrees, radians, sqrt
 from engine import Car
 
 class Waypoint(QGraphicsEllipseItem):
@@ -144,7 +144,7 @@ class NotificationTooltip(InfoBox):
         elif type==self.information:
             color = QColor(40, 70, 210)
         elif type == self.ok:
-            color = QColor(40, 210, 70)
+            color = QColor(45, 200, 70)
         else:
             raise Exception("Unknown notification type")
         
@@ -614,6 +614,8 @@ class CarSpeedMeter(QGraphicsObject):
 
 class GraphicalParticleFilter(QGraphicsObject):
 
+    checkmark = QImage('img/check.png')
+
     def __init__(self, partFilter):
         super(GraphicalParticleFilter, self).__init__()
         self.setCacheMode( QGraphicsItem.ItemCoordinateCache )
@@ -646,15 +648,10 @@ class GraphicalParticleFilter(QGraphicsObject):
         numParticles = len(self.particleFilter.particles)
         maxProba = max(particle.p for particle in self.particleFilter.particles)
 
-        for particle in self.particleFilter.particles:
-            bX += particle.x
-            bY += particle.y
 
-        bX /= numParticles
-        bY /= numParticles
+        bX, bY = self.particleFilter.barycenter.x, self.particleFilter.barycenter.y
 
-        bMeanDist = 0
-
+        # Drawing the particles
         for particle in self.particleFilter.particles:
             # Importance of the particle ranges from 0.0 to 1.0
             importance = particle.p / maxProba
@@ -663,15 +660,16 @@ class GraphicalParticleFilter(QGraphicsObject):
             painter.setBrush( color.lighter(0.2) )
             radius = 3 + importance*8
             painter.drawEllipse(QPointF(particle.x, particle.y), radius, radius)
-            bMeanDist += sqrt((particle.x - bX)**2 + (particle.y -bY)**2)
-            # painter.drawLine(particle.x, particle.y, bX, bY)
+            painter.drawLine(particle.x, particle.y, bX, bY)
 
-        bMeanDist /= numParticles
-        relevance = max(0., 1. - bMeanDist / self.particleFilter.car.length)
-        color = QColor.fromHsvF(0.5*relevance, 0.5, 0.8, 0.8)
+        color = QColor.fromHsvF(0.5*self.particleFilter.relevance, 0.5, 0.8, 0.8)
         painter.setPen( color.darker(10) )
         painter.setBrush( color )
         painter.drawEllipse(QPointF(bX, bY), 15, 15)
+
+        # Drawing the checkmark (if the barycenter is relevant)
+        if self.particleFilter.relevance >= 0.8:
+            painter.drawImage(bX - 8, bY - 8, self.checkmark)
 
     def boundingRect(self):
         return QRectF(0, 0, self.particleFilter.width, self.particleFilter.height )

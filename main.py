@@ -166,8 +166,9 @@ class MainWindow(QMainWindow):
         # Updating dialog with the configuration 
         
         c = self.config
-        c.widthValue.setPlainText(str(self.car.width))
-        c.lengthValue.setPlainText(str(self.car.length))
+        c.widthValue.setValue(self.car.width)
+        c.lengthValue.setValue(self.car.length)
+        c.randomnessValue.setValue(int(self.automaticView.scene().particleFilter.randomness*100))
 
         c.sensorSlider.setValue(int(self.car.sensor_noise))
         c.rotationSlider.setValue(int(self.car.rotation_noise))
@@ -188,7 +189,7 @@ class MainWindow(QMainWindow):
         ip = self.config.ipEdit.toPlainText()
         port = int(self.config.portEdit.toPlainText())
 
-        print "Connecting robot to {}:{}".format(ip, port)
+        print "Connecting robot to {}:{}".format(ip, pozrt)
 
         connected = self.carSocket.connect(ip, port)
 
@@ -202,13 +203,14 @@ class MainWindow(QMainWindow):
         """ Validating the parameters from the configuration dialog """
         try:
             c = self.config
-            self.car.width = int(c.widthValue.toPlainText())
-            self.car.length = int(c.lengthValue.toPlainText())
+            self.car.width = c.widthValue.value()
+            self.car.length = c.lengthValue.value()
 
             self.car.sensor_noise = float(c.sensorValue.text())
             self.car.displacement_noise = float(c.displacementValue.text())
             self.car.rotation_noise = float(c.rotationValue.text())
 
+            self.automaticView.scene().particleFilter.randomness = c.randomnessValue.value() / 100.0
             if c.simpleProba.isChecked():
                 self.automaticView.scene().particleFilter.mode = ParticleFilter.simple
             elif c.markovProba.isChecked():
