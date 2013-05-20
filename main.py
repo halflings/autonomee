@@ -15,7 +15,7 @@ from carsocket import CarSocket
 from probability import ParticleFilter
 from widgets import NotificationTooltip
 
-import engine
+from engine import Car
 import datetime
 import time
 
@@ -29,7 +29,7 @@ class MainWindow(QMainWindow):
         self.currentPath = ''
 
         # The car's model, shared between the different views
-        self.car = engine.Car()
+        self.car = Car()
 
         # Socket (to connect with the car/Rpi)
         self.carSocket = CarSocket(self.car)
@@ -112,7 +112,7 @@ class MainWindow(QMainWindow):
 
         self.log.saveButton.clicked.connect(self.saveLog)
 
-        # self.carSocket.logSignal.connect(self.addToLog)
+        #self.carSocket.logSignal.connect(self.addToLog)
 
         self.initLog()
 
@@ -129,10 +129,12 @@ class MainWindow(QMainWindow):
     def manualMode(self):
         self.stackedWidget.setCurrentWidget(self.manualView)
         self.setWindowTitle("Autonomee - Manual mode")
+        self.car.mode = Car.Manual
 
     def automaticMode(self):
         self.stackedWidget.setCurrentWidget(self.automaticView)
         self.setWindowTitle("Autonomee - Automatic mode - Map : {}".format(self.currentPath))
+        self.car.mode = Car.Automatic
 
     def saveMap(self):
         self.automaticView.scene().map.save()
@@ -189,7 +191,7 @@ class MainWindow(QMainWindow):
         ip = self.config.ipEdit.toPlainText()
         port = int(self.config.portEdit.toPlainText())
 
-        print "Connecting robot to {}:{}".format(ip, pozrt)
+        print "Connecting robot to {}:{}".format(ip, port)
 
         connected = self.carSocket.connect(ip, port)
 
@@ -234,12 +236,12 @@ class MainWindow(QMainWindow):
     def resetConfig(self):
         """ Reseting the parameters from the configuration dialog """
         c = self.config
-        c.widthValue.setPlainText(str(engine.Car.def_width))
-        c.lengthValue.setPlainText(str(engine.Car.def_length))
+        c.widthValue.setPlainText(str(Car.def_width))
+        c.lengthValue.setPlainText(str(Car.def_length))
 
-        c.sensorSlider.setValue(int(engine.Car.def_sensor))
-        c.rotationSlider.setValue(int(engine.Car.def_rotation))
-        c.displacementSlider.setValue(int(engine.Car.def_displacement))
+        c.sensorSlider.setValue(int(Car.def_sensor))
+        c.rotationSlider.setValue(int(Car.def_rotation))
+        c.displacementSlider.setValue(int(Car.def_displacement))
 
         self.notify("All parameters were reset to their default value", type=NotificationTooltip.information)
 

@@ -315,6 +315,13 @@ class AutoView(QGraphicsView):
         s = self.scene()
 
         s.map = svg_map
+        # If the map doesn't contain information about the map's scale or north angle
+        if s.map.pixel_per_mm is None:
+            s.setMapScale()
+
+        if s.map.north_angle is None:
+            s.setMapNorthAngle()
+        
         s.path = None
         s.graphicalPath = None
 
@@ -414,13 +421,6 @@ class AutoView(QGraphicsView):
         self.y = 0
 
         self.updateScene()
-
-        # If the map doesn't contain information about the map's scale or north angle
-        if s.map.pixel_per_mm is None:
-            s.setMapScale()
-
-        if s.map.north_angle is None:
-            s.setMapNorthAngle()
 
     def updateScene(self):
         self.scene().setSceneRect(self.svgItem.boundingRect().adjusted(self.x-10, self.y-10, self.x+10, self.y+10))

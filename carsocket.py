@@ -6,10 +6,10 @@ import re
 import sfml as sf
 from PySide.QtCore import *
 
-from math import copysign, radians
-
+from math import radians
+from engine import Car
 from Queue import Queue
-# from PySFML import sf
+from time import sleep
 
 TURN_LEFT, RUN_BACKWARD, STOP, RUN_FORWARD, TURN_RIGHT, SWEEP_SERVO, TURN_SERVO = range(-2, 5)
 
@@ -57,7 +57,7 @@ class CarSocket(QObject):
 
     def log(self, text, mode='DEBUG'):
         self.logSignal.emit(text, mode)
-        print "[CarSocket] {}".format(text)
+        #print "[CarSocket] {}".format(text)
 
     def connect(self, ip, port):
         self.log("Connecting the socket")
@@ -193,38 +193,45 @@ class CarSocket(QObject):
 
             # Processing what has been received
             received = self.received.get()
-
             floatPattern = "-?\d+(?:[.]\d+)?"
 
-            # Extracting the speed from the received
-            speedSearch = re.search("Speed : ({})".format(floatPattern), received)
-            if speedSearch:
-                self.log("Got speed : {}".format(speedSearch.group(1)))
-                self.car.setSpeed( 10*float(speedSearch.group(1)) )
+            if self.car.mode == Car.Manual:
+                # Extracting the speed from the received
+                speedSearch = re.search("Speed : ({})".format(floatPattern), received)
+                if speedSearch:
+                    self.log("Got speed : {}".format(speedSearch.group(1)))
+                    self.car.setSpeed( 3*float(speedSearch.group(1)) )
 
-            # Extracting the angle
-            angleSearch = re.search("Angle : ({})".format(floatPattern), received)
-            if angleSearch:
-                self.log("Got angle : {}".format(angleSearch.group(1)))
-                angle = radians(float(angleSearch.group(1))) 
-                self.car.setAngle(angle)
+                # Extracting the angle
+                angleSearch = re.search("Angle : ({})".format(floatPattern), received)
+                if angleSearch:
+                    self.log("Got angle : {}".format(angleSearch.group(1)))
+                    angle = radians(float(angleSearch.group(1))) 
+                    self.car.setAngle(angle)
 
-            # Extracting the closest distance
-            distanceSearch = re.search("Distance : ({})".format(floatPattern), received)
-            if distanceSearch:
-                self.log("Got distance : {}".format(distanceSearch.group(1)))
-                self.car.distance = float(distanceSearch.group(1))
-                self.car.notify()
+                # Extracting the closest distance
+                distanceSearch = re.search("Distance : ({})".format(floatPattern), received)
+                if distanceSearch:
+                    self.log("Got distance : {}".format(distanceSearch.group(1)))
+                    self.car.distance = float(distanceSearch.group(1))
+                    self.car.notify()
 
-            # Extracting the car's position
-            positionSearch = re.search("Position : [(](\d+), (\d+)[)]", received)
-            if positionSearch:
-                x, y = int(positionSearch.group(1)), int(positionSearch.group(2))
-                self.log("Got position : ({}, {})".format(x, y))
-                
-                xOff, yOff = self.car.map.width/2, self.car.map.height/2
-                self.car.x, self.car.y = x + xOff, y + yOff
-                self.car.notify()
+                temperatureSearch = re.search("Temperature : ({})".format(floatPattern), received)
+                if temperatureSearch:
+                    self.log("Got temperature : {}".format(temperatureSearch.group(1)))
+                    self.car.temperature = float(temperatureSearch.group(1))
+                    self.car.notify()
+
+                # Extracting the car's position
+                positionSearch = re.search("Position : [(](\d+), (\d+)[)]", received)
+                if positionSearch:
+                    x, y = int(positionSearch.group(1)), int(positionSearch.group(2))
+                    self.log("Got position : ({}, {})".format(x, y))
+                    
+                    #xOff, yOff = self.car.map.width/2, self.car.map.height/2
+                    #self.car.x, self.car.y = x + xOff, y + yOff
+                    #self.car.notify()
+            sleep(0.0005)
 
         self.socket.sendall("DISCONNECT")
         self.socket.close()

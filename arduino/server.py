@@ -124,4 +124,5 @@ if __name__ == "__main__":
     port = 4242
 
     server = PiServer((host, port), PiHandler)
+    print "Setting up server on : {}:{}".format(host, port)
     server.serve_forever()

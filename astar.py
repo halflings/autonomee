@@ -4,7 +4,7 @@
     astar.py - A* algorithm implementation
 """
 
-from math import sqrt, atan2
+from math import sqrt
 import scipy
 import scipy.signal
 
@@ -136,12 +136,12 @@ class DiscreteMap:
             print "Goal is unreachable"
             return []
         else:
-            # We intialize the closed and open list
+            # We intialize the closed and open list...
             cl = set()
             ol = set()
             ol.add(begin)
 
-            # We initialize the
+            # ... and the path's beginning
             begin.g = 0
             begin.h = begin.diagonalDistance(goal)
             begin.f = begin.g + begin.h
@@ -158,6 +158,7 @@ class DiscreteMap:
 
                     return path
 
+                # We remove the current cell from the open list and add it to the closed list
                 ol.remove(curCell)
                 cl.add(curCell)
 
@@ -175,59 +176,6 @@ class DiscreteMap:
                         if neighbor not in ol:
                             ol.add(neighbor)
 
-            self.clear()
-            return []
-
-    def altsearch(self, begin, goal):
-        if not (0 < goal.x < self.width and 0 < goal.y < self.height):
-            print "Goal is out of bound"
-            return []
-        elif not self.grid[begin.y][begin.x].reachable:
-            print "Beginning is unreachable"
-            return []
-        elif not self.grid[goal.y][goal.x].reachable:
-            print "Goal is unreachable"
-            return []
-        else:
-
-            self.cl = set()
-            self.ol = set()
-
-            curCell = begin
-            self.ol.add(curCell)
-
-            while len(self.ol) > 0:
-
-                # We choose the cell in the open list having the minimum score as our current cell
-                curCell = min(self.ol, key=lambda cell: cell.f)
-
-                # We add the current cell to the closed list
-                self.ol.remove(curCell)
-                self.cl.add(curCell)
-
-                # We check the cell's (reachable) neighbours :
-                neighbours = self.neighbours(curCell, diagonal=True)
-
-                for cell in neighbours:
-                    # If the goal is a neighbour cell :
-                    if cell == goal:
-                        cell.parent = curCell
-                        self.path = cell.path()
-                        # self.display()
-                        self.clear()
-                        return self.path
-                    elif cell not in self.cl:
-                        # We process the cells that are not in the closed list
-                        # (processing <-> calculating the "F" score)
-                        cell.process(curCell, goal)
-
-                        self.ol.add(cell)
-
-                # To vizualize the algorithm in ASCII
-                # self.display()
-                # sleep(0.02)
-
-            # If the open list gets empty : no path can be found
             self.clear()
             return []
 

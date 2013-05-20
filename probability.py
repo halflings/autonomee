@@ -192,8 +192,8 @@ class Particle(object):
         self.angle = (self.angle + deltaAngle + pi) % (2*pi) - pi
 
     def move(self, displacement):
-        dx = displacement * -sin(self.angle  - radians(self.car.map.north_angle))
-        dy = displacement * -cos(self.angle  - radians(self.car.map.north_angle))
+        dx = displacement * self.car.map.pixel_per_mm * -sin(self.angle  - radians(self.car.map.north_angle))
+        dy = displacement * self.car.map.pixel_per_mm * -cos(self.angle  - radians(self.car.map.north_angle))
 
         self.x, self.y = int(self.x + dx), int(self.y + dy)
 

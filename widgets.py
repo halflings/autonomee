@@ -538,7 +538,7 @@ class CarSpeedMeter(QGraphicsObject):
     maxSpeed = 220
 
     # Speed of the arrow (when animated) in ms / (cm/s)
-    MsPerAngle = 20
+    MsPerAngle = 7
 
     """ A compass showing the car's current orientation """
 
@@ -665,7 +665,7 @@ class GraphicalParticleFilter(QGraphicsObject):
             painter.setBrush( color.lighter(0.2) )
             radius = 3 + importance*8
             painter.drawEllipse(QPointF(particle.x, particle.y), radius, radius)
-            painter.drawLine(particle.x, particle.y, bX, bY)
+            # painter.drawLine(particle.x, particle.y, bX, bY)
 
         color = QColor.fromHsvF(0.5*self.particleFilter.relevance, 0.5, 0.8, 0.8)
         painter.setPen( color.darker(10) )

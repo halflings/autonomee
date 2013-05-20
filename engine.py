@@ -6,14 +6,15 @@
 
 
 from PySide.QtCore import *
-
-from math import cos, sin, pi, radians, degrees
+from math import cos, sin, pi, radians
 
 
 class Car(QObject):
+    Automatic, Manual = range(2)
+
     updateSignal = Signal(int)
 
-    max_temperature = 120.
+    max_temperature = 60.
 
     # TODO : Should be in mm
     def_width = 50
@@ -32,6 +33,9 @@ class Car(QObject):
     def __init__(self, map=None, carSocket=None, x=0, y=0, width=def_width, length=def_length):
         super(Car, self).__init__()
 
+        # By default, the car is in the 'automatic' mode
+        self.mode = Car.Automatic
+
         # The map where the car is located
         self.map = map
 
@@ -47,7 +51,7 @@ class Car(QObject):
         self.width = width
         self.length = length
 
-        self.speed = 15
+        self.speed = 0.
 
         # Noise parameters
         self.sensor_noise = Car.def_sensor
@@ -95,13 +99,8 @@ class Car(QObject):
         return max(1., self.length * self.map.pixel_per_mm)
 
     def move(self, speed):
-        self.x += speed * -sin(self.angle - radians(self.map.north_angle))
-        self.y += speed * -cos(self.angle - radians(self.map.north_angle))
-
-        # TODO: Temporary...
-        # if self.socket.connected:
-        #     # SET ANGLE : '01' + '#' + angle on 6 digits + '#' + distance on 6 digits
-        #     self.socket.send( "01#{0:06d}#{1:06d}".format(int(degrees(self.angle)), int(speed)) )
+        self.x += -speed * self.map.pixel_per_mm * sin(self.angle - radians(self.map.north_angle))
+        self.y += -speed * self.map.pixel_per_mm * cos(self.angle - radians(self.map.north_angle))
 
         self.notify()
 
@@ -155,7 +154,7 @@ class Car(QObject):
 
     def update(self, signal=1):
         # Calculating the distance to the closest object
-        if self.map is not None and not self.moving:
+        if self.mode == Car.Automatic and self.map is not None and not self.moving:
             self.distance = self.map.rayDistance(self.x, self.y, self.angle)
 
         for view in self.views:
