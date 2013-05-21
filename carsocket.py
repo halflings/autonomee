@@ -11,7 +11,7 @@ from engine import Car
 from Queue import Queue
 from time import sleep
 
-TURN_LEFT, RUN_BACKWARD, STOP, RUN_FORWARD, TURN_RIGHT, SWEEP_SERVO, TURN_SERVO = range(-2, 5)
+TURN_LEFT, RUN_BACKWARD, STOP, RUN_FORWARD, TURN_RIGHT, SWEEP_SERVO, TURN_SERVO, SET_SPEED = range(-2, 6)
 
 def formatCommand(operation, firstOperand = 0, secondOperand = 0):
     if operation > 99 or operation < - 9:
@@ -56,8 +56,8 @@ class CarSocket(QObject):
         self.processingThread.daemon = True
 
     def log(self, text, mode='DEBUG'):
-        self.logSignal.emit(text, mode)
-        #print "[CarSocket] {}".format(text)
+        #self.logSignal.emit(text, mode)
+        print "[CarSocket] {}".format(text)
 
     def connect(self, ip, port):
         self.log("Connecting the socket")
@@ -69,8 +69,6 @@ class CarSocket(QObject):
             self.socket.settimeout(None)
 
             self.connected = True
-
-            print "socket.connect : OK"
 
             # Launching the socket's threads
             self.receivingThread.start()
@@ -115,8 +113,8 @@ class CarSocket(QObject):
                     self.connected = False
                 else:
                     self.received.put(received)
-                    self.log("Received : {}".format(received))
-
+                    #self.log("Received : {}".format(received))
+                sleep(0.005)
             except socket.error, e:
                 self.log("Couldn't receive from server [Exception : {}]. Disconnecting.".format(e))
                 self.connected = False
@@ -129,14 +127,13 @@ class CarSocket(QObject):
         lastDir, x, y, lastRight, lastLeft = 0, 0, 0, 0, 0
 
         while self.connected:
-
+            sleep(0.005)
             sf.Joystick.update()
 
             if sf.Joystick.is_connected(0):
 
                 x = sf.Joystick.get_axis_position(0, sf.Joystick.X)
                 y = sf.Joystick.get_axis_position(0, sf.Joystick.Y)
-
 
                 command = None
 
@@ -148,44 +145,19 @@ class CarSocket(QObject):
                     self.turning = False
                 elif x != 0 or y != 0:
                     if abs(x) > abs(y) and not self.turning:
+                        command  = TURN_RIGHT if x > 0 else TURN_LEFT
+
                         self.turning = True
                         self.running = False
-                        if x > 0:
-                            command = TURN_RIGHT
-                        else:
-                            command = TURN_LEFT
+
                     elif abs(y) > abs(x) and not self.running:
+                        command = RUN_FORWARD if y < 0 else RUN_BACKWARD
+
                         self.running = True
                         self.turning = False
-                        if y < 0:
-                            command = RUN_FORWARD
-                        else:
-                            command = RUN_BACKWARD
 
                 if command is not None:
                     self.send(formatCommand(command))
-
-
-                # New style move (percent on right/left wheel)
-                # if x == 0 and y == 0:
-                #     direction, speedRight, speedLeft = 0, 0, 0
-                # else:
-                #     direction = int(copysign(1, -y))
-                #     percentRight = (100 + x) / 200.
-                #     percentLeft =  (100 - x) / 200.
-                    
-                #     coef = 250. / max(percentRight, percentLeft)
-                    
-                #     # Making sure the speed will always be >= 0 and <= 255
-                #     speedRight = max(0, min(250, int(coef * percentRight)))
-                #     speedLeft = max(0, min(250, int(coef * percentLeft)))
-
-                # if speedRight != lastRight or speedLeft != lastLeft or direction != lastDir:
-                #     self.send(formatCommand(direction, speedRight, speedLeft))
-
-                #     lastDir, lastRight, lastLeft = direction, speedRight, speedLeft
-
-                time.sleep(0.005)
 
     def processingRoutine(self):
         self.log("PROCESSING ROUTINE")
@@ -199,26 +171,27 @@ class CarSocket(QObject):
                 # Extracting the speed from the received
                 speedSearch = re.search("Speed : ({})".format(floatPattern), received)
                 if speedSearch:
-                    self.log("Got speed : {}".format(speedSearch.group(1)))
+                    #self.log("Got speed : {}".format(speedSearch.group(1)))
                     self.car.setSpeed( 3*float(speedSearch.group(1)) )
 
                 # Extracting the angle
                 angleSearch = re.search("Angle : ({})".format(floatPattern), received)
                 if angleSearch:
-                    self.log("Got angle : {}".format(angleSearch.group(1)))
+                    #self.log("Got angle : {}".format(angleSearch.group(1)))
                     angle = radians(float(angleSearch.group(1))) 
                     self.car.setAngle(angle)
 
                 # Extracting the closest distance
                 distanceSearch = re.search("Distance : ({})".format(floatPattern), received)
                 if distanceSearch:
-                    self.log("Got distance : {}".format(distanceSearch.group(1)))
-                    self.car.distance = float(distanceSearch.group(1))
+                    #self.log("Got distance : {}".format(distanceSearch.group(1)))
+                    # The received distance is in cm, we convert it to mm
+                    self.car.distance = float(distanceSearch.group(1))*10
                     self.car.notify()
 
                 temperatureSearch = re.search("Temperature : ({})".format(floatPattern), received)
                 if temperatureSearch:
-                    self.log("Got temperature : {}".format(temperatureSearch.group(1)))
+                    #self.log("Got temperature : {}".format(temperatureSearch.group(1)))
                     self.car.temperature = float(temperatureSearch.group(1))
                     self.car.notify()
 
@@ -226,7 +199,7 @@ class CarSocket(QObject):
                 positionSearch = re.search("Position : [(](\d+), (\d+)[)]", received)
                 if positionSearch:
                     x, y = int(positionSearch.group(1)), int(positionSearch.group(2))
-                    self.log("Got position : ({}, {})".format(x, y))
+                    #self.log("Got position : ({}, {})".format(x, y))
                     
                     #xOff, yOff = self.car.map.width/2, self.car.map.height/2
                     #self.car.x, self.car.y = x + xOff, y + yOff
@@ -240,3 +213,6 @@ class CarSocket(QObject):
         # Making sure : -80 <= angle <= 80
         angle = max(-80, min(80, angle))
         self.send(formatCommand(TURN_SERVO, angle))
+
+    def setMaxSpeed(self, maxspeed):
+        self.send(formatCommand(SET_SPEED, maxspeed))

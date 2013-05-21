@@ -115,8 +115,8 @@ class ObstacleWarning(InfoBox):
             self.setCaption("No obstacle ahead")
             self.setColor(QColor(255, 255, 255))
         else:
-            self.setCaption("Obstacle at : {0:.2f}".format(self.car.distance))
-            hue = max(0., min(1., (float(self.car.distance - self.car.width / 2)/Car.danger_distance))) * 0.33
+            self.setCaption("Obstacle at : {0:.2f}cm".format(self.car.distance/10.0))
+            hue = max(0., min(1., (float(self.car.distance - self.car.width)/Car.danger_distance))) * 0.33
             self.setColor( QColor.fromHsvF(hue, 0.5, 0.8, 0.5) )
 
 

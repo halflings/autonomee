@@ -28,7 +28,7 @@ class Car(QObject):
     def_rotation = 2.
 
     # Distance at which the car is 'in danger' (obstacle too close)
-    danger_distance = 300
+    danger_distance = 150
 
     def __init__(self, map=None, carSocket=None, x=0, y=0, width=def_width, length=def_length):
         super(Car, self).__init__()
@@ -51,7 +51,12 @@ class Car(QObject):
         self.width = width
         self.length = length
 
+
+        # Current speed
         self.speed = 0.
+
+        # Maximum speed (0 - 250)
+        self.maxspeed = 250
 
         # Noise parameters
         self.sensor_noise = Car.def_sensor
@@ -148,6 +153,12 @@ class Car(QObject):
         self.servoAngle = servoAngle
         if self.socket.connected:
             self.socket.setServo(self.servoAngle)
+
+    def setMaxSpeed(self, maxspeed):
+        self.maxspeed = max(0, min(250, maxspeed))
+        if self.socket.connected:
+            self.socket.setMaxSpeed(self.maxspeed)
+
 
     def notify(self, signal=1):
         self.updateSignal.emit(signal)

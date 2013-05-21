@@ -60,10 +60,12 @@ class PiHandler(SocketServer.BaseRequestHandler, object):
         while self.connected:
             data = self.request.recv(1024)
             print "Client sent '{}'".format(data)
-            if len(data) > 0:
-                self.queries.put(data)
-            else:
+            if len(data) == 0:
+                print "Got an empty message"
                 self.connected = False
+
+            self.queries.put(data)
+	    sleep(0.005)
 
     def serialReadRoutine(self):
         while self.connected:
@@ -76,8 +78,7 @@ class PiHandler(SocketServer.BaseRequestHandler, object):
                 except:
                     print "Couldn't write on the arduino. Disconnecting"
                     self.connected = False
-
-        time.sleep(0.005)
+        sleep(0.005)
 
     def handle(self):
         print "New connection"
@@ -101,7 +102,8 @@ class PiHandler(SocketServer.BaseRequestHandler, object):
             
             if query == 'DISCONNECT' or len(query) == 0:
                 self.connected = False 
-   
+            sleep(0.005)
+
 	print "Disconnecting"
 
 	if self.arduino is not None:
@@ -122,7 +124,6 @@ if __name__ == "__main__":
 
     host = getAddress()
     port = 4242
-
+    print "Server connected on {}:{}".format(host, port)
     server = PiServer((host, port), PiHandler)
-    print "Setting up server on : {}:{}".format(host, port)
     server.serve_forever()

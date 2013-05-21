@@ -8,7 +8,7 @@ from PySide.QtGui import *
 from PySide.QtCore import *
 
 import widgets
-
+import carsocket
 
 class ManualView(QGraphicsView):
 
@@ -36,6 +36,9 @@ class ManualScene(QGraphicsScene):
         super(ManualScene, self).__init__(parent)
 
         self.car = car
+
+        # Defines the maximum speed of the car
+        self.maxSpeed = 250
 
         # Gradient background
         self.gradient = QLinearGradient(0, -200, 0, 600)
@@ -107,9 +110,13 @@ class ManualScene(QGraphicsScene):
         if event.key() == Qt.Key_L:
             servoAngle = min(80, self.car.servoAngle + 10)
             self.car.setServoAngle(servoAngle)
-        if event.key() == Qt.Key_J:
+        elif event.key() == Qt.Key_J:
             servoAngle = max(-80, self.car.servoAngle - 10)
             self.car.setServoAngle(servoAngle)
+        elif event.key() == Qt.Key_Plus:
+            self.car.setMaxSpeed(self.car.maxspeed + 10)
+        elif event.key() == Qt.Key_Minus:
+            self.car.setMaxSpeed(self.car.maxspeed - 10)
 
     def processmultikeys(self,keyspressed):
         print keyspressed
