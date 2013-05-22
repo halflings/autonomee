@@ -28,20 +28,20 @@ You can also check the robot's arduino sketch, __arduino.ino__.
 
 The packets sent to the server (TCP) respect this format:
 
-OPCODE(2 chars) + "#" + OPERANDE 1 (6 chars) + "#" + OPERANDE 2 (6 chars)
+'''OPCODE(2 chars) + "#" + OPERANDE 1 (6 chars) + "#" + OPERANDE 2 (6 chars)'''
 
 ### Supported operations
 
-* Running forward: 01
-01#000000#000000
-* Running backward: 01
--01#000000#000000
-* Turning right : 02
-02#000000#000000
-* Turning left :
--2#000000#000000
-* Setting speed : 05, first operand is a factor ranging from 0 to 250.
-05#000180#000000
+* Running forward: '''OPCODE=01'''
+'''01#000000#000000'''
+* Running backward: '''OPCODE=-1'''
+'''-01#000000#000000'''
+* Turning right : '''OPCODE=02'''
+'''02#000000#000000'''
+* Turning left : '''OPCODE=-2'''
+'''-2#000000#000000'''
+* Setting speed : '''OPCODE=05''', first operand is a factor ranging from 0 to 250.
+'''05#000180#000000'''
 
 ## Mobile app
 
