@@ -35,15 +35,19 @@ The packets sent to the server (TCP) respect this format:
 * Running forward: ```OPCODE=01```
 
 ```01#000000#000000```
+
 * Running backward: ```OPCODE=-1```
 
 ```-01#000000#000000```
+
 * Turning right : ```OPCODE=02```
 
 ```02#000000#000000```
+
 * Turning left : ```OPCODE=-2```
 
 ```-2#000000#000000```
+
 * Setting speed : ```OPCODE=05```, first operand is a factor ranging from 0 to 250.
 
 ```05#000180#000000```
