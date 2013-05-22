@@ -32,25 +32,15 @@ The packets sent to the server (TCP) respect this format:
 
 ### Supported operations
 
-* Running forward: ```OPCODE=01```
+* Running forward: ```OPCODE=01``` ; Example : ```01#000000#000000```
 
-```01#000000#000000```
+* Running backward: ```OPCODE=-1```; Example : ```-01#000000#000000```
 
-* Running backward: ```OPCODE=-1```
+* Turning right : ```OPCODE=02``` ; Example : ```02#000000#000000```
 
-```-01#000000#000000```
+* Turning left : ```OPCODE=-2``` ; Example : ```-2#000000#000000```
 
-* Turning right : ```OPCODE=02```
-
-```02#000000#000000```
-
-* Turning left : ```OPCODE=-2```
-
-```-2#000000#000000```
-
-* Setting speed : ```OPCODE=05```, first operand is a factor ranging from 0 to 250.
-
-```05#000180#000000```
+* Setting speed : ```OPCODE=05```, first operand is a factor ranging from 0 to 250. ; Example : ```05#000180#000000```
 
 ## Mobile app
 
@@ -61,6 +51,10 @@ A (responsive) mobile (Android) client compatible with the communication protoco
 
 
 ## Updates :
+
+### 22 May 2013
+
+We presented this project (initally a class project) to our fellow students (@INSA Lyon) today. You can check the presentation (in French) here: https://slid.es/halflings/autonomee
 
 ### 2 May 2013
 
