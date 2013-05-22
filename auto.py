@@ -258,10 +258,10 @@ class AutoScene(QGraphicsScene):
                     relevance = self.particleFilter.relevance 
                     if relevance >= ParticleFilter.DecentRelevance and not self.car.localized:
                         self.notify("Car localized with a {}% relevance rate".format(int(100*relevance)),
-                                    type=NotificationTooltip.ok, duration=4000)
+                                    type=NotificationTooltip.ok)
                         self.car.localized = True
                     elif self.car.localized and relevance < ParticleFilter.DecentRelevance - 0.10:
-                        self.notify("Lost car's localization !", duration=3000)
+                        self.notify("Lost car's localization !")
                         self.car.localized = False
 
                 # Putting back the car into the map if it got out
