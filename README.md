@@ -1,9 +1,9 @@
-# Autonomee
+# autonomee
 
 ![Screenshot of the app's UI](img/screenshot.png)
 
 
-A Python front-end for robot localization (and other uses) using SVG for maps' representation and Qt for the UI.
+A client/server for robot localization (using a 'particle filter') and distant control.
 
 You can also check the robot's arduino sketch, __arduino.ino__. 
 
@@ -24,9 +24,32 @@ You can also check the robot's arduino sketch, __arduino.ino__.
 * PySerial
 * Scipy
 
-## Important
+## Communication protocol
 
-This is a work in progress and the code base can change very radically. Don't except (for now) something working out of the box  !
+The packets sent to the server (TCP) respect this format:
+
+OPCODE(2 chars) + "#" + OPERANDE 1 (6 chars) + "#" + OPERANDE 2 (6 chars)
+
+### Supported operations
+
+* Running forward: 01
+01#000000#000000
+* Running backward: 01
+-01#000000#000000
+* Turning right : 02
+02#000000#000000
+* Turning left :
+-2#000000#000000
+* Setting speed : 05, first operand is a factor ranging from 0 to 250.
+05#000180#000000
+
+## Mobile app
+
+A (responsive) mobile (Android) client compatible with the communication protocol used has been developped by Alexis Fasquel.
+
+![Tablet view of the mobile UI](img/tabletscreen.png)
+![Phone view of the mobile UI UI](img/mobilescreen.png)
+
 
 ## Updates :
 
