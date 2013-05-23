@@ -5,7 +5,7 @@
 
 A client/server for robot localization (using a 'particle filter') and distant control.
 
-You can also check the robot's arduino sketch, __arduino.ino__. 
+You can also check the robot's arduino sketch, __autonomee.ino__. 
 
 ## Features
 
