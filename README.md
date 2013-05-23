@@ -1,13 +1,16 @@
 # autonomee
 
-![Screenshot of the app's UI](img/screenshot.png)
+![Picture of the car](img/autonomeeIRL.png)
 
 
 A client/server for robot localization (using a 'particle filter') and distant control.
 
-You can also check the robot's arduino sketch, __autonomee.ino__. 
+For the (real) car, an arduino (for motor control and sensor readings) and  a raspberry pi (for communication) are used.
+You can the robot's arduino sketch, __autonomee.ino__. 
 
 ## Features
+
+![Screenshot of the app's UI](img/screenshot.png)
 
 * A basic SVG parser
 * A pathfinder (A\*)
