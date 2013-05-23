@@ -56,11 +56,11 @@ class CarSocket(QObject):
         self.processingThread.daemon = True
 
     def log(self, text, mode='DEBUG'):
-        #self.logSignal.emit(text, mode)
+        self.logSignal.emit(text, mode)
         print "[CarSocket] {}".format(text)
 
     def connect(self, ip, port):
-        self.log("Connecting the socket")
+        self.log("Attempting connection to {}:{}".format(ip, port))
 
         try:
             # Connect to server and send data
@@ -82,8 +82,6 @@ class CarSocket(QObject):
             return True
 
         except Exception, e:
-
-            print "In exception catching"
             self.log("Error when creating and connecting socket", mode='ERROR')
             self.log("Exception : {}".format(e), mode='ERROR')
 

@@ -262,6 +262,7 @@ class AutoScene(QGraphicsScene):
                         self.car.localized = True
                     elif self.car.localized and relevance < ParticleFilter.DecentRelevance - 0.10:
                         self.notify("Lost car's localization !")
+                        
                         self.car.localized = False
 
                 # Putting back the car into the map if it got out

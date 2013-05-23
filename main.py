@@ -112,7 +112,7 @@ class MainWindow(QMainWindow):
 
         self.log.saveButton.clicked.connect(self.saveLog)
 
-        #self.carSocket.logSignal.connect(self.addToLog)
+        self.connect(self.carSocket, SIGNAL("logSignal(str, str)"), self, SLOT("addToLog(str, str)"))
 
         self.initLog()
 
@@ -158,10 +158,11 @@ class MainWindow(QMainWindow):
         self.addToLog("<h3>Date : {} | Time: {}</h3>".format(curDate, curTime))
 
     def addToLog(self, text, mode='NORMAL'):
+        print "Got ", text
         if mode == 'RAW':
             toAdd = text
         else:
-            toAdd = "<p>{}</p> \n <hr> \n".format(text)
+            toAdd = "<p>{}</p><hr> \n".format(text)
         self.log.logEdit.append(toAdd)
 
     def openConfigPanel(self):
