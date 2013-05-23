@@ -37,7 +37,7 @@ The packets sent to the server (TCP) respect this format:
 
 * Running forward: ```OPCODE=01``` ; Example : ```01#000000#000000```
 
-* Running backward: ```OPCODE=-1```; Example : ```-01#000000#000000```
+* Running backward: ```OPCODE=-1```; Example : ```-1#000000#000000```
 
 * Turning right : ```OPCODE=02``` ; Example : ```02#000000#000000```
 
