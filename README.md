@@ -6,7 +6,7 @@
 A client/server for robot localization (using a 'particle filter') and distant control.
 
 For the (real) car, an arduino (for motor control and sensor readings) and  a raspberry pi (for communication) are used.
-You can the robot's arduino sketch, __autonomee.ino__. 
+You can the robot's arduino sketch, __autonomee.ino__, __car.h__ and __compass.h__. 
 
 ## Features
 
