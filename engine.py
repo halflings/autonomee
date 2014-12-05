@@ -140,7 +140,7 @@ class Car(QObject):
     # Temperature (in celcius)
     def readTemperature(self):
         return self.temperature
-    
+
     def setTemperature(self, temperature):
         self.temperature = temperature
 

@@ -6,7 +6,7 @@
 from PySide.QtCore import *
 from PySide.QtGui import *
 
-from math import sin, cos, pi, degrees, radians, sqrt
+from math import sin, cos, pi, degrees, radians
 from engine import Car
 from probability import ParticleFilter
 
@@ -132,11 +132,11 @@ class NotificationTooltip(InfoBox):
     def_duration = 2000
 
     # Types
-    normal, error, information, ok = range(4) 
+    normal, error, information, ok = range(4)
 
     def __init__(self, text, duration=def_duration, type=normal):
         super(NotificationTooltip, self).__init__(text, fontsize=self.def_fontsize, capitalize=False)
-        
+
         # Setting the correct color
         if type==self.normal:
             color = QColor(10, 10, 10)
@@ -148,7 +148,7 @@ class NotificationTooltip(InfoBox):
             color = QColor(45, 200, 70)
         else:
             raise Exception("Unknown notification type")
-        
+
         self.setColor(color)
 
         self.setBackgroundOpacity(0.9)
@@ -361,7 +361,7 @@ class MapCompass(QGraphicsObject):
         self.arrow = QGraphicsPixmapItem(QPixmap(self.img))
         self.arrow.setTransformationMode(Qt.SmoothTransformation)
         self.arrow.setOffset(-self.img.width() / 2, -self.img.height() / 2)
-        
+
         self.setAngle(angle)
 
         self.update()

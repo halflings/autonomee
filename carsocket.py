@@ -1,6 +1,5 @@
 import socket
 import threading
-import time
 import re
 
 import sfml as sf
@@ -122,8 +121,6 @@ class CarSocket(QObject):
 
         self.log("JOYSTICK ROUTINE")
 
-        lastDir, x, y, lastRight, lastLeft = 0, 0, 0, 0, 0
-
         while self.connected:
             sleep(0.005)
             sf.Joystick.update()
@@ -198,7 +195,7 @@ class CarSocket(QObject):
                 if positionSearch:
                     x, y = int(positionSearch.group(1)), int(positionSearch.group(2))
                     #self.log("Got position : ({}, {})".format(x, y))
-                    
+
                     #xOff, yOff = self.car.map.width/2, self.car.map.height/2
                     #self.car.x, self.car.y = x + xOff, y + yOff
                     #self.car.notify()

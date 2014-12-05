@@ -9,8 +9,6 @@ Meant to run on a RaspberryPi.
 import SocketServer
 import socket
 import serial
-import re
-import time
 import threading
 import sys
 from Queue import Queue
@@ -46,7 +44,7 @@ class PiHandler(SocketServer.BaseRequestHandler, object):
             self.arduino = None
         else:
             self.arduino = serial.Serial(USB_PATH, 9600)
-        
+
         self.queries = Queue()
         self.receiveThread = threading.Thread(target = self.receptionRoutine)
         self.receiveThread.daemon = True
@@ -96,12 +94,12 @@ class PiHandler(SocketServer.BaseRequestHandler, object):
 
             #We write the value we receive to the Arduino
             query = self.queries.get()
-            
+
             if self.arduino is not None:
                 self.arduino.write(query)
-            
+
             if query == 'DISCONNECT' or len(query) == 0:
-                self.connected = False 
+                self.connected = False
             sleep(0.005)
 
 	print "Disconnecting"

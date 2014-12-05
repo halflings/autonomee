@@ -72,7 +72,6 @@ class SvgTree:
         #Parsing the width, height, and their unit (should be 'px')
         self.width = self.height = self.unit = None
         for attribute in ['width', 'height']:
-            
             regexp = re.match("([\d]+)(.+)", svgNode.attrib[attribute])
             if regexp:
                 setattr(self, attribute, int(regexp.group(1)))
@@ -85,7 +84,7 @@ class SvgTree:
         if 'pixel_per_mm' in svgNode.attrib:
             self.pixel_per_mm = float(svgNode.attrib['pixel_per_mm'])
 
-        # Parsing the 'real' angle of the map's north 
+        # Parsing the 'real' angle of the map's north
         # (What a compass would show if oriented toward the map's top)
         self.north_angle = None
         if 'north_angle' in svgNode.attrib:

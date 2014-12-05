@@ -45,7 +45,7 @@ class MainWindow(QMainWindow):
 
         saveAction = fileMenu.addAction("&Save...")
         saveAction.setShortcut("Ctrl+S")
-        
+
         setScale = fileMenu.addAction("Set map's scale")
         setAngle = fileMenu.addAction("Set map's orientation")
 
@@ -166,8 +166,8 @@ class MainWindow(QMainWindow):
         self.log.logEdit.append(toAdd)
 
     def openConfigPanel(self):
-        # Updating dialog with the configuration 
-        
+        # Updating dialog with the configuration
+
         c = self.config
         c.widthValue.setValue(self.car.width)
         c.lengthValue.setValue(self.car.length)
@@ -252,11 +252,11 @@ class MainWindow(QMainWindow):
         cW, lW = 200, 150
 
         x, y = self.size().width(), self.size().height()
-        
+
         y -= h + 35
         x -= cW + 15
         self.configButton.setGeometry(QRect(x, y, cW, h))
-        
+
         x -= lW + 15
         self.logButton.setGeometry(QRect(x, y, lW, h))
 

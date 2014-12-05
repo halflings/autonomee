@@ -8,7 +8,6 @@ from PySide.QtGui import *
 from PySide.QtCore import *
 
 import widgets
-import carsocket
 
 class ManualView(QGraphicsView):
 
@@ -97,12 +96,9 @@ class ManualScene(QGraphicsScene):
         self.firstrelease = True
 
     def mousePressEvent(self, event):
-        x, y = event.scenePos().x(), event.scenePos().y()
-
         super(ManualScene, self).mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
-        x, y = event.scenePos().x(), event.scenePos().y()
         super(ManualScene, self).mouseMoveEvent(event)
 
     def keyPressEvent(self, event):

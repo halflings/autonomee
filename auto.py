@@ -23,7 +23,7 @@ class AutoScene(QGraphicsScene):
 
     def __init__(self, car, parent=None):
         super(AutoScene, self).__init__(parent)
-        
+
 
         self.x = 0
         self.y = 0
@@ -68,7 +68,7 @@ class AutoScene(QGraphicsScene):
         self.Ynotif += tooltip.boundingRect().height() + 20
 
         self.notifications.append(tooltip)
-        self.addItem(tooltip) 
+        self.addItem(tooltip)
 
     def pathfinding(self, x, y):
 
@@ -159,13 +159,13 @@ class AutoScene(QGraphicsScene):
 
                 # Calculation of the 'new' angle
                 newAngle = pi/2 + radians(self.car.map.north_angle) - atan2(lastPt.y - pt.y, lastPt.x - pt.x)
-                
+
                 if abs(2*pi + newAngle - curAngle) < abs(newAngle - curAngle):
                     curAngle = 2*pi + newAngle
-                else: 
+                else:
                     curAngle = newAngle
 
-                angles.append( curAngle ) 
+                angles.append( curAngle )
                 rotAnim.setKeyValueAt(t/totalDuration, sum(angles)/len(angles))
 
                 if len(angles) > 10:
@@ -248,21 +248,21 @@ class AutoScene(QGraphicsScene):
 
                 if self.heatmap.isVisible():
                     # Noise on the car's current angle
-                    noisyCarAngle = self.car.angle + random.gauss(0.0, radians(self.car.rotation_noise)) 
+                    noisyCarAngle = self.car.angle + random.gauss(0.0, radians(self.car.rotation_noise))
                     self.particleFilter.setAngle(noisyCarAngle)
                     self.particleFilter.move(speed)
                     self.particleFilter.sense(self.car.distance, noisyCarAngle)
                     self.particleFilter.resample()
                     self.heatmap.update()
 
-                    relevance = self.particleFilter.relevance 
+                    relevance = self.particleFilter.relevance
                     if relevance >= ParticleFilter.DecentRelevance and not self.car.localized:
                         self.notify("Car localized with a {}% relevance rate".format(int(100*relevance)),
                                     type=NotificationTooltip.ok)
                         self.car.localized = True
                     elif self.car.localized and relevance < ParticleFilter.DecentRelevance - 0.10:
                         self.notify("Lost car's localization !")
-                        
+
                         self.car.localized = False
 
                 # Putting back the car into the map if it got out
@@ -274,7 +274,7 @@ class AutoScene(QGraphicsScene):
         ok = False
         while not ok:
             # We ask for the scale in 'mm per px' as it's easier to imagine, but convert it to px per mm
-            curValue = 1. / self.map.pixel_per_mm if self.map.pixel_per_mm is not None else 1. 
+            curValue = 1. / self.map.pixel_per_mm if self.map.pixel_per_mm is not None else 1.
             mm_per_px, ok = QInputDialog.getDouble(self.views()[0], "Map's scale", "Enter the map's scale (mm per px):",
                                                       value=curValue)
 
@@ -283,7 +283,7 @@ class AutoScene(QGraphicsScene):
     def setMapNorthAngle(self):
         ok = False
         while not ok:
-            curValue = self.map.north_angle if self.map.north_angle is not None else 0. 
+            curValue = self.map.north_angle if self.map.north_angle is not None else 0.
             north_angle, ok = QInputDialog.getDouble(self.views()[0], "Map's north angle",
                 "Enter the angle corresponding to the map's top :", value=curValue)
         self.map.setNorthAngle(north_angle)
@@ -322,7 +322,7 @@ class AutoView(QGraphicsView):
 
         if s.map.north_angle is None:
             s.setMapNorthAngle()
-        
+
         s.path = None
         s.graphicalPath = None
 
@@ -335,7 +335,7 @@ class AutoView(QGraphicsView):
             drawBackground = True
 
         s.clear()
-        
+
         # Graphic visualization of the SVG map
         self.svgItem = QtSvg.QGraphicsSvgItem(svg_map.path)
         self.svgItem.setFlags(QGraphicsItem.ItemClipsToShape)
