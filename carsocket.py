@@ -2,7 +2,6 @@ import socket
 import threading
 import re
 
-import sfml as sf
 from PySide.QtCore import *
 
 from math import radians
@@ -35,8 +34,7 @@ class CarSocket(QObject):
         self.received = Queue()
         self.connected = False
 
-        # Initializing the Joystick
-        sf.Joystick.update()
+        # Initializing the Joystick's state
         self.running = False
         self.turning = False
 
@@ -118,6 +116,8 @@ class CarSocket(QObject):
 
     def joystickRoutine(self):
         """ Reads commands from the joystick and puts them in the sending queue """
+        import sfml as sf
+        sf.Joystick.update()
 
         self.log("JOYSTICK ROUTINE")
 
